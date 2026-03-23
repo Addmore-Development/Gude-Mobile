@@ -1,16 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:gude_app/core/router/app_router.dart';
 import 'package:gude_app/core/theme/app_theme.dart';
-
-void main() {
-  WidgetsFlutterBinding.ensureInitialized();
-  SystemChrome.setPreferredOrientations([
-    DeviceOrientation.portraitUp,
-    DeviceOrientation.portraitDown,
-  ]);
-  runApp(const GudeApp());
-}
 
 class GudeApp extends StatelessWidget {
   const GudeApp({super.key});
@@ -21,8 +11,10 @@ class GudeApp extends StatelessWidget {
       title: 'Gude',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
+      darkTheme: AppTheme.dark,
       routerConfig: AppRouter.router,
       builder: (context, child) {
+        // Constrain to phone width when running on desktop/tablet
         return LayoutBuilder(builder: (context, constraints) {
           final isWide = constraints.maxWidth > 480;
           if (!isWide) return child!;
