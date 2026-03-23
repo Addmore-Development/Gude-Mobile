@@ -9,6 +9,8 @@ import '../features/auth/presentation/screens/forgot_password_screen.dart';
 import '../features/auth/presentation/screens/student_verify_screen.dart';
 import '../features/auth/presentation/screens/capture_banking_screen.dart';
 import '../features/auth/presentation/screens/congratulations_screen.dart';
+import '../features/auth/presentation/screens/home_screen.dart';
+
 // TODO: import home + feature screens when built
 
 final GoRouter appRouter = GoRouter(
@@ -76,8 +78,8 @@ final GoRouter appRouter = GoRouter(
 );
 
 // ── Placeholder home — replace with real HomeScreen ──────
-class _PlaceholderHome extends StatelessWidget {
-  const _PlaceholderHome();
+class home_screen extends StatelessWidget {
+  const home_screen();
 
   @override
   Widget build(BuildContext context) {
