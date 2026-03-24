@@ -1,11 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:gude_app/core/theme/app_theme.dart';
+import 'package:gude_app/core/state/financial_health.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final badgeColor = Color(FinancialHealth.badgeColorValue);
+    final isAlert    = FinancialHealth.needsAlert;
+
     return Scaffold(
       backgroundColor: AppColors.surface,
       appBar: AppBar(
@@ -21,26 +26,24 @@ class HomePage extends StatelessWidget {
               ),
               child: const Center(
                 child: Text('G',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 18,
-                  )),
+                    style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 18)),
               ),
             ),
             const SizedBox(width: 8),
             const Text('Gude',
-              style: TextStyle(
-                color: AppColors.textDark,
-                fontWeight: FontWeight.bold,
-                fontSize: 20,
-              )),
+                style: TextStyle(
+                    color: AppColors.textDark,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 20)),
           ],
         ),
         actions: [
           IconButton(
             icon: const Icon(Icons.notifications_outlined,
-              color: AppColors.textDark),
+                color: AppColors.textDark),
             onPressed: () {},
           ),
           const Padding(
@@ -49,11 +52,10 @@ class HomePage extends StatelessWidget {
               radius: 16,
               backgroundColor: AppColors.primary,
               child: Text('S',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 14,
-                )),
+                  style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14)),
             ),
           ),
         ],
@@ -63,88 +65,167 @@ class HomePage extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Welcome card
+            // ── Welcome card ───────────────────────────
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: AppColors.primary,
+                color: isAlert
+                    ? const Color(0xFFB91C1C)
+                    : AppColors.primary,
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Welcome back, Student ??',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    )),
+                  const Text('Welcome back, Student 👋',
+                      style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold)),
                   const SizedBox(height: 4),
-                  Text('Your stability score is looking good',
+                  Text(
+                    FinancialHealth.homepageSubtitle,
                     style: TextStyle(
-                      color: Colors.white.withOpacity(0.85),
-                      fontSize: 13,
-                    )),
+                        color: Colors.white.withOpacity(0.85),
+                        fontSize: 13),
+                  ),
                   const SizedBox(height: 16),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: const Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.circle, color: Colors.greenAccent, size: 10),
-                        SizedBox(width: 6),
-                        Text('Stable',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                          )),
-                      ],
+                  // Status badge — now matches wallet
+                  GestureDetector(
+                    onTap: () => context.go('/wallet'),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.circle,
+                              color: badgeColor, size: 10),
+                          const SizedBox(width: 6),
+                          Text(
+                            '${FinancialHealth.emoji}  ${FinancialHealth.statusBadge}',
+                            style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600),
+                          ),
+                          const SizedBox(width: 4),
+                          const Icon(Icons.chevron_right,
+                              color: Colors.white70, size: 14),
+                        ],
+                      ),
                     ),
                   ),
                 ],
               ),
             ),
+
+            // ── At-risk nudge banner ───────────────────
+            if (FinancialHealth.needsWarning) ...[
+              const SizedBox(height: 12),
+              GestureDetector(
+                onTap: () => context.go('/wallet'),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 14, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: isAlert
+                        ? const Color(0xFFFFF1F1)
+                        : const Color(0xFFFFF3CD),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: isAlert
+                          ? const Color(0xFFEF4444).withOpacity(0.4)
+                          : const Color(0xFFFFD700).withOpacity(0.5),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.warning_amber_rounded,
+                        color: isAlert
+                            ? const Color(0xFFEF4444)
+                            : const Color(0xFFF59E0B),
+                        size: 20,
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          isAlert
+                              ? 'Financial health is critical. Tap to review your wallet.'
+                              : 'Your spending is over budget. Tap to manage.',
+                          style: TextStyle(
+                            color: isAlert
+                                ? const Color(0xFF7F1D1D)
+                                : const Color(0xFF92400E),
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Text('View →',
+                          style: TextStyle(
+                              color: isAlert
+                                  ? const Color(0xFFEF4444)
+                                  : const Color(0xFFE30613),
+                              fontWeight: FontWeight.w700,
+                              fontSize: 13)),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+
             const SizedBox(height: 24),
 
-            // Quick actions
+            // ── Quick actions ──────────────────────────
             const Text('Quick Actions',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: AppColors.textDark,
-              )),
+                style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textDark)),
             const SizedBox(height: 12),
             Row(
               children: [
-                _QuickAction(icon: Icons.storefront_outlined,
-                  label: 'Marketplace', color: const Color(0xFF6C63FF)),
+                _QuickAction(
+                    icon: Icons.storefront_outlined,
+                    label: 'Marketplace',
+                    color: const Color(0xFF6C63FF),
+                    onTap: () => context.go('/marketplace')),
                 const SizedBox(width: 12),
-                _QuickAction(icon: Icons.account_balance_wallet_outlined,
-                  label: 'Wallet', color: AppColors.primary),
+                _QuickAction(
+                    icon: Icons.account_balance_wallet_outlined,
+                    label: 'Wallet',
+                    color: AppColors.primary,
+                    onTap: () => context.go('/wallet')),
                 const SizedBox(width: 12),
-                _QuickAction(icon: Icons.support_agent_outlined,
-                  label: 'Support', color: const Color(0xFF00C896)),
+                _QuickAction(
+                    icon: Icons.support_agent_outlined,
+                    label: 'Support',
+                    color: const Color(0xFF00C896),
+                    onTap: () => context.go('/support')),
                 const SizedBox(width: 12),
-                _QuickAction(icon: Icons.monitor_heart_outlined,
-                  label: 'Stability', color: const Color(0xFFFF9800)),
+                _QuickAction(
+                    icon: Icons.monitor_heart_outlined,
+                    label: 'Stability',
+                    color: const Color(0xFFFF9800),
+                    onTap: () => context.go('/stability')),
               ],
             ),
             const SizedBox(height: 24),
 
-            // Wallet summary
+            // ── Wallet summary ─────────────────────────
             const Text('Wallet Summary',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: AppColors.textDark,
-              )),
+                style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textDark)),
             const SizedBox(height: 12),
             Container(
               padding: const EdgeInsets.all(20),
@@ -153,35 +234,48 @@ class HomePage extends StatelessWidget {
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 10,
-                    offset: const Offset(0, 2),
-                  ),
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 10,
+                      offset: const Offset(0, 2))
                 ],
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
-                  _WalletStat(label: 'Balance', value: 'R 0.00',
-                    icon: Icons.account_balance_wallet_outlined),
-                  Container(width: 1, height: 40, color: AppColors.inputBorder),
-                  _WalletStat(label: 'Earned', value: 'R 0.00',
-                    icon: Icons.trending_up),
-                  Container(width: 1, height: 40, color: AppColors.inputBorder),
-                  _WalletStat(label: 'Spent', value: 'R 0.00',
-                    icon: Icons.shopping_bag_outlined),
+                  _WalletStat(
+                      label: 'Balance',
+                      value:
+                          'R ${(FinancialHealth.income - FinancialHealth.totalSpent).toStringAsFixed(2)}',
+                      icon: Icons.account_balance_wallet_outlined),
+                  Container(
+                      width: 1,
+                      height: 40,
+                      color: AppColors.inputBorder),
+                  _WalletStat(
+                      label: 'Earned',
+                      value:
+                          'R ${FinancialHealth.income.toStringAsFixed(2)}',
+                      icon: Icons.trending_up),
+                  Container(
+                      width: 1,
+                      height: 40,
+                      color: AppColors.inputBorder),
+                  _WalletStat(
+                      label: 'Spent',
+                      value:
+                          'R ${FinancialHealth.totalSpent.toStringAsFixed(2)}',
+                      icon: Icons.shopping_bag_outlined),
                 ],
               ),
             ),
             const SizedBox(height: 24),
 
-            // Recent activity
+            // ── Recent activity ────────────────────────
             const Text('Recent Activity',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: AppColors.textDark,
-              )),
+                style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textDark)),
             const SizedBox(height: 12),
             Container(
               padding: const EdgeInsets.all(40),
@@ -193,19 +287,20 @@ class HomePage extends StatelessWidget {
                 child: Column(
                   children: [
                     Icon(Icons.inbox_outlined,
-                      size: 48, color: AppColors.textGrey),
+                        size: 48, color: AppColors.textGrey),
                     SizedBox(height: 12),
                     Text('No activity yet',
-                      style: TextStyle(
-                        color: AppColors.textGrey, fontSize: 14)),
+                        style: TextStyle(
+                            color: AppColors.textGrey, fontSize: 14)),
                     SizedBox(height: 4),
                     Text('Start by browsing the marketplace',
-                      style: TextStyle(
-                        color: AppColors.textGrey, fontSize: 12)),
+                        style: TextStyle(
+                            color: AppColors.textGrey, fontSize: 12)),
                   ],
                 ),
               ),
             ),
+            const SizedBox(height: 20),
           ],
         ),
       ),
@@ -213,43 +308,47 @@ class HomePage extends StatelessWidget {
   }
 }
 
+// ─────────────────────────────────────────────
 class _QuickAction extends StatelessWidget {
   final IconData icon;
   final String label;
   final Color color;
+  final VoidCallback onTap;
   const _QuickAction({
     required this.icon,
     required this.label,
     required this.color,
+    required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
     return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Column(
-          children: [
-            Icon(icon, color: color, size: 24),
-            const SizedBox(height: 6),
-            Text(label,
-              style: const TextStyle(
-                fontSize: 10,
-                color: AppColors.textDark,
-                fontWeight: FontWeight.w500,
-              )),
-          ],
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2))
+            ],
+          ),
+          child: Column(
+            children: [
+              Icon(icon, color: color, size: 24),
+              const SizedBox(height: 6),
+              Text(label,
+                  style: const TextStyle(
+                      fontSize: 10,
+                      color: AppColors.textDark,
+                      fontWeight: FontWeight.w500)),
+            ],
+          ),
         ),
       ),
     );
@@ -273,16 +372,13 @@ class _WalletStat extends StatelessWidget {
         Icon(icon, color: AppColors.primary, size: 20),
         const SizedBox(height: 4),
         Text(value,
-          style: const TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 14,
-            color: AppColors.textDark,
-          )),
+            style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
+                color: AppColors.textDark)),
         Text(label,
-          style: const TextStyle(
-            fontSize: 11,
-            color: AppColors.textGrey,
-          )),
+            style: const TextStyle(
+                fontSize: 11, color: AppColors.textGrey)),
       ],
     );
   }

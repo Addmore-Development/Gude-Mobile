@@ -8,249 +8,469 @@ class StabilityPage extends StatefulWidget {
   State<StabilityPage> createState() => _StabilityPageState();
 }
 
-class _StabilityPageState extends State<StabilityPage> {
-  final _score = 72;
+class _StabilityPageState extends State<StabilityPage> with TickerProviderStateMixin {
+  int _score = 62;
+  bool _checkinDone = false;
+  late AnimationController _scoreAnim;
+  late Animation<double> _scoreValue;
+
+  final List<_Signal> _signals = [
+    _Signal('Financial Health', 55, Icons.account_balance_wallet_outlined, 'R670 over budget this month'),
+    _Signal('Marketplace Activity', 80, Icons.store_outlined, '3 active gigs this week'),
+    _Signal('App Engagement', 70, Icons.phone_android_outlined, 'Active 5 of 7 days'),
+    _Signal('Wellbeing Check-ins', 40, Icons.favorite_outline, 'Missed last 2 check-ins'),
+  ];
+
+  final _moods = [
+    {'emoji': '😊', 'label': 'Doing well', 'value': 'well'},
+    {'emoji': '😰', 'label': 'Stressed', 'value': 'stressed'},
+    {'emoji': '😞', 'label': 'Struggling', 'value': 'struggling'},
+    {'emoji': '🆘', 'label': 'Need help', 'value': 'help'},
+  ];
+
+  final _supportItems = [
+    _SupportItem('Emergency Income', Icons.bolt_rounded, Color(0xFFE30613), 'Quick-paying gigs near you', '/marketplace'),
+    _SupportItem('Budget Rescue', Icons.savings_outlined, Color(0xFF3B82F6), 'Restructure your budget now', '/wallet/budget'),
+    _SupportItem('Food Support', Icons.fastfood_outlined, Color(0xFF10B981), 'Affordable meals & food banks', null),
+    _SupportItem('Tutoring Help', Icons.school_outlined, Color(0xFF8B5CF6), 'Free peer tutoring groups', '/marketplace'),
+    _SupportItem('Counseling', Icons.psychology_outlined, Color(0xFFF59E0B), 'Talk to a campus counselor', null),
+    _SupportItem('Mentorship', Icons.people_outline, Color(0xFFEC4899), 'Connect with a student mentor', null),
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _scoreAnim = AnimationController(vsync: this, duration: const Duration(milliseconds: 1200));
+    _scoreValue = Tween<double>(begin: 0, end: _score / 100)
+        .animate(CurvedAnimation(parent: _scoreAnim, curve: Curves.easeOutCubic));
+    _scoreAnim.forward();
+  }
+
+  @override
+  void dispose() {
+    _scoreAnim.dispose();
+    super.dispose();
+  }
 
   Color get _scoreColor {
-    if (_score >= 75) return const Color(0xFF4CAF50);
-    if (_score >= 50) return const Color(0xFFFF9800);
-    if (_score >= 25) return const Color(0xFFFF5722);
-    return const Color(0xFFF44336);
+    if (_score >= 75) return const Color(0xFF10B981);
+    if (_score >= 50) return const Color(0xFFF59E0B);
+    if (_score >= 30) return const Color(0xFFEF4444);
+    return const Color(0xFF7F1D1D);
   }
 
   String get _scoreLabel {
     if (_score >= 75) return 'Stable';
     if (_score >= 50) return 'Watch';
-    if (_score >= 25) return 'At Risk';
+    if (_score >= 30) return 'At Risk';
     return 'Critical';
+  }
+
+  String get _scoreEmoji {
+    if (_score >= 75) return '🟢';
+    if (_score >= 50) return '🟡';
+    if (_score >= 30) return '🟠';
+    return '🔴';
+  }
+
+  void _submitCheckin(String mood) {
+    int delta = mood == 'well' ? 5 : mood == 'stressed' ? -3 : mood == 'struggling' ? -7 : -12;
+    setState(() {
+      _checkinDone = true;
+      _score = (_score + delta).clamp(0, 100);
+      _scoreAnim.reset();
+      _scoreValue = Tween<double>(begin: _scoreValue.value, end: _score / 100)
+          .animate(CurvedAnimation(parent: _scoreAnim, curve: Curves.easeOutCubic));
+      _scoreAnim.forward();
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F7),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          child: Column(
-            children: [
-              _buildHeader(),
-              _buildScoreCard(),
-              _buildMetrics(),
-              _buildCheckIn(context),
-              _buildAlerts(),
-              const SizedBox(height: 32),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildHeader() {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
-      color: Colors.white,
-      child: const Row(
-        children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Stability Score', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppColors.textDark)),
-              Text('Your student wellness overview', style: TextStyle(fontSize: 13, color: AppColors.textGrey)),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildScoreCard() {
-    return Container(
-      margin: const EdgeInsets.all(16),
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)),
-      child: Column(
-        children: [
-          Stack(
-            alignment: Alignment.center,
-            children: [
-              SizedBox(
-                width: 160, height: 160,
-                child: CircularProgressIndicator(
-                  value: _score / 100,
-                  strokeWidth: 12,
-                  backgroundColor: _scoreColor.withOpacity(0.1),
-                  valueColor: AlwaysStoppedAnimation<Color>(_scoreColor),
-                ),
+      backgroundColor: const Color(0xFFF5F5F5),
+      body: CustomScrollView(
+        slivers: [
+          SliverAppBar(
+            pinned: true,
+            backgroundColor: Colors.white,
+            elevation: 0,
+            title: const Text('Stability',
+                style: TextStyle(color: Color(0xFF1A1A1A), fontWeight: FontWeight.w800, fontSize: 20)),
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.info_outline, color: Color(0xFF777777)),
+                onPressed: () => _showInfoDialog(context),
               ),
-              Column(
+            ],
+          ),
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: 32),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('$_score', style: TextStyle(fontSize: 48, fontWeight: FontWeight.bold, color: _scoreColor)),
-                  Text(_scoreLabel, style: TextStyle(fontSize: 16, color: _scoreColor, fontWeight: FontWeight.w600)),
+
+                  // ── Score Card ──────────────────────────
+                  Container(
+                    margin: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 12)],
+                    ),
+                    child: Column(
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text('Student Stability Score',
+                                      style: TextStyle(fontSize: 12, color: Color(0xFF888888))),
+                                  const SizedBox(height: 4),
+                                  Row(children: [
+                                    Text(_scoreEmoji, style: const TextStyle(fontSize: 22)),
+                                    const SizedBox(width: 8),
+                                    Text(_scoreLabel,
+                                        style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: _scoreColor)),
+                                  ]),
+                                  const SizedBox(height: 6),
+                                  Text(_score >= 75
+                                      ? 'You\'re doing great! Keep it up.'
+                                      : _score >= 50
+                                          ? 'Some stress signals detected.'
+                                          : _score >= 30
+                                              ? 'Financial or academic stress detected.'
+                                              : 'Critical signals — please seek support.',
+                                      style: const TextStyle(fontSize: 12, color: Color(0xFF666666), height: 1.4)),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            AnimatedBuilder(
+                              animation: _scoreAnim,
+                              builder: (_, __) => _ScoreRing(
+                                value: _scoreValue.value,
+                                color: _scoreColor,
+                                score: (_scoreValue.value * 100).toInt(),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(6),
+                          child: AnimatedBuilder(
+                            animation: _scoreAnim,
+                            builder: (_, __) => LinearProgressIndicator(
+                              value: _scoreValue.value,
+                              minHeight: 10,
+                              backgroundColor: const Color(0xFFEEEEEE),
+                              valueColor: AlwaysStoppedAnimation(_scoreColor),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            _ScoreLegend(color: const Color(0xFF10B981), label: 'Stable 75+'),
+                            _ScoreLegend(color: const Color(0xFFF59E0B), label: 'Watch 50+'),
+                            _ScoreLegend(color: const Color(0xFFEF4444), label: 'At Risk 30+'),
+                            _ScoreLegend(color: const Color(0xFF7F1D1D), label: 'Critical'),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // ── Signal Breakdown ────────────────────
+                  const Padding(
+                    padding: EdgeInsets.fromLTRB(16, 4, 16, 10),
+                    child: Text('Signal Breakdown',
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Color(0xFF1A1A1A))),
+                  ),
+                  Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 16),
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8)],
+                    ),
+                    child: Column(children: _signals.map((s) => _SignalRow(signal: s)).toList()),
+                  ),
+
+                  // ── Weekly Check-in ─────────────────────
+                  Container(
+                    margin: const EdgeInsets.fromLTRB(16, 18, 16, 0),
+                    padding: const EdgeInsets.all(18),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFFE30613), Color(0xFFB0000E)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(18),
+                    ),
+                    child: _checkinDone
+                        ? Row(children: [
+                            const Text('✅', style: TextStyle(fontSize: 28)),
+                            const SizedBox(width: 12),
+                            const Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text('Check-in recorded!',
+                                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 15)),
+                                  Text('Your stability score has been updated.',
+                                      style: TextStyle(color: Colors.white70, fontSize: 12)),
+                                ],
+                              ),
+                            ),
+                          ])
+                        : Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text('📋 Weekly Check-in',
+                                  style: TextStyle(color: Colors.white70, fontSize: 13)),
+                              const SizedBox(height: 6),
+                              const Text('How are you doing this week?',
+                                  style: TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.w800)),
+                              const SizedBox(height: 14),
+                              Row(children: [
+                                Expanded(child: _MoodBtn(mood: _moods[0], onTap: _submitCheckin)),
+                                const SizedBox(width: 10),
+                                Expanded(child: _MoodBtn(mood: _moods[1], onTap: _submitCheckin)),
+                              ]),
+                              const SizedBox(height: 10),
+                              Row(children: [
+                                Expanded(child: _MoodBtn(mood: _moods[2], onTap: _submitCheckin)),
+                                const SizedBox(width: 10),
+                                Expanded(child: _MoodBtn(mood: _moods[3], onTap: _submitCheckin)),
+                              ]),
+                            ],
+                          ),
+                  ),
+
+                  // ── Support Hub ─────────────────────────
+                  const Padding(
+                    padding: EdgeInsets.fromLTRB(16, 22, 16, 10),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Support Hub',
+                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Color(0xFF1A1A1A))),
+                        SizedBox(height: 2),
+                        Text('Resources tailored to your situation',
+                            style: TextStyle(fontSize: 12, color: Color(0xFF888888))),
+                      ],
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Column(
+                      children: List.generate(3, (row) => Padding(
+                        padding: EdgeInsets.only(bottom: row < 2 ? 12 : 0),
+                        child: Row(
+                          children: [
+                            Expanded(child: _SupportCard(
+                              item: _supportItems[row * 2],
+                              onTap: _supportItems[row * 2].route != null
+                                  ? () => context.push(_supportItems[row * 2].route!)
+                                  : () => _showComingSoon(context, _supportItems[row * 2].title),
+                            )),
+                            const SizedBox(width: 12),
+                            Expanded(child: _SupportCard(
+                              item: _supportItems[row * 2 + 1],
+                              onTap: _supportItems[row * 2 + 1].route != null
+                                  ? () => context.push(_supportItems[row * 2 + 1].route!)
+                                  : () => _showComingSoon(context, _supportItems[row * 2 + 1].title),
+                            )),
+                          ],
+                        ),
+                      )),
+                    ),
+                  ),
                 ],
               ),
-            ],
-          ),
-          const SizedBox(height: 24),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _indicator('Green', const Color(0xFF4CAF50), _score >= 75),
-              _indicator('Yellow', const Color(0xFFFF9800), _score >= 50 && _score < 75),
-              _indicator('Orange', const Color(0xFFFF5722), _score >= 25 && _score < 50),
-              _indicator('Red', const Color(0xFFF44336), _score < 25),
-            ],
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _indicator(String label, Color color, bool active) {
-    return Column(
-      children: [
-        Container(
-          width: 16, height: 16,
-          decoration: BoxDecoration(
-            color: active ? color : color.withOpacity(0.2),
-            shape: BoxShape.circle,
-          ),
+  void _showInfoDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('About Your Stability Score', style: TextStyle(fontWeight: FontWeight.w800)),
+        content: const Text(
+          'Your score is calculated using:\n\n'
+          '• Wallet spending patterns\n'
+          '• Marketplace activity\n'
+          '• App engagement\n'
+          '• Weekly check-in responses\n\n'
+          'It is private to you and helps Gude suggest the right support.',
+          style: TextStyle(fontSize: 13, height: 1.5, color: Color(0xFF444444)),
         ),
-        const SizedBox(height: 4),
-        Text(label, style: TextStyle(fontSize: 11, color: active ? color : AppColors.textGrey,
-          fontWeight: active ? FontWeight.w600 : FontWeight.normal)),
-      ],
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Got it', style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.w700)),
+          ),
+        ],
+      ),
     );
   }
 
-  Widget _buildMetrics() {
+  void _showComingSoon(BuildContext context, String title) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text('$title — coming soon!'),
+      backgroundColor: AppColors.primary,
+      behavior: SnackBarBehavior.floating,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+    ));
+  }
+}
+
+class _MoodBtn extends StatelessWidget {
+  final Map<String, String> mood;
+  final void Function(String) onTap;
+  const _MoodBtn({required this.mood, required this.onTap});
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => onTap(mood['value']!),
+      child: Container(
+        height: 44,
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.2),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: Colors.white.withOpacity(0.4)),
+        ),
+        child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+          Text(mood['emoji']!, style: const TextStyle(fontSize: 16)),
+          const SizedBox(width: 6),
+          Text(mood['label']!,
+              style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600)),
+        ]),
+      ),
+    );
+  }
+}
+
+class _Signal {
+  final String label;
+  final int score;
+  final IconData icon;
+  final String note;
+  const _Signal(this.label, this.score, this.icon, this.note);
+}
+
+class _SignalRow extends StatelessWidget {
+  final _Signal signal;
+  const _SignalRow({required this.signal});
+  Color get _c => signal.score >= 70 ? const Color(0xFF10B981) : signal.score >= 45 ? const Color(0xFFF59E0B) : const Color(0xFFEF4444);
+  @override
+  Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text('Health Metrics', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textDark)),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(child: _metricCard('Financial Health', 68, const Color(0xFF6C3CE1), Icons.account_balance_wallet_outlined)),
-              const SizedBox(width: 12),
-              Expanded(child: _metricCard('Marketplace Activity', 85, const Color(0xFF4ECDC4), Icons.storefront_outlined)),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(child: _metricCard('Engagement', 72, const Color(0xFFFF9800), Icons.psychology_outlined)),
-              const SizedBox(width: 12),
-              Expanded(child: _metricCard('Wellbeing', 60, const Color(0xFFE91E63), Icons.favorite_outline)),
-            ],
-          ),
-        ],
+      padding: const EdgeInsets.only(bottom: 14),
+      child: Row(children: [
+        Container(width: 36, height: 36,
+            decoration: BoxDecoration(color: _c.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
+            child: Icon(signal.icon, size: 18, color: _c)),
+        const SizedBox(width: 12),
+        Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+            Text(signal.label, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF1A1A1A))),
+            Text('${signal.score}%', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: _c)),
+          ]),
+          const SizedBox(height: 4),
+          ClipRRect(borderRadius: BorderRadius.circular(4),
+              child: LinearProgressIndicator(value: signal.score / 100, minHeight: 5,
+                  backgroundColor: const Color(0xFFEEEEEE), valueColor: AlwaysStoppedAnimation(_c))),
+          const SizedBox(height: 3),
+          Text(signal.note, style: const TextStyle(fontSize: 11, color: Color(0xFF999999))),
+        ])),
+      ]),
+    );
+  }
+}
+
+class _SupportItem {
+  final String title;
+  final IconData icon;
+  final Color color;
+  final String description;
+  final String? route;
+  const _SupportItem(this.title, this.icon, this.color, this.description, this.route);
+}
+
+class _SupportCard extends StatelessWidget {
+  final _SupportItem item;
+  final VoidCallback onTap;
+  const _SupportCard({required this.item, required this.onTap});
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        height: 95,
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 8)],
+        ),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Container(width: 32, height: 32,
+              decoration: BoxDecoration(color: item.color.withOpacity(0.12), borderRadius: BorderRadius.circular(9)),
+              child: Icon(item.icon, size: 16, color: item.color)),
+          const Spacer(),
+          Text(item.title, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF1A1A1A))),
+          const SizedBox(height: 2),
+          Text(item.description,
+              style: const TextStyle(fontSize: 10, color: Color(0xFF999999), height: 1.3),
+              maxLines: 1, overflow: TextOverflow.ellipsis),
+        ]),
       ),
     );
   }
+}
 
-  Widget _metricCard(String label, int score, Color color, IconData icon) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12)),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(icon, color: color, size: 20),
-              const SizedBox(width: 8),
-              Expanded(child: Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textDark))),
-            ],
-          ),
-          const SizedBox(height: 12),
-          LinearProgressIndicator(
-            value: score / 100,
-            backgroundColor: color.withOpacity(0.1),
-            valueColor: AlwaysStoppedAnimation<Color>(color),
-            minHeight: 6,
-            borderRadius: BorderRadius.circular(3),
-          ),
-          const SizedBox(height: 6),
-          Text('$score%', style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 13)),
-        ],
-      ),
+class _ScoreRing extends StatelessWidget {
+  final double value;
+  final Color color;
+  final int score;
+  const _ScoreRing({required this.value, required this.color, required this.score});
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(width: 80, height: 80,
+      child: Stack(alignment: Alignment.center, children: [
+        CircularProgressIndicator(value: 1.0, strokeWidth: 8, color: const Color(0xFFEEEEEE)),
+        CircularProgressIndicator(value: value, strokeWidth: 8, color: color, strokeCap: StrokeCap.round),
+        Text('$score', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: color)),
+      ]),
     );
   }
+}
 
-  Widget _buildCheckIn(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.all(16),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.primary.withOpacity(0.05),
-        border: Border.all(color: AppColors.primary.withOpacity(0.2)),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        children: [
-          const Icon(Icons.edit_note_outlined, color: AppColors.primary, size: 32),
-          const SizedBox(width: 12),
-          const Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Weekly Check-In', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15, color: AppColors.textDark)),
-                Text('How are you feeling this week?', style: TextStyle(color: AppColors.textGrey, fontSize: 13)),
-              ],
-            ),
-          ),
-          ElevatedButton(
-            onPressed: () => context.push('/stability/checkin'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-            ),
-            child: const Text('Start', style: TextStyle(color: Colors.white, fontSize: 13)),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildAlerts() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text('Recent Alerts', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textDark)),
-          const SizedBox(height: 12),
-          _alert('Spending spike detected', 'Your food spending is 30% above budget', const Color(0xFFFF9800), Icons.warning_amber_outlined),
-          _alert('Great marketplace activity!', 'You completed 3 jobs this week', const Color(0xFF4CAF50), Icons.check_circle_outline),
-        ],
-      ),
-    );
-  }
-
-  Widget _alert(String title, String subtitle, Color color, IconData icon) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12)),
-      child: Row(
-        children: [
-          Icon(icon, color: color, size: 24),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
-                Text(subtitle, style: const TextStyle(color: AppColors.textGrey, fontSize: 12)),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
+class _ScoreLegend extends StatelessWidget {
+  final Color color;
+  final String label;
+  const _ScoreLegend({required this.color, required this.label});
+  @override
+  Widget build(BuildContext context) {
+    return Row(children: [
+      Container(width: 8, height: 8, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
+      const SizedBox(width: 4),
+      Text(label, style: const TextStyle(fontSize: 9, color: Color(0xFF888888))),
+    ]);
   }
 }

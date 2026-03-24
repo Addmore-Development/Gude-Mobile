@@ -55,6 +55,16 @@ import '../features/wallet/presentation/screens/withdraw_screen.dart';
       builder: (_, __) => const WithdrawMoneyScreen(),
     ),
 
+      GoRoute(
+      path: '/wallet/pockets', 
+      builder: (_, __) => const WalletPocketsPage()
+    ),
+
+      GoRoute(
+      path: '/shop', 
+      builder: (_, __) => const MarketplaceLandingPage()
+    ),
+
 // ════════════════════════════════════════════════════════════════════════════
 // ALSO: In whichever screen currently navigates to '/home' after onboarding
 // (likely capture_banking_screen.dart or student_verify_screen.dart),
