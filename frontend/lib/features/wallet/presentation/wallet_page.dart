@@ -180,7 +180,7 @@ class _WalletPageState extends State<WalletPage> {
                       _QuickAction(
                         icon: Icons.send_rounded,
                         label: 'Send',
-                        onTap: () {},
+                        onTap: () => context.push('/wallet/send'),
                       ),
                       _QuickAction(
                         icon: Icons.call_received_rounded,
@@ -190,7 +190,7 @@ class _WalletPageState extends State<WalletPage> {
                       _QuickAction(
                         icon: Icons.account_balance_rounded,
                         label: 'Withdraw',
-                        onTap: () {},
+                        onTap: () => context.push('/wallet/withdraw'),
                       ),
                       _QuickAction(
                         icon: Icons.pie_chart_outline_rounded,

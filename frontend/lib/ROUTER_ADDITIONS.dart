@@ -9,6 +9,8 @@ import '../features/wallet/presentation/screens/wallet_screen.dart';
 import '../features/wallet/presentation/screens/transactions_screen.dart';
 import '../features/wallet/presentation/screens/budget_planner_screen.dart';
 import '../features/wallet/presentation/screens/savings_goals_screen.dart';
+import '../features/wallet/presentation/screens/send_money_screen.dart';
+import '../features/wallet/presentation/screens/withdraw_screen.dart';
 
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -44,7 +46,14 @@ import '../features/wallet/presentation/screens/savings_goals_screen.dart';
       path: '/wallet/savings',
       builder: (_, __) => const SavingsGoalsScreen(),
     ),
-
+      GoRoute(
+      path: '/wallet/send',
+      builder: (_, __) => const SendMoneyScreen(),
+    ),
+      GoRoute(
+      path: '/wallet/withdraw',
+      builder: (_, __) => const WithdrawMoneyScreen(),
+    ),
 
 // ════════════════════════════════════════════════════════════════════════════
 // ALSO: In whichever screen currently navigates to '/home' after onboarding

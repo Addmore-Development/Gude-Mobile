@@ -20,6 +20,8 @@ import 'package:gude_app/features/support_hub/presentation/support_page.dart';
 import 'package:gude_app/features/home/presentation/home_page.dart';
 import 'package:gude_app/features/profile/presentation/profile_page.dart';
 import 'package:gude_app/shared/widgets/bottom_nav_shell.dart';
+import 'package:gude_app/features/wallet/presentation/screens/send_money_screen.dart';
+import 'package:gude_app/features/wallet/presentation/screens/withdraw_screen.dart';
 
 class AppRouter {
   static final router = GoRouter(
@@ -45,6 +47,14 @@ class AppRouter {
       GoRoute(path: '/wallet/budget', builder: (c, s) => const BudgetPlannerPage()),
       GoRoute(path: '/wallet/savings', builder: (c, s) => const SavingsGoalsPage()),
       GoRoute(path: '/stability/checkin', builder: (c, s) => const WeeklyCheckinPage()),
+      GoRoute(                                                // 👈 ADD THIS
+      path: '/wallet/send',
+      builder: (_, __) => const SendMoneyScreen(),
+    ),
+      GoRoute(                                                // 👈 ADD THIS
+      path: '/wallet/withdraw',
+      builder: (_, __) => const WithdrawScreen(),
+    ),
       ShellRoute(
         builder: (context, state, child) => BottomNavShell(child: child),
         routes: [

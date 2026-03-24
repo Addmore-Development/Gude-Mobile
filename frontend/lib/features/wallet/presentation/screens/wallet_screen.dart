@@ -119,9 +119,9 @@ class _QuickActions extends StatelessWidget {
     return Row(children:[
       _Btn(icon:Icons.arrow_downward_rounded,  label:'Receive',  onTap:(){}),
       const SizedBox(width:12),
-      _Btn(icon:Icons.arrow_upward_rounded,    label:'Send',     onTap:(){}),
+      _Btn(icon:Icons.arrow_upward_rounded,    label:'Send',     onTap:() => context.push('/wallet/send')),
       const SizedBox(width:12),
-      _Btn(icon:Icons.account_balance_outlined,label:'Withdraw', onTap:(){}),
+      _Btn(icon:Icons.account_balance_outlined,label:'Withdraw', onTap:() => context.push('/wallet/withdraw')),
       const SizedBox(width:12),
       _Btn(icon:Icons.pie_chart_outline_rounded,label:'Budget',  onTap:() => context.push('/wallet/budget')),
     ]);
