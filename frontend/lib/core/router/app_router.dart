@@ -23,6 +23,9 @@ import 'package:gude_app/features/home/presentation/home_page.dart';
 import 'package:gude_app/features/profile/presentation/profile_page.dart';
 import 'package:gude_app/features/buyer/presentation/buyer_profile_page.dart';
 import 'package:gude_app/shared/widgets/bottom_nav_shell.dart';
+import 'package:gude_app/features/wallet/presentation/screens/transactions_screen.dart';
+
+// ── Buyer onboarding screens (all in one file) ────────
 import 'package:gude_app/features/auth/presentation/buyer_onboarding_welcome_page.dart';
 
 class AppRouter {
@@ -106,6 +109,9 @@ class AppRouter {
           path: '/wallet/send', builder: (_, __) => const SendMoneyScreen()),
       GoRoute(
           path: '/wallet/withdraw', builder: (_, __) => const WithdrawScreen()),
+      GoRoute(
+          path: '/wallet/transactions',
+          builder: (_, __) => const TransactionsScreen()),
 
       // ── Stability (outside shell) ──────────────────────────
       GoRoute(
