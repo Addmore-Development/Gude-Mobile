@@ -3,7 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 // ─────────────────────────────────────────────────────────────────────────────
 // SEND MONEY PAGE
-// Step 0 → Select Recipient (Contact / Group tabs, contact list)
+// Step 0 → Select Recipient (Contact list, sort, add contact)
 // Step 1 → Pay Details (from/to, amount, EFT type, reference)
 // Step 2 → Transaction Details / Success
 // ─────────────────────────────────────────────────────────────────────────────
@@ -18,38 +18,66 @@ class SendMoneyScreen extends StatefulWidget {
 class _SendMoneyScreenState extends State<SendMoneyScreen> {
   int _step = 0;
   int _selectedContact = -1;
-  int _contactTab = 0; // 0=Contact, 1=Group
   bool _immediate = false;
+  String _sortBy = 'Recent'; // 'Recent', 'Most Sent', 'A-Z'
 
   final _amountController = TextEditingController();
   final _refController = TextEditingController();
 
-  final List<Map<String, dynamic>> _contacts = [
+  // Contact list with additional fields for sorting
+  List<Map<String, dynamic>> _contacts = [
     {
       'name': 'Susan Precious',
       'number': '+2769335215',
       'initials': 'SP',
       'color': const Color(0xFFE91E63),
+      'lastSentDate': DateTime.now().subtract(const Duration(days: 1)),
+      'totalSent': 450.0,
     },
     {
       'name': 'Kinalwe Hope',
       'number': '+2761234567',
       'initials': 'KH',
       'color': const Color(0xFF4CAF50),
+      'lastSentDate': DateTime.now().subtract(const Duration(days: 5)),
+      'totalSent': 1200.0,
     },
     {
       'name': 'Pearl Hlogwane',
       'number': '+2769876543',
       'initials': 'PH',
       'color': const Color(0xFF9C27B0),
+      'lastSentDate': DateTime.now().subtract(const Duration(days: 2)),
+      'totalSent': 300.0,
     },
     {
-      'name': 'Pearl Hlogwane',
+      'name': 'Thabo Mbeki',
       'number': '+2761234578',
-      'initials': 'PH',
-      'color': const Color(0xFF9C27B0),
+      'initials': 'TM',
+      'color': const Color(0xFF3F51B5),
+      'lastSentDate': DateTime.now().subtract(const Duration(days: 0, hours: 3)),
+      'totalSent': 75.0,
     },
   ];
+
+  // Sorted list based on _sortBy
+  List<Map<String, dynamic>> get _sortedContacts {
+    final list = List<Map<String, dynamic>>.from(_contacts);
+    switch (_sortBy) {
+      case 'Recent':
+        list.sort((a, b) => (b['lastSentDate'] as DateTime).compareTo(a['lastSentDate'] as DateTime));
+        break;
+      case 'Most Sent':
+        list.sort((a, b) => (b['totalSent'] as double).compareTo(a['totalSent'] as double));
+        break;
+      case 'A-Z':
+        list.sort((a, b) => (a['name'] as String).compareTo(b['name'] as String));
+        break;
+      default:
+        break;
+    }
+    return list;
+  }
 
   @override
   void dispose() {
@@ -64,6 +92,78 @@ class _SendMoneyScreenState extends State<SendMoneyScreen> {
     return 'Transaction Details';
   }
 
+  // Show dialog to add new contact
+  void _showAddContactDialog() {
+    final nameController = TextEditingController();
+    final numberController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Add New Contact', style: TextStyle(fontFamily: 'Poppins', fontWeight: FontWeight.w600)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: nameController,
+              decoration: const InputDecoration(
+                labelText: 'Full Name',
+                border: OutlineInputBorder(),
+                hintText: 'e.g., John Doe',
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: numberController,
+              keyboardType: TextInputType.phone,
+              decoration: const InputDecoration(
+                labelText: 'Phone Number',
+                border: OutlineInputBorder(),
+                hintText: '+27 12 345 6789',
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel', style: TextStyle(color: Color(0xFF999999))),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              final name = nameController.text.trim();
+              final number = numberController.text.trim();
+              if (name.isNotEmpty && number.isNotEmpty) {
+                final initials = name.split(' ').map((e) => e[0]).join().toUpperCase();
+                // Generate a random color from a list
+                final colors = [0xFFE91E63, 0xFF4CAF50, 0xFF9C27B0, 0xFF3F51B5, 0xFFFF9800, 0xFF00BCD4];
+                final color = Color(colors[_contacts.length % colors.length]);
+                setState(() {
+                  _contacts.add({
+                    'name': name,
+                    'number': number,
+                    'initials': initials,
+                    'color': color,
+                    'lastSentDate': DateTime.now(),
+                    'totalSent': 0.0,
+                  });
+                });
+                Navigator.pop(context);
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Please fill in both fields')),
+                );
+              }
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFFF3B3C)),
+            child: const Text('Add', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -74,16 +174,17 @@ class _SendMoneyScreenState extends State<SendMoneyScreen> {
         child: _step == 0
             ? _SelectRecipientStep(
                 key: const ValueKey(0),
-                contacts: _contacts,
+                contacts: _sortedContacts,
                 selected: _selectedContact,
-                contactTab: _contactTab,
-                onTabChange: (i) => setState(() => _contactTab = i),
+                sortBy: _sortBy,
+                onSortChange: (value) => setState(() => _sortBy = value),
                 onSelect: (i) => setState(() => _selectedContact = i),
                 onCancel: () => context.go('/wallet'),
                 onBack: () => context.go('/wallet'),
                 onContinue: _selectedContact >= 0
                     ? () => setState(() => _step = 1)
                     : null,
+                onAddContact: _showAddContactDialog,
               )
             : _step == 1
                 ? _PayDetailsStep(
@@ -110,6 +211,13 @@ class _SendMoneyScreenState extends State<SendMoneyScreen> {
                     onBackToWallet: () => context.go('/wallet'),
                   ),
       ),
+      floatingActionButton: _step == 0
+          ? FloatingActionButton(
+              onPressed: _showAddContactDialog,
+              backgroundColor: const Color(0xFFFF3B3C),
+              child: const Icon(Icons.add, color: Colors.white),
+            )
+          : null,
     );
   }
 
@@ -119,8 +227,7 @@ class _SendMoneyScreenState extends State<SendMoneyScreen> {
       elevation: 0,
       centerTitle: true,
       leading: IconButton(
-        icon: const Icon(Icons.arrow_back,
-            size: 18, color: Color(0xFF232323)),
+        icon: const Icon(Icons.arrow_back, size: 18, color: Color(0xFF232323)),
         onPressed: () {
           if (_step == 0) {
             context.go('/wallet');
@@ -151,7 +258,6 @@ class _SendMoneyScreenState extends State<SendMoneyScreen> {
           ),
         ],
       ),
-      // Red progress bar under app bar
       bottom: PreferredSize(
         preferredSize: const Size.fromHeight(3),
         child: Container(
@@ -170,24 +276,66 @@ class _SendMoneyScreenState extends State<SendMoneyScreen> {
 class _SelectRecipientStep extends StatelessWidget {
   final List<Map<String, dynamic>> contacts;
   final int selected;
-  final int contactTab;
-  final void Function(int) onTabChange;
+  final String sortBy;
+  final void Function(String) onSortChange;
   final void Function(int) onSelect;
   final VoidCallback onCancel;
   final VoidCallback onBack;
   final VoidCallback? onContinue;
+  final VoidCallback onAddContact;
 
   const _SelectRecipientStep({
     super.key,
     required this.contacts,
     required this.selected,
-    required this.contactTab,
-    required this.onTabChange,
+    required this.sortBy,
+    required this.onSortChange,
     required this.onSelect,
     required this.onCancel,
     required this.onBack,
     required this.onContinue,
+    required this.onAddContact,
   });
+
+  void _showSortOptions(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (context) => Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const SizedBox(height: 8),
+          ListTile(
+            title: const Text('Recent', style: TextStyle(fontFamily: 'Poppins')),
+            trailing: sortBy == 'Recent' ? const Icon(Icons.check, color: Color(0xFFFF3B3C)) : null,
+            onTap: () {
+              onSortChange('Recent');
+              Navigator.pop(context);
+            },
+          ),
+          ListTile(
+            title: const Text('Most Sent', style: TextStyle(fontFamily: 'Poppins')),
+            trailing: sortBy == 'Most Sent' ? const Icon(Icons.check, color: Color(0xFFFF3B3C)) : null,
+            onTap: () {
+              onSortChange('Most Sent');
+              Navigator.pop(context);
+            },
+          ),
+          ListTile(
+            title: const Text('A-Z', style: TextStyle(fontFamily: 'Poppins')),
+            trailing: sortBy == 'A-Z' ? const Icon(Icons.check, color: Color(0xFFFF3B3C)) : null,
+            onTap: () {
+              onSortChange('A-Z');
+              Navigator.pop(context);
+            },
+          ),
+          const SizedBox(height: 8),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -199,7 +347,6 @@ class _SelectRecipientStep extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // ── Headline ──
               const Text(
                 'Who do you want to send\nMoney to?',
                 style: TextStyle(
@@ -212,26 +359,7 @@ class _SelectRecipientStep extends StatelessWidget {
               ),
               const SizedBox(height: 20),
 
-              // ── Contact | Group tabs ──
-              // ── Contact | Group tabs ──
-Row(
-  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-  children: [
-    _ContactTab(
-      label: 'Contact',
-      selected: contactTab == 0,
-      onTap: () => onTabChange(0),
-    ),
-    _ContactTab(
-      label: 'Group',
-      selected: contactTab == 1,
-      onTap: () => onTabChange(1),
-    ),
-  ],
-),
-              const SizedBox(height: 20),
-
-              // ── Column header ──
+              // Sort By row
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -244,20 +372,23 @@ Row(
                       color: Color(0xFF999999),
                     ),
                   ),
-                  Row(
-                    children: const [
-                      Text(
-                        'Sort By',
-                        style: TextStyle(
-                          fontFamily: 'Poppins',
-                          fontSize: 12,
-                          color: Color(0xFF999999),
+                  GestureDetector(
+                    onTap: () => _showSortOptions(context),
+                    child: Row(
+                      children: [
+                        Text(
+                          sortBy,
+                          style: const TextStyle(
+                            fontFamily: 'Poppins',
+                            fontSize: 12,
+                            color: Color(0xFFFF3B3C),
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
-                      ),
-                      SizedBox(width: 4),
-                      Icon(Icons.sort_rounded,
-                          size: 16, color: Color(0xFF999999)),
-                    ],
+                        const SizedBox(width: 4),
+                        const Icon(Icons.arrow_drop_down, color: Color(0xFFFF3B3C)),
+                      ],
+                    ),
                   ),
                 ],
               ),
@@ -267,11 +398,10 @@ Row(
 
         const SizedBox(height: 8),
 
-        // ── Contact List ──
+        // Contact List
         Expanded(
           child: ListView.builder(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
             itemCount: contacts.length,
             itemBuilder: (_, i) {
               final c = contacts[i];
@@ -285,129 +415,90 @@ Row(
           ),
         ),
 
-        // ── Bottom Buttons ──
+        // Bottom Buttons
         Container(
-  padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
-  decoration: const BoxDecoration(
-    color: Colors.white,
-    border: Border(
-      top: BorderSide(color: Color(0xFFF2F2F2), width: 1),
-    ),
-  ),
-  child: Row(
-    children: [
-      // Cancel – text only, no button
-      GestureDetector(
-        onTap: onCancel,
-        child: const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-          child: Text(
-            'Cancel',
-            style: TextStyle(
-              fontFamily: 'Poppins',
-              fontSize: 13,
-              fontWeight: FontWeight.w500,
-              color: Color(0xFF555555),
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            border: Border(
+              top: BorderSide(color: Color(0xFFF2F2F2), width: 1),
             ),
+          ),
+          child: Row(
+            children: [
+              GestureDetector(
+                onTap: onCancel,
+                child: const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                  child: Text(
+                    'Cancel',
+                    style: TextStyle(
+                      fontFamily: 'Poppins',
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                      color: Color(0xFF555555),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: onBack,
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xFF555555),
+                    side: const BorderSide(color: Color(0xFFDDDDDD)),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                  ),
+                  child: const Text(
+                    'Back',
+                    style: TextStyle(
+                      fontFamily: 'Poppins',
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: onContinue,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFFF3B3C),
+                    foregroundColor: Colors.white,
+                    disabledBackgroundColor: const Color(0xFFFF3B3C).withOpacity(0.4),
+                    disabledForegroundColor: Colors.white,
+                    elevation: 0,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                  ),
+                  child: const Text(
+                    'Continue',
+                    style: TextStyle(
+                      fontFamily: 'Poppins',
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
-      ),
-      const SizedBox(width: 8),
-      // Back – pill‑shaped
-      Expanded(
-        child: OutlinedButton(
-          onPressed: onBack,
-          style: OutlinedButton.styleFrom(
-            foregroundColor: const Color(0xFF555555),
-            side: const BorderSide(color: Color(0xFFDDDDDD)),
-            padding: const EdgeInsets.symmetric(vertical: 14),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(30),
-            ),
-          ),
-          child: const Text(
-            'Back',
-            style: TextStyle(
-              fontFamily: 'Poppins',
-              fontSize: 13,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ),
-      ),
-      const SizedBox(width: 10),
-      // Continue – pill‑shaped
-      Expanded(
-        child: ElevatedButton(
-          onPressed: onContinue,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFFFF3B3C),
-            foregroundColor: Colors.white,
-            disabledBackgroundColor: const Color(0xFFFF3B3C).withOpacity(0.4),
-            disabledForegroundColor: Colors.white,
-            elevation: 0,
-            padding: const EdgeInsets.symmetric(vertical: 14),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(30),
-            ),
-          ),
-          child: const Text(
-            'Continue',
-            style: TextStyle(
-              fontFamily: 'Poppins',
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ),
-      ),
-    ],
-  ),
-),
       ],
     );
   }
 }
 
-class _ContactTab extends StatelessWidget {
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-
-  const _ContactTab(
-      {required this.label,
-      required this.selected,
-      required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding:
-            const EdgeInsets.symmetric(horizontal: 22, vertical: 9),
-        decoration: BoxDecoration(
-          color: selected ? Colors.white : const Color(0xFFF5F5F5),
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(
-            color: selected
-                ? const Color(0xFFFF3B3C)
-                : const Color(0xFFE0E0E0),
-          ),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontFamily: 'Poppins',
-            fontSize: 13,
-            fontWeight: FontWeight.w500,
-            color: selected ? const Color(0xFFFF3B3C) : const Color(0xFF999999),
-          ),
-        ),
-      ),
-    );
-  }
-}
+// ─────────────────────────────────────────────────────────────────────────────
+// CONTACT TILE (unchanged)
+// ─────────────────────────────────────────────────────────────────────────────
 
 class _ContactTile extends StatelessWidget {
   final Map<String, dynamic> contact;
@@ -426,8 +517,7 @@ class _ContactTile extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
       child: Container(
-        padding:
-            const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         margin: const EdgeInsets.only(bottom: 4),
         decoration: BoxDecoration(
           color: isSelected
@@ -442,7 +532,6 @@ class _ContactTile extends StatelessWidget {
         ),
         child: Row(
           children: [
-            // Avatar
             Container(
               width: 44,
               height: 44,
@@ -500,7 +589,7 @@ class _ContactTile extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// STEP 1 — PAY DETAILS
+// STEP 1 — PAY DETAILS (unchanged)
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _PayDetailsStep extends StatelessWidget {
@@ -528,7 +617,6 @@ class _PayDetailsStep extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── Recipient avatar ──
           Center(
             child: Column(
               children: [
@@ -574,30 +662,21 @@ class _PayDetailsStep extends StatelessWidget {
               ],
             ),
           ),
-
           const SizedBox(height: 28),
-
-          // ── From Account ──
           _DetailCard(
             icon: Icons.account_balance_outlined,
             label: 'From Account',
             title: 'Current Balance',
             sub: 'R190.00 ZAR',
           ),
-
           const SizedBox(height: 12),
-
-          // ── To ──
           _DetailCard(
             icon: Icons.person_outline_rounded,
             label: 'To',
             title: contact['name'] as String,
             sub: contact['number'] as String,
           ),
-
           const SizedBox(height: 20),
-
-          // ── Amount ──
           const Text(
             'Amount',
             style: TextStyle(
@@ -611,13 +690,9 @@ class _PayDetailsStep extends StatelessWidget {
           _StyledTextField(
             controller: amountController,
             hint: 'R 0.00',
-            keyboardType:
-                const TextInputType.numberWithOptions(decimal: true),
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
           ),
-
           const SizedBox(height: 16),
-
-          // ── EFT Type ──
           Row(
             children: [
               Expanded(
@@ -639,10 +714,7 @@ class _PayDetailsStep extends StatelessWidget {
               ),
             ],
           ),
-
           const SizedBox(height: 16),
-
-          // ── My reference ──
           const Text(
             'My reference',
             style: TextStyle(
@@ -657,10 +729,7 @@ class _PayDetailsStep extends StatelessWidget {
             controller: refController,
             hint: 'Reference',
           ),
-
           const SizedBox(height: 32),
-
-          // ── Send Money button ──
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
@@ -720,9 +789,7 @@ class _DetailCard extends StatelessWidget {
               color: const Color(0xFFFF3B3C).withOpacity(0.1),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: Icon(icon,
-                size: 18,
-                color: const Color(0xFFFF3B3C)),
+            child: Icon(icon, size: 18, color: const Color(0xFFFF3B3C)),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -792,8 +859,7 @@ class _StyledTextField extends StatelessWidget {
           fontSize: 14,
           color: Color(0xFFBBBBBB),
         ),
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         filled: true,
         fillColor: Colors.white,
         enabledBorder: OutlineInputBorder(
@@ -802,8 +868,7 @@ class _StyledTextField extends StatelessWidget {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide:
-              const BorderSide(color: Color(0xFFFF3B3C), width: 1.5),
+          borderSide: const BorderSide(color: Color(0xFFFF3B3C), width: 1.5),
         ),
       ),
     );
@@ -835,9 +900,7 @@ class _EftButton extends StatelessWidget {
               : const Color(0xFFF2F2F2),
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
-            color: selected
-                ? const Color(0xFFFF3B3C)
-                : const Color(0xFFDDDDDD),
+            color: selected ? const Color(0xFFFF3B3C) : const Color(0xFFDDDDDD),
             width: selected ? 1.5 : 1,
           ),
         ),
@@ -849,9 +912,7 @@ class _EftButton extends StatelessWidget {
               fontSize: 12,
               fontWeight: FontWeight.w600,
               color: selected
-                  ? (isOutlined
-                      ? const Color(0xFFFF3B3C)
-                      : Colors.white)
+                  ? (isOutlined ? const Color(0xFFFF3B3C) : Colors.white)
                   : const Color(0xFF999999),
             ),
           ),
@@ -862,7 +923,7 @@ class _EftButton extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// STEP 2 — TRANSACTION DETAILS / SUCCESS
+// STEP 2 — TRANSACTION DETAILS / SUCCESS (unchanged)
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _SuccessStep extends StatelessWidget {
@@ -884,7 +945,6 @@ class _SuccessStep extends StatelessWidget {
     return SingleChildScrollView(
       child: Column(
         children: [
-          // ── Top section: green check + amount ──
           Container(
             width: double.infinity,
             color: Colors.white,
@@ -917,10 +977,7 @@ class _SuccessStep extends StatelessWidget {
               ],
             ),
           ),
-
           const SizedBox(height: 8),
-
-          // ── Transaction details card ──
           Container(
             margin: const EdgeInsets.symmetric(horizontal: 20),
             padding: const EdgeInsets.all(18),
@@ -959,10 +1016,7 @@ class _SuccessStep extends StatelessWidget {
               ],
             ),
           ),
-
           const SizedBox(height: 16),
-
-          // ── Send Money Again button ──
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: SizedBox(
@@ -988,10 +1042,7 @@ class _SuccessStep extends StatelessWidget {
               ),
             ),
           ),
-
           const SizedBox(height: 20),
-
-          // ── Recent transaction chip ──
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Container(
@@ -1003,7 +1054,6 @@ class _SuccessStep extends StatelessWidget {
               ),
               child: Row(
                 children: [
-                  // Red left bar
                   Container(
                     width: 4,
                     height: 48,
@@ -1038,7 +1088,6 @@ class _SuccessStep extends StatelessWidget {
                       ],
                     ),
                   ),
-                  // Avatar
                   Container(
                     width: 40,
                     height: 40,
@@ -1062,10 +1111,7 @@ class _SuccessStep extends StatelessWidget {
               ),
             ),
           ),
-
           const SizedBox(height: 12),
-
-          // ── Support note ──
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Text(
@@ -1079,10 +1125,7 @@ class _SuccessStep extends StatelessWidget {
               textAlign: TextAlign.center,
             ),
           ),
-
           const SizedBox(height: 16),
-
-          // ── Back to Wallet ──
           TextButton(
             onPressed: onBackToWallet,
             child: const Text(
@@ -1095,7 +1138,6 @@ class _SuccessStep extends StatelessWidget {
               ),
             ),
           ),
-
           const SizedBox(height: 24),
         ],
       ),
@@ -1145,8 +1187,7 @@ class _TxRow extends StatelessWidget {
                     fontFamily: 'Poppins',
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
-                    color:
-                        valueColor ?? const Color(0xFF232323),
+                    color: valueColor ?? const Color(0xFF232323),
                   ),
                 ),
                 if (sub != null && sub!.isNotEmpty)
@@ -1172,7 +1213,6 @@ class _TxDivider extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Divider(
-        height: 1, thickness: 1, color: Color(0xFFF5F5F5));
+    return const Divider(height: 1, thickness: 1, color: Color(0xFFF5F5F5));
   }
 }

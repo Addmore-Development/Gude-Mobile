@@ -23,6 +23,7 @@ import 'package:gude_app/features/home/presentation/home_page.dart';
 import 'package:gude_app/features/profile/presentation/profile_page.dart';
 import 'package:gude_app/features/messaging/presentation/messaging_inbox_page.dart';
 import 'package:gude_app/shared/widgets/bottom_nav_shell.dart';
+import 'package:gude_app/features/auth/presentation/buyer_onboarding_welcome_page.dart';
 
 // ── Buyer onboarding screens ────────────────────────
 import 'package:gude_app/features/auth/presentation/buyer_onboarding_welcome_page.dart';
@@ -97,6 +98,7 @@ class AppRouter {
       GoRoute(path: '/wallet/savings',  builder: (c, s) => const SavingsGoalsPage()),
       GoRoute(path: '/wallet/send',     builder: (_, __) => const SendMoneyScreen()),
       GoRoute(path: '/wallet/withdraw', builder: (_, __) => const WithdrawScreen()),
+      GoRoute(path: '/wallet/received', builder: (_, __) => const ReceivedMoneyScreen()),
 
       // ── Stability (outside shell) ──────────────────────────
       GoRoute(path: '/stability/checkin', builder: (c, s) => const WeeklyCheckinPage()),

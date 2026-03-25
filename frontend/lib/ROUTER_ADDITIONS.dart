@@ -11,6 +11,7 @@ import '../features/wallet/presentation/screens/budget_planner_screen.dart';
 import '../features/wallet/presentation/screens/savings_goals_screen.dart';
 import '../features/wallet/presentation/screens/send_money_screen.dart';
 import '../features/wallet/presentation/screens/withdraw_screen.dart';
+import '../features/wallet/presentation/screens/received_money_screen.dart';
 
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -59,6 +60,10 @@ import '../features/wallet/presentation/screens/withdraw_screen.dart';
       path: '/wallet/pockets', 
       builder: (_, __) => const WalletPocketsPage()
     ),
+      GoRoute(
+      path: '/wallet/received', 
+      builder: (_, __) => const ReceivedMoneyScreen()
+    )
 
       GoRoute(
       path: '/shop', 
