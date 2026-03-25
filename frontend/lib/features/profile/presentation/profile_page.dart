@@ -48,7 +48,7 @@ class _ProfilePageState extends State<ProfilePage> {
   // ── Verification state ──────────────────────
   bool _emailVerified = true;
   bool _studentIdUploaded = false;
-  bool _universityVerified = false; // auto-set when ID uploaded
+  bool _universityVerified = false;
   bool _isUploadingId = false;
 
   // ── Skills ──────────────────────────────────
@@ -56,19 +56,16 @@ class _ProfilePageState extends State<ProfilePage> {
 
   // ── Simulate ID upload & auto-verify ────────
   Future<void> _handleUploadStudentId() async {
-    // In production replace with image_picker + backend call.
-    // Here we show a sheet confirming upload then simulate processing.
     final confirmed = await _showUploadSheet();
     if (!confirmed) return;
 
     setState(() => _isUploadingId = true);
-    // Simulate network delay
     await Future.delayed(const Duration(seconds: 2));
     if (!mounted) return;
     setState(() {
       _isUploadingId = false;
       _studentIdUploaded = true;
-      _universityVerified = true; // auto-verified from ID
+      _universityVerified = true;
     });
     _showVerifiedSnackbar();
   }
@@ -77,81 +74,88 @@ class _ProfilePageState extends State<ProfilePage> {
     final result = await showModalBottomSheet<bool>(
       context: context,
       backgroundColor: Colors.white,
+      isScrollControlled: true,
       shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
-      builder: (_) => Padding(
-        padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Handle
-            Center(
-              child: Container(
-                width: 36,
-                height: 4,
-                decoration: BoxDecoration(
-                    color: const Color(0xFFDDDDDD),
-                    borderRadius: BorderRadius.circular(2)),
-              ),
-            ),
-            const SizedBox(height: 18),
-            Row(children: [
-              Container(
-                width: 42,
-                height: 42,
-                decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(12),
+      builder: (_) => SafeArea(
+        child: SingleChildScrollView(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom,
+          ),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Handle
+                Center(
+                  child: Container(
+                    width: 36,
+                    height: 4,
+                    decoration: BoxDecoration(
+                        color: const Color(0xFFDDDDDD),
+                        borderRadius: BorderRadius.circular(2)),
+                  ),
                 ),
-                child: const Icon(Icons.badge_outlined,
-                    color: AppColors.primary, size: 22),
-              ),
-              const SizedBox(width: 12),
-              const Expanded(
-                child: Text('Upload Student ID',
-                    style: TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.w800,
-                        color: Color(0xFF1A1A1A))),
-              ),
-            ]),
-            const SizedBox(height: 10),
-            const Text(
-              'Upload a clear photo of your student card. '
-              'Your university will be automatically verified '
-              'once approved.',
-              style: TextStyle(
-                  fontSize: 13, color: Color(0xFF666666), height: 1.5),
+                const SizedBox(height: 18),
+                Row(children: [
+                  Container(
+                    width: 42,
+                    height: 42,
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(Icons.badge_outlined,
+                        color: AppColors.primary, size: 22),
+                  ),
+                  const SizedBox(width: 12),
+                  const Expanded(
+                    child: Text('Upload Student ID',
+                        style: TextStyle(
+                            fontSize: 17,
+                            fontWeight: FontWeight.w800,
+                            color: Color(0xFF1A1A1A))),
+                  ),
+                ]),
+                const SizedBox(height: 10),
+                const Text(
+                  'Upload a clear photo of your student card. '
+                  'Your university will be automatically verified '
+                  'once approved.',
+                  style: TextStyle(
+                      fontSize: 13, color: Color(0xFF666666), height: 1.5),
+                ),
+                const SizedBox(height: 20),
+                _UploadOption(
+                  icon: Icons.camera_alt_outlined,
+                  label: 'Take a photo',
+                  onTap: () => Navigator.pop(context, true),
+                ),
+                const SizedBox(height: 10),
+                _UploadOption(
+                  icon: Icons.photo_library_outlined,
+                  label: 'Choose from gallery',
+                  onTap: () => Navigator.pop(context, true),
+                ),
+                const SizedBox(height: 10),
+                _UploadOption(
+                  icon: Icons.upload_file_outlined,
+                  label: 'Upload from files',
+                  onTap: () => Navigator.pop(context, true),
+                ),
+                const SizedBox(height: 4),
+                TextButton(
+                  onPressed: () => Navigator.pop(context, false),
+                  child: const Center(
+                    child: Text('Cancel',
+                        style: TextStyle(color: Color(0xFF888888))),
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 20),
-            // Options
-            _UploadOption(
-              icon: Icons.camera_alt_outlined,
-              label: 'Take a photo',
-              onTap: () => Navigator.pop(context, true),
-            ),
-            const SizedBox(height: 10),
-            _UploadOption(
-              icon: Icons.photo_library_outlined,
-              label: 'Choose from gallery',
-              onTap: () => Navigator.pop(context, true),
-            ),
-            const SizedBox(height: 10),
-            _UploadOption(
-              icon: Icons.upload_file_outlined,
-              label: 'Upload from files',
-              onTap: () => Navigator.pop(context, true),
-            ),
-            const SizedBox(height: 4),
-            TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Center(
-                child:
-                    Text('Cancel', style: TextStyle(color: Color(0xFF888888))),
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );
@@ -173,7 +177,6 @@ class _ProfilePageState extends State<ProfilePage> {
 
   // ── Add Skill sheet ──────────────────────────
   void _showAddSkillSheet() {
-    // Track selections inside the sheet
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -312,13 +315,11 @@ class _ProfilePageState extends State<ProfilePage> {
                           color: AppColors.textDark)),
                   const SizedBox(height: 12),
 
-                  // Email
                   _VerificationRow(
                     label: 'Email verified',
                     done: _emailVerified,
                   ),
 
-                  // Student ID — tappable Verify
                   _VerificationRow(
                     label: 'Student ID uploaded',
                     done: _studentIdUploaded,
@@ -327,17 +328,13 @@ class _ProfilePageState extends State<ProfilePage> {
                         _studentIdUploaded ? null : _handleUploadStudentId,
                   ),
 
-                  // University — auto from ID, no manual Verify
                   _VerificationRow(
                     label: 'University verified',
                     done: _universityVerified,
-                    // No onVerify — auto-set when ID is uploaded
                     subtitle: _universityVerified
                         ? null
                         : 'Auto-verified when student ID is uploaded',
                   ),
-
-                  // Skills Verified REMOVED per requirements
                 ],
               ),
             ),
@@ -359,7 +356,6 @@ class _ProfilePageState extends State<ProfilePage> {
                               fontWeight: FontWeight.bold,
                               fontSize: 16,
                               color: AppColors.textDark)),
-                      // ── WORKING Add Skill button ──
                       GestureDetector(
                         onTap: _showAddSkillSheet,
                         child: Container(
@@ -468,7 +464,8 @@ class _ProfilePageState extends State<ProfilePage> {
                             TextButton(
                               onPressed: () => Navigator.pop(context),
                               child: const Text('Cancel',
-                                  style: TextStyle(color: AppColors.textGrey)),
+                                  style:
+                                      TextStyle(color: AppColors.textGrey)),
                             ),
                             ElevatedButton(
                               style: ElevatedButton.styleFrom(
@@ -557,7 +554,6 @@ class _AddSkillSheetState extends State<_AddSkillSheet> {
   void _addCustom() {
     final custom = _customCtrl.text.trim();
     if (custom.isEmpty) return;
-    // Capitalise first letter
     final formatted = custom[0].toUpperCase() + custom.substring(1);
     setState(() {
       _selected.add(formatted);
@@ -643,7 +639,6 @@ class _AddSkillSheetState extends State<_AddSkillSheet> {
                     ),
                   ),
                 ),
-                // Add custom skill button — shown when typing
                 if (_customCtrl.text.isNotEmpty &&
                     !_availableSkills.any((s) =>
                         (s['label'] as String).toLowerCase() ==
@@ -675,8 +670,8 @@ class _AddSkillSheetState extends State<_AddSkillSheet> {
             child: filtered.isEmpty
                 ? const Center(
                     child: Text('No skills match your search',
-                        style:
-                            TextStyle(color: Color(0xFF888888), fontSize: 13)))
+                        style: TextStyle(
+                            color: Color(0xFF888888), fontSize: 13)))
                 : GridView.builder(
                     controller: scrollCtrl,
                     padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
@@ -852,7 +847,6 @@ class _VerificationRow extends StatelessWidget {
         children: [
           Row(
             children: [
-              // Status icon
               if (isLoading)
                 const SizedBox(
                   width: 20,
@@ -873,7 +867,6 @@ class _VerificationRow extends StatelessWidget {
                         fontSize: 14,
                         color: done ? AppColors.textDark : AppColors.textGrey)),
               ),
-              // Verify button — only shown when not done & not loading & handler provided
               if (!done && !isLoading && onVerify != null)
                 GestureDetector(
                   onTap: onVerify,
@@ -883,8 +876,8 @@ class _VerificationRow extends StatelessWidget {
                     decoration: BoxDecoration(
                       color: AppColors.primary.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(20),
-                      border:
-                          Border.all(color: AppColors.primary.withOpacity(0.3)),
+                      border: Border.all(
+                          color: AppColors.primary.withOpacity(0.3)),
                     ),
                     child: const Text('Verify',
                         style: TextStyle(
@@ -893,13 +886,12 @@ class _VerificationRow extends StatelessWidget {
                             fontWeight: FontWeight.w700)),
                   ),
                 ),
-              // Loading indicator text
               if (isLoading)
                 const Text('Processing…',
-                    style: TextStyle(fontSize: 12, color: AppColors.textGrey)),
+                    style:
+                        TextStyle(fontSize: 12, color: AppColors.textGrey)),
             ],
           ),
-          // Subtitle hint
           if (subtitle != null && !done) ...[
             const SizedBox(height: 3),
             Padding(
