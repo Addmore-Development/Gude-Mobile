@@ -287,6 +287,9 @@ class _WalletPageState extends State<WalletPage> {
                           label: 'Send',
                           onTap: () => context.push('/wallet/send')),
                       _QuickAction(
+                          icon: Icons.call_received_rounded,
+                          label: 'Received',
+                          onTap: () => context.push('/wallet/received')),
                           icon: Icons.trending_up_rounded,
                           label: 'Profit',
                           onTap: () => _showProfitSheet(context)),

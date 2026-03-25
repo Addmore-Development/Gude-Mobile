@@ -117,7 +117,7 @@ class _QuickActions extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Row(children:[
-      _Btn(icon:Icons.arrow_downward_rounded,  label:'Receive',  onTap:(){}),
+      _Btn(icon:Icons.arrow_downward_rounded,  label:'Received',  onTap:() => context.push('/wallet/received')),
       const SizedBox(width:12),
       _Btn(icon:Icons.arrow_upward_rounded,    label:'Send',     onTap:() => context.push('/wallet/send')),
       const SizedBox(width:12),
