@@ -21,9 +21,10 @@ import 'package:gude_app/features/stability/presentation/weekly_checkin_page.dar
 import 'package:gude_app/features/support_hub/presentation/support_page.dart';
 import 'package:gude_app/features/home/presentation/home_page.dart';
 import 'package:gude_app/features/profile/presentation/profile_page.dart';
+import 'package:gude_app/features/marketplace/presentation/messaging_inbox_page.dart';
 import 'package:gude_app/shared/widgets/bottom_nav_shell.dart';
 
-// ── Buyer onboarding screens (all in one file) ────────
+// ── Buyer onboarding screens ────────────────────────
 import 'package:gude_app/features/auth/presentation/buyer_onboarding_welcome_page.dart';
 
 class AppRouter {
@@ -40,8 +41,6 @@ class AppRouter {
       GoRoute(path: '/verify-student',  builder: (c, s) => const StudentVerificationPage()),
 
       // ── Buyer onboarding flow ──────────────────────────────
-      // Triggered after a buyer signs up or logs in for the first time.
-      // Flow: /buyer-onboarding/welcome → /type → /interests → /profile → /complete
       GoRoute(
         path: '/buyer-onboarding/welcome',
         builder: (c, s) => const BuyerOnboardingWelcomePage(),
@@ -109,6 +108,7 @@ class AppRouter {
           GoRoute(path: '/home',        builder: (c, s) => const HomePage()),
           GoRoute(path: '/marketplace', builder: (c, s) => const MarketplacePage()),
           GoRoute(path: '/wallet',      builder: (c, s) => const WalletPage()),
+          GoRoute(path: '/messages',    builder: (c, s) => const MessagingInboxPage()),
           GoRoute(path: '/support',     builder: (c, s) => const SupportPage()),
           GoRoute(path: '/stability',   builder: (c, s) => const StabilityPage()),
           GoRoute(path: '/profile',     builder: (c, s) => const ProfilePage()),
