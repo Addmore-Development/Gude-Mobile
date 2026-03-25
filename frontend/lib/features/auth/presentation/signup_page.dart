@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:gude_app/services/user_role_service.dart';
 
-// ─────────────────────────────────────────────
-// THEME COLORS
-// ─────────────────────────────────────────────
 class AppColors {
   static const primary = Color(0xFFE30613);
   static const primaryDark = Color(0xFFB0000E);
@@ -13,9 +11,6 @@ class AppColors {
   static const bgLight = Color(0xFFFAFAFA);
 }
 
-// ─────────────────────────────────────────────
-// SIGNUP PAGE
-// ─────────────────────────────────────────────
 class SignupPage extends StatefulWidget {
   const SignupPage({super.key});
   @override
@@ -25,28 +20,20 @@ class SignupPage extends StatefulWidget {
 class _SignupPageState extends State<SignupPage>
     with SingleTickerProviderStateMixin {
   String _role = '';
-  bool _roleSelected = false;
 
   final _pageController = PageController();
-  int _step = 0;
-
   final _formKey = GlobalKey<FormState>();
   final _name = TextEditingController();
   final _email = TextEditingController();
   final _password = TextEditingController();
   final _city = TextEditingController();
-  bool _obscure = true;
-  bool _obscureConfirm = true;
   final _confirmPassword = TextEditingController();
-
-  // Student-only
-  String? _selectedInstitution;
-  bool _showCustomInput = false;
   final _customInstitution = TextEditingController();
 
-  // Buyer-only
-  final _companyName = TextEditingController();
-  String? _buyerType;
+  bool _obscure = true;
+  bool _obscureConfirm = true;
+  String? _selectedInstitution;
+  bool _showCustomInput = false;
 
   late AnimationController _animCtrl;
   late Animation<double> _fadeAnim;
@@ -70,36 +57,31 @@ class _SignupPageState extends State<SignupPage>
     _city.dispose();
     _confirmPassword.dispose();
     _customInstitution.dispose();
-    _companyName.dispose();
     super.dispose();
   }
 
-  void _selectRole(String role) {
-    setState(() {
-      _role = role;
-      _roleSelected = true;
-    });
-  }
+  void _selectRole(String role) => setState(() => _role = role);
 
   void _proceedToForm() {
     if (_role.isEmpty) return;
     _pageController.nextPage(
-      duration: const Duration(milliseconds: 400),
-      curve: Curves.easeInOut,
-    );
-    setState(() => _step = 1);
+        duration: const Duration(milliseconds: 400), curve: Curves.easeInOut);
   }
 
-  void _goBack() {
-    _pageController.previousPage(
-      duration: const Duration(milliseconds: 400),
-      curve: Curves.easeInOut,
-    );
-    setState(() => _step = 0);
-  }
+  void _goBack() => _pageController.previousPage(
+      duration: const Duration(milliseconds: 400), curve: Curves.easeInOut);
 
   void _submit() {
-    if (_formKey.currentState!.validate()) {
+    if (!_formKey.currentState!.validate()) return;
+
+    // ── Store role globally so the rest of the app knows ──
+    UserRoleService().role = _role;
+
+    if (_role == 'buyer') {
+      // Buyers land in the buyer-only shell (Marketplace + Profile)
+      context.go('/buyer/marketplace');
+    } else {
+      // Students go to the full student home
       context.go('/home');
     }
   }
@@ -116,10 +98,7 @@ class _SignupPageState extends State<SignupPage>
       'name': 'Cape Peninsula University of Technology (CPUT)',
       'domain': 'cput.ac.za'
     },
-    {
-      'name': 'Durban University of Technology (DUT)',
-      'domain': 'dut.ac.za'
-    },
+    {'name': 'Durban University of Technology (DUT)', 'domain': 'dut.ac.za'},
     {'name': 'Nelson Mandela University (NMU)', 'domain': 'mandela.ac.za'},
     {'name': 'University of the Western Cape (UWC)', 'domain': 'uwc.ac.za'},
     {'name': 'University of the Free State (UFS)', 'domain': 'ufs.ac.za'},
@@ -134,14 +113,8 @@ class _SignupPageState extends State<SignupPage>
       'name': 'Mangosuthu University of Technology (MUT)',
       'domain': 'mut.ac.za'
     },
-    {
-      'name': 'Central University of Technology (CUT)',
-      'domain': 'cut.ac.za'
-    },
-    {
-      'name': 'Ekurhuleni East TVET College',
-      'domain': 'ekurhulenieast.edu.za'
-    },
+    {'name': 'Central University of Technology (CUT)', 'domain': 'cut.ac.za'},
+    {'name': 'Ekurhuleni East TVET College', 'domain': 'ekurhulenieast.edu.za'},
     {'name': 'Coastal KZN TVET College', 'domain': 'coastalkzn.edu.za'},
     {'name': 'College of Cape Town TVET', 'domain': 'cct.edu.za'},
     {'name': 'South West Gauteng TVET College', 'domain': 'swgc.edu.za'},
@@ -152,11 +125,10 @@ class _SignupPageState extends State<SignupPage>
 
   String? _getInstitutionDomain() {
     if (_selectedInstitution == null) return null;
-    final match = _institutions.firstWhere(
+    return (_institutions.firstWhere(
       (i) => i['name'] == _selectedInstitution,
       orElse: () => {'domain': ''},
-    );
-    return match['domain'] as String?;
+    ))['domain'] as String?;
   }
 
   String? _validateName(String? v) {
@@ -170,9 +142,8 @@ class _SignupPageState extends State<SignupPage>
     if (_role == 'student') {
       final domain = _getInstitutionDomain();
       if (domain != null && domain.isNotEmpty) {
-        if (!v.toLowerCase().endsWith('@$domain')) {
+        if (!v.toLowerCase().endsWith('@$domain'))
           return 'Use your student email ending in @$domain';
-        }
         return null;
       }
       final re =
@@ -192,10 +163,8 @@ class _SignupPageState extends State<SignupPage>
     return null;
   }
 
-  String? _validateConfirm(String? v) {
-    if (v != _password.text) return 'Passwords do not match';
-    return null;
-  }
+  String? _validateConfirm(String? v) =>
+      v != _password.text ? 'Passwords do not match' : null;
 
   @override
   Widget build(BuildContext context) {
@@ -234,9 +203,6 @@ class _SignupPageState extends State<SignupPage>
               _email.clear();
             }),
             getInstitutionDomain: _getInstitutionDomain,
-            companyName: _companyName,
-            buyerType: _buyerType,
-            onBuyerTypeChanged: (v) => setState(() => _buyerType = v),
             validateName: _validateName,
             validateEmail: _validateEmail,
             validatePassword: _validatePassword,
@@ -251,15 +217,11 @@ class _SignupPageState extends State<SignupPage>
   }
 }
 
-// ─────────────────────────────────────────────
-// PAGE 1 — ROLE SELECTION (unchanged)
-// ─────────────────────────────────────────────
+// ─── Role Selection Page ───────────────────────────────
 class _RoleSelectionPage extends StatelessWidget {
   final String selectedRole;
   final void Function(String) onSelectRole;
-  final VoidCallback onNext;
-  final VoidCallback onLogin;
-
+  final VoidCallback onNext, onLogin;
   const _RoleSelectionPage({
     required this.selectedRole,
     required this.onSelectRole,
@@ -287,50 +249,39 @@ class _RoleSelectionPage extends StatelessWidget {
                   ),
                 ),
                 Positioned(
-                  top: -40,
-                  right: -30,
-                  child: Container(
-                    width: 160,
-                    height: 160,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Colors.white.withOpacity(0.07),
-                    ),
-                  ),
-                ),
+                    top: -40,
+                    right: -30,
+                    child: Container(
+                        width: 160,
+                        height: 160,
+                        decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.white.withOpacity(0.07)))),
                 Positioned(
-                  top: 60,
-                  right: 30,
-                  child: Container(
-                    width: 60,
-                    height: 60,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Colors.white.withOpacity(0.1),
-                    ),
-                  ),
-                ),
+                    top: 60,
+                    right: 30,
+                    child: Container(
+                        width: 60,
+                        height: 60,
+                        decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.white.withOpacity(0.1)))),
                 Positioned(
-                  bottom: 60,
-                  left: -20,
-                  child: Container(
-                    width: 100,
-                    height: 100,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Colors.white.withOpacity(0.06),
-                    ),
-                  ),
-                ),
+                    bottom: 60,
+                    left: -20,
+                    child: Container(
+                        width: 100,
+                        height: 100,
+                        decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.white.withOpacity(0.06)))),
                 Positioned(
-                  bottom: 0,
-                  left: 0,
-                  right: 0,
-                  child: CustomPaint(
-                    size: const Size(double.infinity, 80),
-                    painter: _WavePainter(),
-                  ),
-                ),
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    child: CustomPaint(
+                        size: const Size(double.infinity, 80),
+                        painter: _WavePainter())),
                 SafeArea(
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(28, 24, 28, 0),
@@ -351,33 +302,28 @@ class _RoleSelectionPage extends StatelessWidget {
                             ],
                           ),
                           child: const Center(
-                            child: Text('G',
-                                style: TextStyle(
-                                  color: AppColors.primary,
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.w900,
-                                  letterSpacing: -1,
-                                )),
-                          ),
+                              child: Text('G',
+                                  style: TextStyle(
+                                      color: AppColors.primary,
+                                      fontSize: 24,
+                                      fontWeight: FontWeight.w900,
+                                      letterSpacing: -1))),
                         ),
                         const SizedBox(height: 20),
                         const Text('GUDE',
                             style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 36,
-                              fontWeight: FontWeight.w900,
-                              letterSpacing: -1.5,
-                            )),
+                                color: Colors.white,
+                                fontSize: 36,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: -1.5)),
                         const SizedBox(height: 6),
                         const Text(
-                          'Sign up to get top-tier\ngoods/services at a low\nrate on Gudee.',
-                          style: TextStyle(
-                            color: Colors.white70,
-                            fontSize: 15,
-                            height: 1.5,
-                            fontWeight: FontWeight.w400,
-                          ),
-                        ),
+                            'Sign up to get top-tier\ngoods/services at a low\nrate on Gudee.',
+                            style: TextStyle(
+                                color: Colors.white70,
+                                fontSize: 15,
+                                height: 1.5,
+                                fontWeight: FontWeight.w400)),
                       ],
                     ),
                   ),
@@ -392,11 +338,10 @@ class _RoleSelectionPage extends StatelessWidget {
               children: [
                 const Text('Join as',
                     style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.textDark,
-                      letterSpacing: -0.5,
-                    )),
+                        fontSize: 22,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.textDark,
+                        letterSpacing: -0.5)),
                 const SizedBox(height: 4),
                 const Text('Choose how you want to use Gude',
                     style: TextStyle(fontSize: 13, color: AppColors.textGrey)),
@@ -404,86 +349,73 @@ class _RoleSelectionPage extends StatelessWidget {
                 Row(
                   children: [
                     Expanded(
-                      child: _RoleCard(
-                        emoji: '🎓',
-                        title: 'Sign up as\na Student',
-                        subtitle: 'Sell skills, earn income,\nmanage your wallet',
-                        selected: selectedRole == 'student',
-                        onTap: () => onSelectRole('student'),
-                      ),
-                    ),
+                        child: _RoleCard(
+                            emoji: '🎓',
+                            title: 'Sign up as\na Student',
+                            subtitle:
+                                'Sell skills, earn income,\nmanage your wallet',
+                            selected: selectedRole == 'student',
+                            onTap: () => onSelectRole('student'))),
                     const SizedBox(width: 14),
                     Expanded(
-                      child: _RoleCard(
-                        emoji: '🛒',
-                        title: 'Sign up as\na Buyer',
-                        subtitle: 'Hire students, buy\nservices & products',
-                        selected: selectedRole == 'buyer',
-                        onTap: () => onSelectRole('buyer'),
-                      ),
-                    ),
+                        child: _RoleCard(
+                            emoji: '🛒',
+                            title: 'Sign up as\na Buyer',
+                            subtitle: 'Hire students, buy\nservices & products',
+                            selected: selectedRole == 'buyer',
+                            onTap: () => onSelectRole('buyer'))),
                   ],
                 ),
                 const SizedBox(height: 28),
                 SizedBox(
                   width: double.infinity,
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: selectedRole.isEmpty
-                            ? const Color(0xFFDDDDDD)
-                            : AppColors.primary,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        elevation: selectedRole.isEmpty ? 0 : 4,
-                        shadowColor: AppColors.primary.withOpacity(0.4),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                      ),
-                      onPressed: selectedRole.isEmpty ? null : onNext,
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            selectedRole.isEmpty
-                                ? 'Select a role to continue'
-                                : 'Continue as ${selectedRole == 'student' ? 'Student' : 'Buyer'}',
-                            style: const TextStyle(
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: selectedRole.isEmpty
+                          ? const Color(0xFFDDDDDD)
+                          : AppColors.primary,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      elevation: selectedRole.isEmpty ? 0 : 4,
+                      shadowColor: AppColors.primary.withOpacity(0.4),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14)),
+                    ),
+                    onPressed: selectedRole.isEmpty ? null : onNext,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          selectedRole.isEmpty
+                              ? 'Select a role to continue'
+                              : 'Continue as ${selectedRole == 'student' ? 'Student' : 'Buyer'}',
+                          style: const TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.w700,
-                              letterSpacing: 0.2,
-                            ),
-                          ),
-                          if (selectedRole.isNotEmpty) ...[
-                            const SizedBox(width: 8),
-                            const Icon(Icons.arrow_forward_rounded, size: 18),
-                          ],
+                              letterSpacing: 0.2),
+                        ),
+                        if (selectedRole.isNotEmpty) ...[
+                          const SizedBox(width: 8),
+                          const Icon(Icons.arrow_forward_rounded, size: 18)
                         ],
-                      ),
+                      ],
                     ),
                   ),
                 ),
                 const SizedBox(height: 16),
-                Row(
-                  children: [
-                    Expanded(
-                        child: Container(
-                            height: 1,
-                            color: const Color(0xFFF0F0F0))),
-                    const Padding(
+                Row(children: [
+                  Expanded(
+                      child:
+                          Container(height: 1, color: const Color(0xFFF0F0F0))),
+                  const Padding(
                       padding: EdgeInsets.symmetric(horizontal: 12),
                       child: Text('or',
                           style: TextStyle(
-                              color: AppColors.textGrey, fontSize: 12)),
-                    ),
-                    Expanded(
-                        child: Container(
-                            height: 1,
-                            color: const Color(0xFFF0F0F0))),
-                  ],
-                ),
+                              color: AppColors.textGrey, fontSize: 12))),
+                  Expanded(
+                      child:
+                          Container(height: 1, color: const Color(0xFFF0F0F0))),
+                ]),
                 const SizedBox(height: 16),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -511,16 +443,14 @@ class _RoleSelectionPage extends StatelessWidget {
                     child: RichText(
                       text: const TextSpan(
                         text: 'Already have an account? ',
-                        style: TextStyle(
-                            color: AppColors.textGrey, fontSize: 14),
+                        style:
+                            TextStyle(color: AppColors.textGrey, fontSize: 14),
                         children: [
                           TextSpan(
-                            text: 'Log In',
-                            style: TextStyle(
-                              color: AppColors.primary,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
+                              text: 'Log In',
+                              style: TextStyle(
+                                  color: AppColors.primary,
+                                  fontWeight: FontWeight.w700))
                         ],
                       ),
                     ),
@@ -536,23 +466,17 @@ class _RoleSelectionPage extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────
-// ROLE CARD WIDGET
-// ─────────────────────────────────────────────
+// ─── Role Card ─────────────────────────────────────────
 class _RoleCard extends StatelessWidget {
-  final String emoji;
-  final String title;
-  final String subtitle;
+  final String emoji, title, subtitle;
   final bool selected;
   final VoidCallback onTap;
-
-  const _RoleCard({
-    required this.emoji,
-    required this.title,
-    required this.subtitle,
-    required this.selected,
-    required this.onTap,
-  });
+  const _RoleCard(
+      {required this.emoji,
+      required this.title,
+      required this.subtitle,
+      required this.selected,
+      required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -562,13 +486,11 @@ class _RoleCard extends StatelessWidget {
         duration: const Duration(milliseconds: 220),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color:
-              selected ? AppColors.primary.withOpacity(0.06) : Colors.white,
+          color: selected ? AppColors.primary.withOpacity(0.06) : Colors.white,
           borderRadius: BorderRadius.circular(18),
           border: Border.all(
-            color: selected ? AppColors.primary : const Color(0xFFEEEEEE),
-            width: selected ? 2 : 1.5,
-          ),
+              color: selected ? AppColors.primary : const Color(0xFFEEEEEE),
+              width: selected ? 2 : 1.5),
           boxShadow: selected
               ? [
                   BoxShadow(
@@ -578,8 +500,7 @@ class _RoleCard extends StatelessWidget {
                 ]
               : [
                   BoxShadow(
-                      color: Colors.black.withOpacity(0.04),
-                      blurRadius: 8)
+                      color: Colors.black.withOpacity(0.04), blurRadius: 8)
                 ],
         ),
         child: Column(
@@ -598,8 +519,7 @@ class _RoleCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Center(
-                      child: Text(emoji,
-                          style: const TextStyle(fontSize: 22))),
+                      child: Text(emoji, style: const TextStyle(fontSize: 22))),
                 ),
                 AnimatedContainer(
                   duration: const Duration(milliseconds: 200),
@@ -609,11 +529,10 @@ class _RoleCard extends StatelessWidget {
                     color: selected ? AppColors.primary : Colors.transparent,
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: selected
-                          ? AppColors.primary
-                          : const Color(0xFFCCCCCC),
-                      width: 2,
-                    ),
+                        color: selected
+                            ? AppColors.primary
+                            : const Color(0xFFCCCCCC),
+                        width: 2),
                   ),
                   child: selected
                       ? const Icon(Icons.check, size: 12, color: Colors.white)
@@ -624,18 +543,14 @@ class _RoleCard extends StatelessWidget {
             const SizedBox(height: 12),
             Text(title,
                 style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w800,
-                  color: selected ? AppColors.primary : AppColors.textDark,
-                  height: 1.3,
-                )),
+                    fontSize: 14,
+                    fontWeight: FontWeight.w800,
+                    color: selected ? AppColors.primary : AppColors.textDark,
+                    height: 1.3)),
             const SizedBox(height: 4),
             Text(subtitle,
                 style: const TextStyle(
-                  fontSize: 11,
-                  color: AppColors.textGrey,
-                  height: 1.4,
-                )),
+                    fontSize: 11, color: AppColors.textGrey, height: 1.4)),
           ],
         ),
       ),
@@ -643,9 +558,7 @@ class _RoleCard extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────
-// PAGE 2 — FORM
-// ─────────────────────────────────────────────
+// ─── Form Page ─────────────────────────────────────────
 class _FormPage extends StatelessWidget {
   final String role;
   final GlobalKey<FormState> formKey;
@@ -654,19 +567,17 @@ class _FormPage extends StatelessWidget {
       password,
       confirmPassword,
       city,
-      customInstitution,
-      companyName;
+      customInstitution;
   final bool obscure, obscureConfirm, showCustomInput;
   final VoidCallback onToggleObscure,
       onToggleObscureConfirm,
       onBack,
       onSubmit,
       onLogin;
-  final String? selectedInstitution, buyerType;
+  final String? selectedInstitution;
   final List<Map<String, dynamic>> institutions;
   final void Function(String?) onInstitutionChanged;
   final String? Function() getInstitutionDomain;
-  final void Function(String?) onBuyerTypeChanged;
   final String? Function(String?) validateName,
       validateEmail,
       validatePassword,
@@ -681,7 +592,6 @@ class _FormPage extends StatelessWidget {
     required this.confirmPassword,
     required this.city,
     required this.customInstitution,
-    required this.companyName,
     required this.obscure,
     required this.obscureConfirm,
     required this.showCustomInput,
@@ -694,8 +604,6 @@ class _FormPage extends StatelessWidget {
     required this.institutions,
     required this.onInstitutionChanged,
     required this.getInstitutionDomain,
-    required this.buyerType,
-    required this.onBuyerTypeChanged,
     required this.validateName,
     required this.validateEmail,
     required this.validatePassword,
@@ -715,54 +623,43 @@ class _FormPage extends StatelessWidget {
     return SingleChildScrollView(
       child: Column(
         children: [
-          // ── Compact red header ──
           SizedBox(
             height: 220,
             child: Stack(
               children: [
                 Container(
-                  height: 185,
-                  decoration: const BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [Color(0xFFE30613), Color(0xFFB0000E)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                  ),
-                ),
+                    height: 185,
+                    decoration: const BoxDecoration(
+                      gradient: LinearGradient(
+                          colors: [Color(0xFFE30613), Color(0xFFB0000E)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight),
+                    )),
                 Positioned(
-                  top: -20,
-                  right: -20,
-                  child: Container(
-                    width: 120,
-                    height: 120,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Colors.white.withOpacity(0.07),
-                    ),
-                  ),
-                ),
+                    top: -20,
+                    right: -20,
+                    child: Container(
+                        width: 120,
+                        height: 120,
+                        decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.white.withOpacity(0.07)))),
                 Positioned(
-                  bottom: 50,
-                  left: -10,
-                  child: Container(
-                    width: 70,
-                    height: 70,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Colors.white.withOpacity(0.08),
-                    ),
-                  ),
-                ),
+                    bottom: 50,
+                    left: -10,
+                    child: Container(
+                        width: 70,
+                        height: 70,
+                        decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.white.withOpacity(0.08)))),
                 Positioned(
-                  bottom: 0,
-                  left: 0,
-                  right: 0,
-                  child: CustomPaint(
-                    size: const Size(double.infinity, 55),
-                    painter: _WavePainter(),
-                  ),
-                ),
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    child: CustomPaint(
+                        size: const Size(double.infinity, 55),
+                        painter: _WavePainter())),
                 SafeArea(
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
@@ -771,60 +668,48 @@ class _FormPage extends StatelessWidget {
                         GestureDetector(
                           onTap: onBack,
                           child: Container(
-                            width: 38,
-                            height: 38,
-                            decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.18),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: const Icon(
-                                Icons.arrow_back_ios_rounded,
-                                color: Colors.white,
-                                size: 16),
-                          ),
+                              width: 38,
+                              height: 38,
+                              decoration: BoxDecoration(
+                                  color: Colors.white.withOpacity(0.18),
+                                  borderRadius: BorderRadius.circular(10)),
+                              child: const Icon(Icons.arrow_back_ios_rounded,
+                                  color: Colors.white, size: 16)),
                         ),
                         const SizedBox(width: 14),
                         Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text('GUDE',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 22,
-                                  fontWeight: FontWeight.w900,
-                                  letterSpacing: -1,
-                                )),
-                            Text(
-                              isStudent
-                                  ? 'Create Student Account'
-                                  : 'Create Buyer Account',
-                              style: const TextStyle(
-                                  color: Colors.white70, fontSize: 13),
-                            ),
-                          ],
-                        ),
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text('GUDE',
+                                  style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 22,
+                                      fontWeight: FontWeight.w900,
+                                      letterSpacing: -1)),
+                              Text(
+                                  isStudent
+                                      ? 'Create Student Account'
+                                      : 'Create Buyer Account',
+                                  style: const TextStyle(
+                                      color: Colors.white70, fontSize: 13)),
+                            ]),
                         const Spacer(),
                         Container(
                           padding: const EdgeInsets.symmetric(
                               horizontal: 10, vertical: 5),
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.18),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Row(
-                            children: [
-                              Text(isStudent ? '🎓' : '🛒',
-                                  style: const TextStyle(fontSize: 14)),
-                              const SizedBox(width: 4),
-                              Text(
-                                isStudent ? 'Student' : 'Buyer',
+                              color: Colors.white.withOpacity(0.18),
+                              borderRadius: BorderRadius.circular(20)),
+                          child: Row(children: [
+                            Text(isStudent ? '🎓' : '🛒',
+                                style: const TextStyle(fontSize: 14)),
+                            const SizedBox(width: 4),
+                            Text(isStudent ? 'Student' : 'Buyer',
                                 style: const TextStyle(
                                     color: Colors.white,
                                     fontSize: 11,
-                                    fontWeight: FontWeight.w600),
-                              ),
-                            ],
-                          ),
+                                    fontWeight: FontWeight.w600)),
+                          ]),
                         ),
                       ],
                     ),
@@ -833,8 +718,6 @@ class _FormPage extends StatelessWidget {
               ],
             ),
           ),
-
-          // ── Form body ──────────────────────
           Padding(
             padding: const EdgeInsets.fromLTRB(24, 4, 24, 40),
             child: Form(
@@ -844,43 +727,35 @@ class _FormPage extends StatelessWidget {
                 children: [
                   Container(
                     decoration: const BoxDecoration(
-                      border: Border(
-                          bottom: BorderSide(color: Color(0xFFF0F0F0))),
-                    ),
-                    child: Row(
-                      children: [
-                        _tab('Log In', false, onLogin),
-                        _tab('Sign Up', true, () {}),
-                      ],
-                    ),
+                        border: Border(
+                            bottom: BorderSide(color: Color(0xFFF0F0F0)))),
+                    child: Row(children: [
+                      _tab('Log In', false, onLogin),
+                      _tab('Sign Up', true, () {})
+                    ]),
                   ),
                   const SizedBox(height: 22),
-                  const Text(
-                    'Signup',
-                    style: TextStyle(
-                      fontSize: 26,
-                      fontWeight: FontWeight.w900,
-                      color: AppColors.textDark,
-                      letterSpacing: -0.8,
-                    ),
-                  ),
+                  const Text('Signup',
+                      style: TextStyle(
+                          fontSize: 26,
+                          fontWeight: FontWeight.w900,
+                          color: AppColors.textDark,
+                          letterSpacing: -0.8)),
                   const SizedBox(height: 20),
 
-                  // ── SHARED: Full Name ──────────
+                  // Full Name
                   _label('Full Name *'),
                   const SizedBox(height: 6),
                   _inputField(
-                    controller: name,
-                    hint: 'Enter Name',
-                    icon: Icons.person_outline,
-                    validator: validateName,
-                    capitalization: TextCapitalization.words,
-                  ),
+                      controller: name,
+                      hint: 'Enter Name',
+                      icon: Icons.person_outline,
+                      validator: validateName,
+                      capitalization: TextCapitalization.words),
                   const SizedBox(height: 14),
 
-                  // ── STUDENT SPECIFIC ───────────
+                  // Student-specific fields
                   if (isStudent) ...[
-                    // 1. Institution picker FIRST
                     _label('University / TVET College *'),
                     const SizedBox(height: 6),
                     _DropdownField(
@@ -892,158 +767,87 @@ class _FormPage extends StatelessWidget {
                                 value: inst['name'] as String,
                                 child: Text(inst['name'] as String,
                                     overflow: TextOverflow.ellipsis,
-                                    style:
-                                        const TextStyle(fontSize: 13)),
+                                    style: const TextStyle(fontSize: 13)),
                               ))
                           .toList(),
-                      validator: (v) => v == null
-                          ? 'Please select your institution'
-                          : null,
+                      validator: (v) =>
+                          v == null ? 'Please select your institution' : null,
                       onChanged: onInstitutionChanged,
                     ),
-
                     if (showCustomInput) ...[
                       const SizedBox(height: 10),
                       _inputField(
-                        controller: customInstitution,
-                        hint: 'Type your institution name',
-                        icon: Icons.edit_outlined,
-                        validator: (v) =>
-                            (v == null || v.isEmpty)
-                                ? 'Please enter your institution'
-                                : null,
-                        capitalization: TextCapitalization.words,
-                      ),
+                          controller: customInstitution,
+                          hint: 'Type your institution name',
+                          icon: Icons.edit_outlined,
+                          validator: (v) => (v == null || v.isEmpty)
+                              ? 'Please enter your institution'
+                              : null,
+                          capitalization: TextCapitalization.words),
                     ],
                     const SizedBox(height: 14),
-
-                    // 2. Email AFTER institution (so domain hint is live)
                     _label('University or college email *'),
                     const SizedBox(height: 6),
                     _inputField(
-                      controller: email,
-                      hint: emailHint,
-                      icon: Icons.email_outlined,
-                      validator: validateEmail,
-                      keyboardType: TextInputType.emailAddress,
-                    ),
+                        controller: email,
+                        hint: emailHint,
+                        icon: Icons.email_outlined,
+                        validator: validateEmail,
+                        keyboardType: TextInputType.emailAddress),
                     if (domain != null && domain.isNotEmpty) ...[
                       const SizedBox(height: 4),
                       Padding(
-                        padding: const EdgeInsets.only(left: 4),
-                        child: Text('Must end in @$domain',
-                            style: const TextStyle(
-                                fontSize: 10,
-                                color: AppColors.textGrey)),
-                      ),
+                          padding: const EdgeInsets.only(left: 4),
+                          child: Text('Must end in @$domain',
+                              style: const TextStyle(
+                                  fontSize: 10, color: AppColors.textGrey))),
                     ],
                     const SizedBox(height: 14),
                   ],
 
-                  // ── BUYER SPECIFIC ─────────────
+                  // Buyer — email only (no buyer type, no company)
                   if (!isStudent) ...[
                     _label('Email Address *'),
                     const SizedBox(height: 6),
                     _inputField(
-                      controller: email,
-                      hint: 'Enter email',
-                      icon: Icons.email_outlined,
-                      validator: validateEmail,
-                      keyboardType: TextInputType.emailAddress,
-                    ),
-                    const SizedBox(height: 14),
-                    _label('Buyer Type *'),
-                    const SizedBox(height: 8),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: [
-                        for (final type in [
-                          {'key': 'business', 'label': '🏢 Business'},
-                          {'key': 'parent', 'label': '👨‍👩‍👧 Parent'},
-                          {'key': 'ngo', 'label': '🌍 NGO'},
-                          {'key': 'student', 'label': '🎓 Student'},
-                        ])
-                          GestureDetector(
-                            onTap: () =>
-                                onBuyerTypeChanged(type['key']),
-                            child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 180),
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 14, vertical: 9),
-                              decoration: BoxDecoration(
-                                color: buyerType == type['key']
-                                    ? AppColors.primary.withOpacity(0.08)
-                                    : Colors.white,
-                                borderRadius: BorderRadius.circular(10),
-                                border: Border.all(
-                                  color: buyerType == type['key']
-                                      ? AppColors.primary
-                                      : const Color(0xFFEEEEEE),
-                                  width: buyerType == type['key']
-                                      ? 1.5
-                                      : 1,
-                                ),
-                              ),
-                              child: Text(type['label']!,
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w600,
-                                    color: buyerType == type['key']
-                                        ? AppColors.primary
-                                        : AppColors.textGrey,
-                                  )),
-                            ),
-                          ),
-                      ],
-                    ),
-                    const SizedBox(height: 14),
-                    _label(
-                        'Company / Organisation Name (optional)'),
-                    const SizedBox(height: 6),
-                    _inputField(
-                      controller: companyName,
-                      hint: 'e.g. Acme Corp',
-                      icon: Icons.business_outlined,
-                      capitalization: TextCapitalization.words,
-                    ),
+                        controller: email,
+                        hint: 'Enter email',
+                        icon: Icons.email_outlined,
+                        validator: validateEmail,
+                        keyboardType: TextInputType.emailAddress),
                     const SizedBox(height: 14),
                   ],
 
-                  // ── SHARED ─────────────────────
+                  // Shared fields
                   _label('City *'),
                   const SizedBox(height: 6),
                   _inputField(
-                    controller: city,
-                    hint: 'Enter City',
-                    icon: Icons.location_city_outlined,
-                    validator: (v) => (v == null || v.isEmpty)
-                        ? 'City is required'
-                        : null,
-                    capitalization: TextCapitalization.words,
-                  ),
+                      controller: city,
+                      hint: 'Enter City',
+                      icon: Icons.location_city_outlined,
+                      validator: (v) =>
+                          (v == null || v.isEmpty) ? 'City is required' : null,
+                      capitalization: TextCapitalization.words),
                   const SizedBox(height: 14),
 
                   _label('Create Password *'),
                   const SizedBox(height: 6),
                   _PasswordField(
-                    controller: password,
-                    hint: 'Enter Password',
-                    obscure: obscure,
-                    onToggle: onToggleObscure,
-                    validator: validatePassword,
-                  ),
+                      controller: password,
+                      hint: 'Enter Password',
+                      obscure: obscure,
+                      onToggle: onToggleObscure,
+                      validator: validatePassword),
                   const SizedBox(height: 14),
 
                   _label('Confirm Password *'),
                   const SizedBox(height: 6),
                   _PasswordField(
-                    controller: confirmPassword,
-                    hint: 'Confirm Password',
-                    obscure: obscureConfirm,
-                    onToggle: onToggleObscureConfirm,
-                    validator: validateConfirm,
-                  ),
+                      controller: confirmPassword,
+                      hint: 'Confirm Password',
+                      obscure: obscureConfirm,
+                      onToggle: onToggleObscureConfirm,
+                      validator: validateConfirm),
                   const SizedBox(height: 28),
 
                   SizedBox(
@@ -1052,75 +856,55 @@ class _FormPage extends StatelessWidget {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primary,
                         foregroundColor: Colors.white,
-                        padding:
-                            const EdgeInsets.symmetric(vertical: 16),
+                        padding: const EdgeInsets.symmetric(vertical: 16),
                         elevation: 4,
-                        shadowColor:
-                            AppColors.primary.withOpacity(0.4),
+                        shadowColor: AppColors.primary.withOpacity(0.4),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                        ),
+                            borderRadius: BorderRadius.circular(14)),
                       ),
                       onPressed: onSubmit,
                       child: Text(
-                        isStudent
-                            ? 'Create Student Account'
-                            : 'Create Buyer Account',
-                        style: const TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 0.2,
-                        ),
-                      ),
+                          isStudent
+                              ? 'Create Student Account'
+                              : 'Create Buyer Account',
+                          style: const TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 0.2)),
                     ),
                   ),
-
                   const SizedBox(height: 16),
-
-                  Row(
-                    children: [
-                      Expanded(
-                          child: Container(
-                              height: 1,
-                              color: const Color(0xFFF0F0F0))),
-                      const Padding(
+                  Row(children: [
+                    Expanded(
+                        child: Container(
+                            height: 1, color: const Color(0xFFF0F0F0))),
+                    const Padding(
                         padding: EdgeInsets.symmetric(horizontal: 12),
                         child: Text('or',
                             style: TextStyle(
-                                color: AppColors.textGrey,
-                                fontSize: 12)),
-                      ),
-                      Expanded(
-                          child: Container(
-                              height: 1,
-                              color: const Color(0xFFF0F0F0))),
-                    ],
-                  ),
-
+                                color: AppColors.textGrey, fontSize: 12))),
+                    Expanded(
+                        child: Container(
+                            height: 1, color: const Color(0xFFF0F0F0))),
+                  ]),
                   const SizedBox(height: 16),
-
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      _SocialBtn(
-                          icon: Icons.g_mobiledata_rounded,
-                          label: 'Google',
-                          onTap: () {}),
-                      const SizedBox(width: 12),
-                      _SocialBtn(
-                          icon: Icons.facebook_rounded,
-                          label: 'Facebook',
-                          onTap: () {}),
-                      const SizedBox(width: 12),
-                      _SocialBtn(
-                          icon: Icons.apple_rounded,
-                          label: 'Apple',
-                          onTap: () {}),
-                    ],
-                  ),
-
+                  Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                    _SocialBtn(
+                        icon: Icons.g_mobiledata_rounded,
+                        label: 'Google',
+                        onTap: () {}),
+                    const SizedBox(width: 12),
+                    _SocialBtn(
+                        icon: Icons.facebook_rounded,
+                        label: 'Facebook',
+                        onTap: () {}),
+                    const SizedBox(width: 12),
+                    _SocialBtn(
+                        icon: Icons.apple_rounded,
+                        label: 'Apple',
+                        onTap: () {}),
+                  ]),
                   const SizedBox(height: 20),
-
                   Center(
                     child: GestureDetector(
                       onTap: onLogin,
@@ -1131,12 +915,10 @@ class _FormPage extends StatelessWidget {
                               color: AppColors.textGrey, fontSize: 14),
                           children: [
                             TextSpan(
-                              text: 'Log In',
-                              style: TextStyle(
-                                color: AppColors.primary,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
+                                text: 'Log In',
+                                style: TextStyle(
+                                    color: AppColors.primary,
+                                    fontWeight: FontWeight.w700))
                           ],
                         ),
                       ),
@@ -1153,111 +935,85 @@ class _FormPage extends StatelessWidget {
 
   Widget _label(String text) => Text(text,
       style: const TextStyle(
-        fontSize: 12,
-        fontWeight: FontWeight.w600,
-        color: AppColors.textGrey,
-        letterSpacing: 0.2,
-      ));
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+          color: AppColors.textGrey,
+          letterSpacing: 0.2));
 
   Widget _tab(String label, bool selected, VoidCallback onTap) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding:
-            const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
         decoration: BoxDecoration(
-          border: Border(
-            bottom: BorderSide(
-              color: selected ? AppColors.primary : Colors.transparent,
-              width: 2.5,
-            ),
-          ),
-        ),
+            border: Border(
+                bottom: BorderSide(
+                    color: selected ? AppColors.primary : Colors.transparent,
+                    width: 2.5))),
         child: Text(label,
             style: TextStyle(
-              color: selected ? AppColors.primary : AppColors.textGrey,
-              fontWeight:
-                  selected ? FontWeight.w700 : FontWeight.w500,
-              fontSize: 15,
-            )),
+                color: selected ? AppColors.primary : AppColors.textGrey,
+                fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                fontSize: 15)),
       ),
     );
   }
 
-  Widget _inputField({
-    required TextEditingController controller,
-    required String hint,
-    required IconData icon,
-    String? Function(String?)? validator,
-    TextInputType keyboardType = TextInputType.text,
-    TextCapitalization capitalization = TextCapitalization.none,
-  }) {
+  Widget _inputField(
+      {required TextEditingController controller,
+      required String hint,
+      required IconData icon,
+      String? Function(String?)? validator,
+      TextInputType keyboardType = TextInputType.text,
+      TextCapitalization capitalization = TextCapitalization.none}) {
     return TextFormField(
       controller: controller,
       validator: validator,
       keyboardType: keyboardType,
       textCapitalization: capitalization,
       style: const TextStyle(
-          fontSize: 14,
-          fontWeight: FontWeight.w500,
-          color: AppColors.textDark),
+          fontSize: 14, fontWeight: FontWeight.w500, color: AppColors.textDark),
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle:
-            const TextStyle(color: Color(0xFFBBBBBB), fontSize: 13),
-        prefixIcon:
-            Icon(icon, color: const Color(0xFFBBBBBB), size: 20),
+        hintStyle: const TextStyle(color: Color(0xFFBBBBBB), fontSize: 13),
+        prefixIcon: Icon(icon, color: const Color(0xFFBBBBBB), size: 20),
         filled: true,
         fillColor: const Color(0xFFFAFAFA),
         contentPadding:
             const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide:
-              const BorderSide(color: AppColors.inputBorder),
-        ),
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: AppColors.inputBorder)),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide:
-              const BorderSide(color: AppColors.inputBorder),
-        ),
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: AppColors.inputBorder)),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(
-              color: AppColors.primary, width: 1.5),
-        ),
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: AppColors.primary, width: 1.5)),
         errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide:
-              const BorderSide(color: Color(0xFFEF4444)),
-        ),
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: Color(0xFFEF4444))),
         focusedErrorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(
-              color: Color(0xFFEF4444), width: 1.5),
-        ),
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: Color(0xFFEF4444), width: 1.5)),
       ),
     );
   }
 }
 
-// ─────────────────────────────────────────────
-// PASSWORD FIELD
-// ─────────────────────────────────────────────
+// ─── Password Field ────────────────────────────────────
 class _PasswordField extends StatelessWidget {
   final TextEditingController controller;
   final String hint;
   final bool obscure;
   final VoidCallback onToggle;
   final String? Function(String?)? validator;
-
-  const _PasswordField({
-    required this.controller,
-    required this.hint,
-    required this.obscure,
-    required this.onToggle,
-    this.validator,
-  });
+  const _PasswordField(
+      {required this.controller,
+      required this.hint,
+      required this.obscure,
+      required this.onToggle,
+      this.validator});
 
   @override
   Widget build(BuildContext context) {
@@ -1266,23 +1022,19 @@ class _PasswordField extends StatelessWidget {
       obscureText: obscure,
       validator: validator,
       style: const TextStyle(
-          fontSize: 14,
-          fontWeight: FontWeight.w500,
-          color: AppColors.textDark),
+          fontSize: 14, fontWeight: FontWeight.w500, color: AppColors.textDark),
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle:
-            const TextStyle(color: Color(0xFFBBBBBB), fontSize: 13),
+        hintStyle: const TextStyle(color: Color(0xFFBBBBBB), fontSize: 13),
         prefixIcon: const Icon(Icons.lock_outline_rounded,
             color: Color(0xFFBBBBBB), size: 20),
         suffixIcon: IconButton(
           icon: Icon(
-            obscure
-                ? Icons.visibility_outlined
-                : Icons.visibility_off_outlined,
-            color: const Color(0xFFBBBBBB),
-            size: 20,
-          ),
+              obscure
+                  ? Icons.visibility_outlined
+                  : Icons.visibility_off_outlined,
+              color: const Color(0xFFBBBBBB),
+              size: 20),
           onPressed: onToggle,
         ),
         filled: true,
@@ -1290,38 +1042,26 @@ class _PasswordField extends StatelessWidget {
         contentPadding:
             const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide:
-              const BorderSide(color: AppColors.inputBorder),
-        ),
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: AppColors.inputBorder)),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide:
-              const BorderSide(color: AppColors.inputBorder),
-        ),
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: AppColors.inputBorder)),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(
-              color: AppColors.primary, width: 1.5),
-        ),
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: AppColors.primary, width: 1.5)),
         errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide:
-              const BorderSide(color: Color(0xFFEF4444)),
-        ),
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: Color(0xFFEF4444))),
         focusedErrorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(
-              color: Color(0xFFEF4444), width: 1.5),
-        ),
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: Color(0xFFEF4444), width: 1.5)),
       ),
     );
   }
 }
 
-// ─────────────────────────────────────────────
-// DROPDOWN FIELD
-// ─────────────────────────────────────────────
+// ─── Dropdown Field ────────────────────────────────────
 class _DropdownField extends StatelessWidget {
   final String? value;
   final String hint;
@@ -1329,15 +1069,13 @@ class _DropdownField extends StatelessWidget {
   final List<DropdownMenuItem<String>> items;
   final String? Function(String?)? validator;
   final void Function(String?) onChanged;
-
-  const _DropdownField({
-    required this.value,
-    required this.hint,
-    required this.icon,
-    required this.items,
-    this.validator,
-    required this.onChanged,
-  });
+  const _DropdownField(
+      {required this.value,
+      required this.hint,
+      required this.icon,
+      required this.items,
+      this.validator,
+      required this.onChanged});
 
   @override
   Widget build(BuildContext context) {
@@ -1346,47 +1084,34 @@ class _DropdownField extends StatelessWidget {
       isExpanded: true,
       validator: validator,
       onChanged: onChanged,
-      style:
-          const TextStyle(fontSize: 13, color: AppColors.textDark),
+      style: const TextStyle(fontSize: 13, color: AppColors.textDark),
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle:
-            const TextStyle(color: Color(0xFFBBBBBB), fontSize: 13),
-        prefixIcon:
-            Icon(icon, color: const Color(0xFFBBBBBB), size: 20),
+        hintStyle: const TextStyle(color: Color(0xFFBBBBBB), fontSize: 13),
+        prefixIcon: Icon(icon, color: const Color(0xFFBBBBBB), size: 20),
         filled: true,
         fillColor: const Color(0xFFFAFAFA),
         contentPadding:
             const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide:
-              const BorderSide(color: AppColors.inputBorder),
-        ),
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: AppColors.inputBorder)),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide:
-              const BorderSide(color: AppColors.inputBorder),
-        ),
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: AppColors.inputBorder)),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(
-              color: AppColors.primary, width: 1.5),
-        ),
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: AppColors.primary, width: 1.5)),
         errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide:
-              const BorderSide(color: Color(0xFFEF4444)),
-        ),
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: Color(0xFFEF4444))),
       ),
       items: items,
     );
   }
 }
 
-// ─────────────────────────────────────────────
-// SOCIAL BUTTON
-// ─────────────────────────────────────────────
+// ─── Social Button ─────────────────────────────────────
 class _SocialBtn extends StatelessWidget {
   final IconData icon;
   final String label;
@@ -1405,8 +1130,7 @@ class _SocialBtn extends StatelessWidget {
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: const Color(0xFFEEEEEE)),
           boxShadow: [
-            BoxShadow(
-                color: Colors.black.withOpacity(0.04), blurRadius: 6)
+            BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 6)
           ],
         ),
         child: Icon(icon, size: 22, color: const Color(0xFF444444)),
@@ -1415,27 +1139,17 @@ class _SocialBtn extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────
-// WAVE PAINTER
-// ─────────────────────────────────────────────
+// ─── Wave Painter ──────────────────────────────────────
 class _WavePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()..color = Colors.white;
     final path = Path();
     path.moveTo(0, size.height * 0.55);
+    path.quadraticBezierTo(size.width * 0.25, size.height * 0.1,
+        size.width * 0.5, size.height * 0.45);
     path.quadraticBezierTo(
-      size.width * 0.25,
-      size.height * 0.1,
-      size.width * 0.5,
-      size.height * 0.45,
-    );
-    path.quadraticBezierTo(
-      size.width * 0.75,
-      size.height * 0.8,
-      size.width,
-      size.height * 0.35,
-    );
+        size.width * 0.75, size.height * 0.8, size.width, size.height * 0.35);
     path.lineTo(size.width, size.height);
     path.lineTo(0, size.height);
     path.close();
