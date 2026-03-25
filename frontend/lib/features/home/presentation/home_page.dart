@@ -6,6 +6,104 @@ import 'package:gude_app/core/state/financial_health.dart';
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
 
+  // ── Avatar menu — profile / logout ──────────────────────────────
+  void _showAvatarMenu(BuildContext context) {
+    final RenderBox button =
+        context.findRenderObject() as RenderBox;
+    final RenderBox overlay =
+        Navigator.of(context).overlay!.context.findRenderObject()
+            as RenderBox;
+    final RelativeRect position = RelativeRect.fromRect(
+      Rect.fromPoints(
+        button.localToGlobal(button.size.bottomLeft(Offset.zero),
+            ancestor: overlay),
+        button.localToGlobal(button.size.bottomRight(Offset.zero),
+            ancestor: overlay),
+      ),
+      Offset.zero & overlay.size,
+    );
+
+    showMenu<String>(
+      context: context,
+      position: position,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      elevation: 8,
+      items: [
+        PopupMenuItem<String>(
+          value: 'profile',
+          child: Row(
+            children: const [
+              Icon(Icons.person_outline_rounded,
+                  size: 18, color: Color(0xFF1A1A1A)),
+              SizedBox(width: 10),
+              Text('My Profile',
+                  style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF1A1A1A))),
+            ],
+          ),
+        ),
+        const PopupMenuDivider(height: 1),
+        PopupMenuItem<String>(
+          value: 'logout',
+          child: Row(
+            children: const [
+              Icon(Icons.logout_rounded, size: 18, color: Color(0xFFE30613)),
+              SizedBox(width: 10),
+              Text('Log Out',
+                  style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFFE30613))),
+            ],
+          ),
+        ),
+      ],
+    ).then((val) {
+      if (val == 'profile') {
+        context.push('/profile');
+      } else if (val == 'logout') {
+        _showLogoutDialog(context);
+      }
+    });
+  }
+
+  void _showLogoutDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Log Out',
+            style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18)),
+        content: const Text('Are you sure you want to log out?',
+            style: TextStyle(fontSize: 14, color: Color(0xFF555555))),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel',
+                style: TextStyle(
+                    color: Color(0xFF888888), fontWeight: FontWeight.w600)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFE30613),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10)),
+            ),
+            onPressed: () {
+              Navigator.pop(context);
+              context.go('/login');
+            },
+            child: const Text('Log Out',
+                style: TextStyle(
+                    color: Colors.white, fontWeight: FontWeight.w700)),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final badgeColor = Color(FinancialHealth.badgeColorValue);
@@ -46,16 +144,54 @@ class HomePage extends StatelessWidget {
                 color: AppColors.textDark),
             onPressed: () {},
           ),
-          const Padding(
-            padding: EdgeInsets.only(right: 12),
-            child: CircleAvatar(
-              radius: 16,
-              backgroundColor: AppColors.primary,
-              child: Text('S',
-                  style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14)),
+          // ── Tappable avatar with popup menu ──────────────
+          Padding(
+            padding: const EdgeInsets.only(right: 12),
+            child: Builder(
+              builder: (btnCtx) => GestureDetector(
+                onTap: () => _showAvatarMenu(btnCtx),
+                child: Container(
+                  width: 34, height: 34,
+                  decoration: BoxDecoration(
+                    color: AppColors.primary,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                          color: AppColors.primary.withOpacity(0.3),
+                          blurRadius: 6,
+                          offset: const Offset(0, 2))
+                    ],
+                  ),
+                  child: Stack(
+                    children: [
+                      const Center(
+                        child: Text('S',
+                            style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 15)),
+                      ),
+                      // Small dropdown indicator
+                      Positioned(
+                        bottom: 0, right: 0,
+                        child: Container(
+                          width: 12, height: 12,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                                color: AppColors.primary, width: 1.5),
+                          ),
+                          child: const Icon(
+                              Icons.keyboard_arrow_down_rounded,
+                              size: 8,
+                              color: AppColors.primary),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             ),
           ),
         ],
@@ -65,7 +201,7 @@ class HomePage extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── Welcome card ───────────────────────────
+            // ── Welcome card ─────────────────────────────
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(20),
@@ -91,7 +227,6 @@ class HomePage extends StatelessWidget {
                         fontSize: 13),
                   ),
                   const SizedBox(height: 16),
-                  // Status badge — now matches wallet
                   GestureDetector(
                     onTap: () => context.go('/wallet'),
                     child: Container(

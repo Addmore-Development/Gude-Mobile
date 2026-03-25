@@ -36,7 +36,7 @@ class _FAQ {
 }
 
 // ─────────────────────────────────────────────
-// PAGE
+// PAGE — NO FAB / chatbot
 // ─────────────────────────────────────────────
 class SupportPage extends StatefulWidget {
   const SupportPage({super.key});
@@ -52,27 +52,14 @@ class _SupportPageState extends State<SupportPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      // ── Chatbot FAB — bottom right, above nav bar ──
-      floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 8),
-        child: FloatingActionButton(
-          onPressed: _openChat,
-          backgroundColor: _C.primary,
-          shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16)),
-          child: const Icon(Icons.smart_toy_rounded,
-              color: Colors.white, size: 26),
-        ),
-      ),
+      // ── No floatingActionButton here ──────────────────
       body: SafeArea(
         child: CustomScrollView(
           slivers: [
-            // ── Header ─────────────────────────────
-            SliverToBoxAdapter(
-              child: _Header(),
-            ),
+            // ── Header ────────────────────────────────
+            SliverToBoxAdapter(child: _Header()),
 
-            // ── Quick contact cards ────────────────
+            // ── Quick contact cards ───────────────────
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
@@ -93,7 +80,7 @@ class _SupportPageState extends State<SupportPage> {
                             label: 'Live Chat',
                             sub: 'Avg. 2 min reply',
                             color: _C.primary,
-                            onTap: _openChat,
+                            onTap: () {},
                           ),
                         ),
                         const SizedBox(width: 12),
@@ -137,7 +124,7 @@ class _SupportPageState extends State<SupportPage> {
               ),
             ),
 
-            // ── Popular topics ─────────────────────
+            // ── Popular topics ─────────────────────────
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(16, 24, 16, 12),
@@ -168,7 +155,7 @@ class _SupportPageState extends State<SupportPage> {
               ),
             ),
 
-            // ── FAQ header ─────────────────────────
+            // ── FAQ header ─────────────────────────────
             const SliverToBoxAdapter(
               child: Padding(
                 padding: EdgeInsets.fromLTRB(16, 4, 16, 12),
@@ -180,20 +167,20 @@ class _SupportPageState extends State<SupportPage> {
               ),
             ),
 
-            // ── FAQ list ───────────────────────────
+            // ── FAQ list ───────────────────────────────
             SliverList(
               delegate: SliverChildBuilderDelegate(
                 (_, i) => _FaqTile(
-                  faq: _faqs[i],
+                  faq:        _faqs[i],
                   isExpanded: _expandedFaq == i,
-                  onTap: () => setState(
+                  onTap:      () => setState(
                       () => _expandedFaq = _expandedFaq == i ? null : i),
                 ),
                 childCount: _faqs.length,
               ),
             ),
 
-            // ── Still need help banner ─────────────
+            // ── Still need help banner ─────────────────
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(16, 20, 16, 32),
@@ -226,21 +213,18 @@ class _SupportPageState extends State<SupportPage> {
                                     fontSize: 12,
                                     height: 1.4)),
                             const SizedBox(height: 14),
-                            GestureDetector(
-                              onTap: _openChat,
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 16, vertical: 9),
-                                decoration: BoxDecoration(
-                                  color: _C.primary,
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: const Text('Start a chat',
-                                    style: TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.w700)),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 16, vertical: 9),
+                              decoration: BoxDecoration(
+                                color: _C.primary,
+                                borderRadius: BorderRadius.circular(8),
                               ),
+                              child: const Text('Contact Support',
+                                  style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w700)),
                             ),
                           ],
                         ),
@@ -255,15 +239,6 @@ class _SupportPageState extends State<SupportPage> {
           ],
         ),
       ),
-    );
-  }
-
-  void _openChat() {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => const _ChatSheet(),
     );
   }
 }
@@ -292,7 +267,6 @@ class _Header extends StatelessWidget {
           const Text('How can we help you today?',
               style: TextStyle(fontSize: 13, color: _C.grey)),
           const SizedBox(height: 14),
-          // Search bar
           Container(
             height: 42,
             decoration: BoxDecoration(
@@ -310,8 +284,8 @@ class _Header extends StatelessWidget {
                     style: const TextStyle(fontSize: 13, color: _C.dark),
                     decoration: const InputDecoration(
                       hintText: 'Search for help…',
-                      hintStyle:
-                          TextStyle(color: Color(0xFFAAAAAA), fontSize: 13),
+                      hintStyle: TextStyle(
+                          color: Color(0xFFAAAAAA), fontSize: 13),
                       border: InputBorder.none,
                       isDense: true,
                       contentPadding: EdgeInsets.zero,
@@ -448,7 +422,9 @@ class _FaqTile extends StatelessWidget {
               : Colors.white,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-              color: isExpanded ? _C.primary.withOpacity(0.3) : _C.border),
+              color: isExpanded
+                  ? _C.primary.withOpacity(0.3)
+                  : _C.border),
         ),
         child: Column(
           children: [
@@ -461,7 +437,8 @@ class _FaqTile extends StatelessWidget {
                         style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
-                            color: isExpanded ? _C.primary : _C.dark)),
+                            color:
+                                isExpanded ? _C.primary : _C.dark)),
                   ),
                   const SizedBox(width: 8),
                   AnimatedRotation(
@@ -485,218 +462,6 @@ class _FaqTile extends StatelessWidget {
               ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────
-// CHAT BOTTOM SHEET
-// ─────────────────────────────────────────────
-class _ChatSheet extends StatefulWidget {
-  const _ChatSheet();
-
-  @override
-  State<_ChatSheet> createState() => _ChatSheetState();
-}
-
-class _ChatSheetState extends State<_ChatSheet> {
-  final _ctrl = TextEditingController();
-  final _scroll = ScrollController();
-  final _msgs = <_Msg>[
-    const _Msg(
-        text: 'Hi there! 👋 I\'m the Gude support bot. How can I help you today?',
-        isBot: true),
-  ];
-
-  @override
-  void dispose() {
-    _ctrl.dispose();
-    _scroll.dispose();
-    super.dispose();
-  }
-
-  void _send() {
-    final text = _ctrl.text.trim();
-    if (text.isEmpty) return;
-    setState(() {
-      _msgs.add(_Msg(text: text, isBot: false));
-      _ctrl.clear();
-    });
-    Future.delayed(const Duration(milliseconds: 800), () {
-      if (!mounted) return;
-      setState(() {
-        _msgs.add(const _Msg(
-            text: 'Thanks for reaching out! A human agent will follow up shortly. Is there anything else I can help with?',
-            isBot: true));
-      });
-      Future.delayed(const Duration(milliseconds: 100), () {
-        _scroll.animateTo(_scroll.position.maxScrollExtent,
-            duration: const Duration(milliseconds: 300),
-            curve: Curves.easeOut);
-      });
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return DraggableScrollableSheet(
-      initialChildSize: 0.75,
-      minChildSize: 0.4,
-      maxChildSize: 0.92,
-      builder: (_, ctrl) => Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        child: Column(
-          children: [
-            // Handle
-            const SizedBox(height: 10),
-            Container(
-              width: 36, height: 4,
-              decoration: BoxDecoration(
-                color: _C.border,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            // Header
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 14, 16, 10),
-              child: Row(
-                children: [
-                  Container(
-                    width: 36, height: 36,
-                    decoration: BoxDecoration(
-                      color: _C.primary.withOpacity(0.1),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(Icons.smart_toy_rounded,
-                        color: _C.primary, size: 20),
-                  ),
-                  const SizedBox(width: 10),
-                  const Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Gude Support',
-                          style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w700,
-                              color: _C.dark)),
-                      Text('Usually replies in minutes',
-                          style: TextStyle(fontSize: 11, color: _C.grey)),
-                    ],
-                  ),
-                  const Spacer(),
-                  GestureDetector(
-                    onTap: () => Navigator.pop(context),
-                    child: const Icon(Icons.close_rounded,
-                        color: _C.grey, size: 22),
-                  ),
-                ],
-              ),
-            ),
-            const Divider(height: 1, color: _C.border),
-
-            // Messages
-            Expanded(
-              child: ListView.builder(
-                controller: ctrl,
-                padding: const EdgeInsets.all(16),
-                itemCount: _msgs.length,
-                itemBuilder: (_, i) => _BubbleTile(msg: _msgs[i]),
-              ),
-            ),
-
-            // Input
-            Container(
-              padding: const EdgeInsets.fromLTRB(12, 10, 12, 16),
-              decoration: const BoxDecoration(
-                border: Border(top: BorderSide(color: _C.border)),
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Container(
-                      height: 42,
-                      decoration: BoxDecoration(
-                        color: _C.lightGrey,
-                        borderRadius: BorderRadius.circular(21),
-                        border: Border.all(color: _C.border),
-                      ),
-                      child: TextField(
-                        controller: _ctrl,
-                        onSubmitted: (_) => _send(),
-                        style: const TextStyle(
-                            fontSize: 13, color: _C.dark),
-                        decoration: const InputDecoration(
-                          hintText: 'Type a message…',
-                          hintStyle: TextStyle(
-                              color: Color(0xFFAAAAAA), fontSize: 13),
-                          border: InputBorder.none,
-                          contentPadding: EdgeInsets.symmetric(
-                              horizontal: 16, vertical: 12),
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  GestureDetector(
-                    onTap: _send,
-                    child: Container(
-                      width: 42, height: 42,
-                      decoration: BoxDecoration(
-                        color: _C.primary,
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(Icons.send_rounded,
-                          color: Colors.white, size: 18),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _Msg {
-  final String text;
-  final bool isBot;
-  const _Msg({required this.text, required this.isBot});
-}
-
-class _BubbleTile extends StatelessWidget {
-  final _Msg msg;
-  const _BubbleTile({required this.msg});
-
-  @override
-  Widget build(BuildContext context) {
-    return Align(
-      alignment: msg.isBot ? Alignment.centerLeft : Alignment.centerRight,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 10),
-        constraints: BoxConstraints(
-            maxWidth: MediaQuery.of(context).size.width * 0.72),
-        padding:
-            const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        decoration: BoxDecoration(
-          color: msg.isBot ? _C.lightGrey : _C.primary,
-          borderRadius: BorderRadius.only(
-            topLeft: const Radius.circular(14),
-            topRight: const Radius.circular(14),
-            bottomLeft: Radius.circular(msg.isBot ? 4 : 14),
-            bottomRight: Radius.circular(msg.isBot ? 14 : 4),
-          ),
-        ),
-        child: Text(msg.text,
-            style: TextStyle(
-                fontSize: 13,
-                color: msg.isBot ? _C.dark : Colors.white,
-                height: 1.4)),
       ),
     );
   }

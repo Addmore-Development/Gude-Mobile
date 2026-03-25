@@ -24,15 +24,12 @@ class SignupPage extends StatefulWidget {
 
 class _SignupPageState extends State<SignupPage>
     with SingleTickerProviderStateMixin {
-  // Role: 'student' | 'buyer'
   String _role = '';
   bool _roleSelected = false;
 
-  // Page controller for multi-step
   final _pageController = PageController();
-  int _step = 0; // 0 = role, 1 = form
+  int _step = 0;
 
-  // Shared form state
   final _formKey = GlobalKey<FormState>();
   final _name = TextEditingController();
   final _email = TextEditingController();
@@ -49,7 +46,7 @@ class _SignupPageState extends State<SignupPage>
 
   // Buyer-only
   final _companyName = TextEditingController();
-  String? _buyerType; // 'business' | 'parent' | 'ngo' | 'student'
+  String? _buyerType;
 
   late AnimationController _animCtrl;
   late Animation<double> _fadeAnim;
@@ -57,8 +54,8 @@ class _SignupPageState extends State<SignupPage>
   @override
   void initState() {
     super.initState();
-    _animCtrl =
-        AnimationController(vsync: this, duration: const Duration(milliseconds: 500));
+    _animCtrl = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 500));
     _fadeAnim = CurvedAnimation(parent: _animCtrl, curve: Curves.easeOut);
     _animCtrl.forward();
   }
@@ -103,16 +100,10 @@ class _SignupPageState extends State<SignupPage>
 
   void _submit() {
     if (_formKey.currentState!.validate()) {
-      if (_role == 'student') {
-        // Navigate to banking details capture (per PRD)
-        context.go('/home');
-      } else {
-        context.go('/home');
-      }
+      context.go('/home');
     }
   }
 
-  // ── Institutions list ──────────────────────
   static const List<Map<String, dynamic>> _institutions = [
     {'name': 'University of Cape Town (UCT)', 'domain': 'uct.ac.za'},
     {'name': 'University of the Witwatersrand (Wits)', 'domain': 'wits.ac.za'},
@@ -121,8 +112,14 @@ class _SignupPageState extends State<SignupPage>
     {'name': 'University of Pretoria (UP)', 'domain': 'up.ac.za'},
     {'name': 'University of Johannesburg (UJ)', 'domain': 'uj.ac.za'},
     {'name': 'Tshwane University of Technology (TUT)', 'domain': 'tut.ac.za'},
-    {'name': 'Cape Peninsula University of Technology (CPUT)', 'domain': 'cput.ac.za'},
-    {'name': 'Durban University of Technology (DUT)', 'domain': 'dut.ac.za'},
+    {
+      'name': 'Cape Peninsula University of Technology (CPUT)',
+      'domain': 'cput.ac.za'
+    },
+    {
+      'name': 'Durban University of Technology (DUT)',
+      'domain': 'dut.ac.za'
+    },
     {'name': 'Nelson Mandela University (NMU)', 'domain': 'mandela.ac.za'},
     {'name': 'University of the Western Cape (UWC)', 'domain': 'uwc.ac.za'},
     {'name': 'University of the Free State (UFS)', 'domain': 'ufs.ac.za'},
@@ -133,9 +130,18 @@ class _SignupPageState extends State<SignupPage>
     {'name': 'University of Venda (UniVen)', 'domain': 'univen.ac.za'},
     {'name': 'Walter Sisulu University (WSU)', 'domain': 'wsu.ac.za'},
     {'name': 'Vaal University of Technology (VUT)', 'domain': 'vut.ac.za'},
-    {'name': 'Mangosuthu University of Technology (MUT)', 'domain': 'mut.ac.za'},
-    {'name': 'Central University of Technology (CUT)', 'domain': 'cut.ac.za'},
-    {'name': 'Ekurhuleni East TVET College', 'domain': 'ekurhulenieast.edu.za'},
+    {
+      'name': 'Mangosuthu University of Technology (MUT)',
+      'domain': 'mut.ac.za'
+    },
+    {
+      'name': 'Central University of Technology (CUT)',
+      'domain': 'cut.ac.za'
+    },
+    {
+      'name': 'Ekurhuleni East TVET College',
+      'domain': 'ekurhulenieast.edu.za'
+    },
     {'name': 'Coastal KZN TVET College', 'domain': 'coastalkzn.edu.za'},
     {'name': 'College of Cape Town TVET', 'domain': 'cct.edu.za'},
     {'name': 'South West Gauteng TVET College', 'domain': 'swgc.edu.za'},
@@ -153,7 +159,6 @@ class _SignupPageState extends State<SignupPage>
     return match['domain'] as String?;
   }
 
-  // ── Validators ────────────────────────────
   String? _validateName(String? v) {
     if (v == null || v.isEmpty) return 'Full name is required';
     if (v.trim().split(' ').length < 2) return 'Enter first and last name';
@@ -170,8 +175,10 @@ class _SignupPageState extends State<SignupPage>
         }
         return null;
       }
-      final re = RegExp(r'^[^@]+@[^@]+\.(ac\.za|edu\.za)$', caseSensitive: false);
-      if (!re.hasMatch(v)) return 'Use your official student email (.ac.za or .edu.za)';
+      final re =
+          RegExp(r'^[^@]+@[^@]+\.(ac\.za|edu\.za)$', caseSensitive: false);
+      if (!re.hasMatch(v))
+        return 'Use your official student email (.ac.za or .edu.za)';
     } else {
       final re = RegExp(r'^[^@]+@[^@]+\.[^@]+$');
       if (!re.hasMatch(v)) return 'Enter a valid email address';
@@ -190,7 +197,6 @@ class _SignupPageState extends State<SignupPage>
     return null;
   }
 
-  // ── UI ────────────────────────────────────
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -216,7 +222,8 @@ class _SignupPageState extends State<SignupPage>
             obscure: _obscure,
             obscureConfirm: _obscureConfirm,
             onToggleObscure: () => setState(() => _obscure = !_obscure),
-            onToggleObscureConfirm: () => setState(() => _obscureConfirm = !_obscureConfirm),
+            onToggleObscureConfirm: () =>
+                setState(() => _obscureConfirm = !_obscureConfirm),
             selectedInstitution: _selectedInstitution,
             showCustomInput: _showCustomInput,
             customInstitution: _customInstitution,
@@ -245,7 +252,7 @@ class _SignupPageState extends State<SignupPage>
 }
 
 // ─────────────────────────────────────────────
-// PAGE 1 — ROLE SELECTION
+// PAGE 1 — ROLE SELECTION (unchanged)
 // ─────────────────────────────────────────────
 class _RoleSelectionPage extends StatelessWidget {
   final String selectedRole;
@@ -265,12 +272,10 @@ class _RoleSelectionPage extends StatelessWidget {
     return SingleChildScrollView(
       child: Column(
         children: [
-          // ── Red hero section with diagonal wave ──
           SizedBox(
             height: 340,
             child: Stack(
               children: [
-                // Red background
                 Container(
                   height: 300,
                   decoration: const BoxDecoration(
@@ -281,12 +286,12 @@ class _RoleSelectionPage extends StatelessWidget {
                     ),
                   ),
                 ),
-
-                // Decorative circles
                 Positioned(
-                  top: -40, right: -30,
+                  top: -40,
+                  right: -30,
                   child: Container(
-                    width: 160, height: 160,
+                    width: 160,
+                    height: 160,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       color: Colors.white.withOpacity(0.07),
@@ -294,9 +299,11 @@ class _RoleSelectionPage extends StatelessWidget {
                   ),
                 ),
                 Positioned(
-                  top: 60, right: 30,
+                  top: 60,
+                  right: 30,
                   child: Container(
-                    width: 60, height: 60,
+                    width: 60,
+                    height: 60,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       color: Colors.white.withOpacity(0.1),
@@ -304,58 +311,63 @@ class _RoleSelectionPage extends StatelessWidget {
                   ),
                 ),
                 Positioned(
-                  bottom: 60, left: -20,
+                  bottom: 60,
+                  left: -20,
                   child: Container(
-                    width: 100, height: 100,
+                    width: 100,
+                    height: 100,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       color: Colors.white.withOpacity(0.06),
                     ),
                   ),
                 ),
-
-                // Diagonal wave clip at bottom
                 Positioned(
-                  bottom: 0, left: 0, right: 0,
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
                   child: CustomPaint(
                     size: const Size(double.infinity, 80),
                     painter: _WavePainter(),
                   ),
                 ),
-
-                // Logo + tagline
                 SafeArea(
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(28, 24, 28, 0),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // G logo
                         Container(
-                          width: 48, height: 48,
+                          width: 48,
+                          height: 48,
                           decoration: BoxDecoration(
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(14),
-                            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.15), blurRadius: 12, offset: const Offset(0, 4))],
+                            boxShadow: [
+                              BoxShadow(
+                                  color: Colors.black.withOpacity(0.15),
+                                  blurRadius: 12,
+                                  offset: const Offset(0, 4))
+                            ],
                           ),
                           child: const Center(
                             child: Text('G',
-                              style: TextStyle(
-                                color: AppColors.primary,
-                                fontSize: 24,
-                                fontWeight: FontWeight.w900,
-                                letterSpacing: -1,
-                              )),
+                                style: TextStyle(
+                                  color: AppColors.primary,
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.w900,
+                                  letterSpacing: -1,
+                                )),
                           ),
                         ),
                         const SizedBox(height: 20),
                         const Text('GUDE',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 36,
-                            fontWeight: FontWeight.w900,
-                            letterSpacing: -1.5,
-                          )),
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 36,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: -1.5,
+                            )),
                         const SizedBox(height: 6),
                         const Text(
                           'Sign up to get top-tier\ngoods/services at a low\nrate on Gudee.',
@@ -373,25 +385,22 @@ class _RoleSelectionPage extends StatelessWidget {
               ],
             ),
           ),
-
-          // ── Role cards ──────────────────────
           Padding(
             padding: const EdgeInsets.fromLTRB(24, 8, 24, 0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text('Join as',
-                  style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.textDark,
-                    letterSpacing: -0.5,
-                  )),
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.textDark,
+                      letterSpacing: -0.5,
+                    )),
                 const SizedBox(height: 4),
                 const Text('Choose how you want to use Gude',
-                  style: TextStyle(fontSize: 13, color: AppColors.textGrey)),
+                    style: TextStyle(fontSize: 13, color: AppColors.textGrey)),
                 const SizedBox(height: 20),
-
                 Row(
                   children: [
                     Expanded(
@@ -415,10 +424,7 @@ class _RoleSelectionPage extends StatelessWidget {
                     ),
                   ],
                 ),
-
                 const SizedBox(height: 28),
-
-                // Next button
                 SizedBox(
                   width: double.infinity,
                   child: AnimatedContainer(
@@ -459,44 +465,54 @@ class _RoleSelectionPage extends StatelessWidget {
                     ),
                   ),
                 ),
-
                 const SizedBox(height: 16),
-
-                // Divider
                 Row(
                   children: [
-                    Expanded(child: Container(height: 1, color: const Color(0xFFF0F0F0))),
+                    Expanded(
+                        child: Container(
+                            height: 1,
+                            color: const Color(0xFFF0F0F0))),
                     const Padding(
                       padding: EdgeInsets.symmetric(horizontal: 12),
-                      child: Text('or', style: TextStyle(color: AppColors.textGrey, fontSize: 12)),
+                      child: Text('or',
+                          style: TextStyle(
+                              color: AppColors.textGrey, fontSize: 12)),
                     ),
-                    Expanded(child: Container(height: 1, color: const Color(0xFFF0F0F0))),
+                    Expanded(
+                        child: Container(
+                            height: 1,
+                            color: const Color(0xFFF0F0F0))),
                   ],
                 ),
-
                 const SizedBox(height: 16),
-
-                // Social login
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    _SocialBtn(icon: Icons.g_mobiledata_rounded, label: 'Google', onTap: () {}),
+                    _SocialBtn(
+                        icon: Icons.g_mobiledata_rounded,
+                        label: 'Google',
+                        onTap: () {}),
                     const SizedBox(width: 12),
-                    _SocialBtn(icon: Icons.facebook_rounded, label: 'Facebook', onTap: () {}),
+                    _SocialBtn(
+                        icon: Icons.facebook_rounded,
+                        label: 'Facebook',
+                        onTap: () {}),
                     const SizedBox(width: 12),
-                    _SocialBtn(icon: Icons.apple_rounded, label: 'Apple', onTap: () {}),
+                    _SocialBtn(
+                        icon: Icons.apple_rounded,
+                        label: 'Apple',
+                        onTap: () {}),
                   ],
                 ),
-
                 const SizedBox(height: 20),
-
                 Center(
                   child: GestureDetector(
                     onTap: onLogin,
                     child: RichText(
                       text: const TextSpan(
                         text: 'Already have an account? ',
-                        style: TextStyle(color: AppColors.textGrey, fontSize: 14),
+                        style: TextStyle(
+                            color: AppColors.textGrey, fontSize: 14),
                         children: [
                           TextSpan(
                             text: 'Log In',
@@ -546,39 +562,56 @@ class _RoleCard extends StatelessWidget {
         duration: const Duration(milliseconds: 220),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: selected ? AppColors.primary.withOpacity(0.06) : Colors.white,
+          color:
+              selected ? AppColors.primary.withOpacity(0.06) : Colors.white,
           borderRadius: BorderRadius.circular(18),
           border: Border.all(
             color: selected ? AppColors.primary : const Color(0xFFEEEEEE),
             width: selected ? 2 : 1.5,
           ),
           boxShadow: selected
-              ? [BoxShadow(color: AppColors.primary.withOpacity(0.12), blurRadius: 16, offset: const Offset(0, 4))]
-              : [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8)],
+              ? [
+                  BoxShadow(
+                      color: AppColors.primary.withOpacity(0.12),
+                      blurRadius: 16,
+                      offset: const Offset(0, 4))
+                ]
+              : [
+                  BoxShadow(
+                      color: Colors.black.withOpacity(0.04),
+                      blurRadius: 8)
+                ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Check badge
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Container(
-                  width: 44, height: 44,
+                  width: 44,
+                  height: 44,
                   decoration: BoxDecoration(
-                    color: selected ? AppColors.primary.withOpacity(0.12) : const Color(0xFFF5F5F5),
+                    color: selected
+                        ? AppColors.primary.withOpacity(0.12)
+                        : const Color(0xFFF5F5F5),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Center(child: Text(emoji, style: const TextStyle(fontSize: 22))),
+                  child: Center(
+                      child: Text(emoji,
+                          style: const TextStyle(fontSize: 22))),
                 ),
                 AnimatedContainer(
                   duration: const Duration(milliseconds: 200),
-                  width: 22, height: 22,
+                  width: 22,
+                  height: 22,
                   decoration: BoxDecoration(
                     color: selected ? AppColors.primary : Colors.transparent,
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: selected ? AppColors.primary : const Color(0xFFCCCCCC),
+                      color: selected
+                          ? AppColors.primary
+                          : const Color(0xFFCCCCCC),
                       width: 2,
                     ),
                   ),
@@ -590,19 +623,19 @@ class _RoleCard extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             Text(title,
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w800,
-                color: selected ? AppColors.primary : AppColors.textDark,
-                height: 1.3,
-              )),
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w800,
+                  color: selected ? AppColors.primary : AppColors.textDark,
+                  height: 1.3,
+                )),
             const SizedBox(height: 4),
             Text(subtitle,
-              style: const TextStyle(
-                fontSize: 11,
-                color: AppColors.textGrey,
-                height: 1.4,
-              )),
+                style: const TextStyle(
+                  fontSize: 11,
+                  color: AppColors.textGrey,
+                  height: 1.4,
+                )),
           ],
         ),
       ),
@@ -616,16 +649,27 @@ class _RoleCard extends StatelessWidget {
 class _FormPage extends StatelessWidget {
   final String role;
   final GlobalKey<FormState> formKey;
-  final TextEditingController name, email, password, confirmPassword, city,
-      customInstitution, companyName;
+  final TextEditingController name,
+      email,
+      password,
+      confirmPassword,
+      city,
+      customInstitution,
+      companyName;
   final bool obscure, obscureConfirm, showCustomInput;
-  final VoidCallback onToggleObscure, onToggleObscureConfirm, onBack, onSubmit, onLogin;
+  final VoidCallback onToggleObscure,
+      onToggleObscureConfirm,
+      onBack,
+      onSubmit,
+      onLogin;
   final String? selectedInstitution, buyerType;
   final List<Map<String, dynamic>> institutions;
   final void Function(String?) onInstitutionChanged;
   final String? Function() getInstitutionDomain;
   final void Function(String?) onBuyerTypeChanged;
-  final String? Function(String?) validateName, validateEmail, validatePassword,
+  final String? Function(String?) validateName,
+      validateEmail,
+      validatePassword,
       validateConfirm;
 
   const _FormPage({
@@ -663,7 +707,9 @@ class _FormPage extends StatelessWidget {
     final isStudent = role == 'student';
     final domain = getInstitutionDomain();
     final emailHint = isStudent
-        ? (domain != null && domain.isNotEmpty ? 'e.g. s1234@$domain' : 'your.name@university.ac.za')
+        ? (domain != null && domain.isNotEmpty
+            ? 'e.g. s1234@$domain'
+            : 'your.name@university.ac.za')
         : 'your@email.com';
 
     return SingleChildScrollView(
@@ -684,11 +730,12 @@ class _FormPage extends StatelessWidget {
                     ),
                   ),
                 ),
-                // Circles
                 Positioned(
-                  top: -20, right: -20,
+                  top: -20,
+                  right: -20,
                   child: Container(
-                    width: 120, height: 120,
+                    width: 120,
+                    height: 120,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       color: Colors.white.withOpacity(0.07),
@@ -696,26 +743,26 @@ class _FormPage extends StatelessWidget {
                   ),
                 ),
                 Positioned(
-                  bottom: 50, left: -10,
+                  bottom: 50,
+                  left: -10,
                   child: Container(
-                    width: 70, height: 70,
+                    width: 70,
+                    height: 70,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       color: Colors.white.withOpacity(0.08),
                     ),
                   ),
                 ),
-
-                // Wave
                 Positioned(
-                  bottom: 0, left: 0, right: 0,
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
                   child: CustomPaint(
                     size: const Size(double.infinity, 55),
                     painter: _WavePainter(),
                   ),
                 ),
-
-                // Header content
                 SafeArea(
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
@@ -724,46 +771,57 @@ class _FormPage extends StatelessWidget {
                         GestureDetector(
                           onTap: onBack,
                           child: Container(
-                            width: 38, height: 38,
+                            width: 38,
+                            height: 38,
                             decoration: BoxDecoration(
                               color: Colors.white.withOpacity(0.18),
                               borderRadius: BorderRadius.circular(10),
                             ),
-                            child: const Icon(Icons.arrow_back_ios_rounded, color: Colors.white, size: 16),
+                            child: const Icon(
+                                Icons.arrow_back_ios_rounded,
+                                color: Colors.white,
+                                size: 16),
                           ),
                         ),
                         const SizedBox(width: 14),
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            // G logo inline
                             const Text('GUDE',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 22,
-                                fontWeight: FontWeight.w900,
-                                letterSpacing: -1,
-                              )),
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.w900,
+                                  letterSpacing: -1,
+                                )),
                             Text(
-                              isStudent ? 'Create Student Account' : 'Create Buyer Account',
-                              style: const TextStyle(color: Colors.white70, fontSize: 13),
+                              isStudent
+                                  ? 'Create Student Account'
+                                  : 'Create Buyer Account',
+                              style: const TextStyle(
+                                  color: Colors.white70, fontSize: 13),
                             ),
                           ],
                         ),
                         const Spacer(),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 5),
                           decoration: BoxDecoration(
                             color: Colors.white.withOpacity(0.18),
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: Row(
                             children: [
-                              Text(isStudent ? '🎓' : '🛒', style: const TextStyle(fontSize: 14)),
+                              Text(isStudent ? '🎓' : '🛒',
+                                  style: const TextStyle(fontSize: 14)),
                               const SizedBox(width: 4),
                               Text(
                                 isStudent ? 'Student' : 'Buyer',
-                                style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600),
+                                style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600),
                               ),
                             ],
                           ),
@@ -784,10 +842,10 @@ class _FormPage extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Tab row (Log In / Sign Up)
                   Container(
                     decoration: const BoxDecoration(
-                      border: Border(bottom: BorderSide(color: Color(0xFFF0F0F0))),
+                      border: Border(
+                          bottom: BorderSide(color: Color(0xFFF0F0F0))),
                     ),
                     child: Row(
                       children: [
@@ -797,11 +855,9 @@ class _FormPage extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 22),
-
-                  // Signup header
-                  Text(
-                    isStudent ? 'Signup' : 'Signup',
-                    style: const TextStyle(
+                  const Text(
+                    'Signup',
+                    style: TextStyle(
                       fontSize: 26,
                       fontWeight: FontWeight.w900,
                       color: AppColors.textDark,
@@ -810,7 +866,7 @@ class _FormPage extends StatelessWidget {
                   ),
                   const SizedBox(height: 20),
 
-                  // ── SHARED FIELDS ──────────
+                  // ── SHARED: Full Name ──────────
                   _label('Full Name *'),
                   const SizedBox(height: 6),
                   _inputField(
@@ -822,8 +878,46 @@ class _FormPage extends StatelessWidget {
                   ),
                   const SizedBox(height: 14),
 
-                  // ── STUDENT SPECIFIC ───────
+                  // ── STUDENT SPECIFIC ───────────
                   if (isStudent) ...[
+                    // 1. Institution picker FIRST
+                    _label('University / TVET College *'),
+                    const SizedBox(height: 6),
+                    _DropdownField(
+                      value: selectedInstitution,
+                      hint: 'Select your institution',
+                      icon: Icons.school_outlined,
+                      items: institutions
+                          .map((inst) => DropdownMenuItem<String>(
+                                value: inst['name'] as String,
+                                child: Text(inst['name'] as String,
+                                    overflow: TextOverflow.ellipsis,
+                                    style:
+                                        const TextStyle(fontSize: 13)),
+                              ))
+                          .toList(),
+                      validator: (v) => v == null
+                          ? 'Please select your institution'
+                          : null,
+                      onChanged: onInstitutionChanged,
+                    ),
+
+                    if (showCustomInput) ...[
+                      const SizedBox(height: 10),
+                      _inputField(
+                        controller: customInstitution,
+                        hint: 'Type your institution name',
+                        icon: Icons.edit_outlined,
+                        validator: (v) =>
+                            (v == null || v.isEmpty)
+                                ? 'Please enter your institution'
+                                : null,
+                        capitalization: TextCapitalization.words,
+                      ),
+                    ],
+                    const SizedBox(height: 14),
+
+                    // 2. Email AFTER institution (so domain hint is live)
                     _label('University or college email *'),
                     const SizedBox(height: 6),
                     _inputField(
@@ -838,41 +932,15 @@ class _FormPage extends StatelessWidget {
                       Padding(
                         padding: const EdgeInsets.only(left: 4),
                         child: Text('Must end in @$domain',
-                          style: const TextStyle(fontSize: 10, color: AppColors.textGrey)),
-                      ),
-                    ],
-                    const SizedBox(height: 14),
-
-                    _label('University / TVET College *'),
-                    const SizedBox(height: 6),
-                    _DropdownField(
-                      value: selectedInstitution,
-                      hint: 'Select your institution',
-                      icon: Icons.school_outlined,
-                      items: institutions.map((inst) => DropdownMenuItem<String>(
-                        value: inst['name'] as String,
-                        child: Text(inst['name'] as String,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(fontSize: 13)),
-                      )).toList(),
-                      validator: (v) => v == null ? 'Please select your institution' : null,
-                      onChanged: onInstitutionChanged,
-                    ),
-
-                    if (showCustomInput) ...[
-                      const SizedBox(height: 10),
-                      _inputField(
-                        controller: customInstitution,
-                        hint: 'Type your institution name',
-                        icon: Icons.edit_outlined,
-                        validator: (v) => (v == null || v.isEmpty) ? 'Please enter your institution' : null,
-                        capitalization: TextCapitalization.words,
+                            style: const TextStyle(
+                                fontSize: 10,
+                                color: AppColors.textGrey)),
                       ),
                     ],
                     const SizedBox(height: 14),
                   ],
 
-                  // ── BUYER SPECIFIC ─────────
+                  // ── BUYER SPECIFIC ─────────────
                   if (!isStudent) ...[
                     _label('Email Address *'),
                     const SizedBox(height: 6),
@@ -884,7 +952,6 @@ class _FormPage extends StatelessWidget {
                       keyboardType: TextInputType.emailAddress,
                     ),
                     const SizedBox(height: 14),
-
                     _label('Buyer Type *'),
                     const SizedBox(height: 8),
                     Wrap(
@@ -892,16 +959,18 @@ class _FormPage extends StatelessWidget {
                       runSpacing: 8,
                       children: [
                         for (final type in [
-                          {'key': 'business', 'label': '🏢 Business', },
+                          {'key': 'business', 'label': '🏢 Business'},
                           {'key': 'parent', 'label': '👨‍👩‍👧 Parent'},
                           {'key': 'ngo', 'label': '🌍 NGO'},
                           {'key': 'student', 'label': '🎓 Student'},
                         ])
                           GestureDetector(
-                            onTap: () => onBuyerTypeChanged(type['key']),
+                            onTap: () =>
+                                onBuyerTypeChanged(type['key']),
                             child: AnimatedContainer(
                               duration: const Duration(milliseconds: 180),
-                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 14, vertical: 9),
                               decoration: BoxDecoration(
                                 color: buyerType == type['key']
                                     ? AppColors.primary.withOpacity(0.08)
@@ -911,24 +980,26 @@ class _FormPage extends StatelessWidget {
                                   color: buyerType == type['key']
                                       ? AppColors.primary
                                       : const Color(0xFFEEEEEE),
-                                  width: buyerType == type['key'] ? 1.5 : 1,
+                                  width: buyerType == type['key']
+                                      ? 1.5
+                                      : 1,
                                 ),
                               ),
                               child: Text(type['label']!,
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                  color: buyerType == type['key']
-                                      ? AppColors.primary
-                                      : AppColors.textGrey,
-                                )),
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    color: buyerType == type['key']
+                                        ? AppColors.primary
+                                        : AppColors.textGrey,
+                                  )),
                             ),
                           ),
                       ],
                     ),
                     const SizedBox(height: 14),
-
-                    _label('Company / Organisation Name (optional)'),
+                    _label(
+                        'Company / Organisation Name (optional)'),
                     const SizedBox(height: 6),
                     _inputField(
                       controller: companyName,
@@ -939,14 +1010,16 @@ class _FormPage extends StatelessWidget {
                     const SizedBox(height: 14),
                   ],
 
-                  // ── SHARED ─────────────────
+                  // ── SHARED ─────────────────────
                   _label('City *'),
                   const SizedBox(height: 6),
                   _inputField(
                     controller: city,
                     hint: 'Enter City',
                     icon: Icons.location_city_outlined,
-                    validator: (v) => (v == null || v.isEmpty) ? 'City is required' : null,
+                    validator: (v) => (v == null || v.isEmpty)
+                        ? 'City is required'
+                        : null,
                     capitalization: TextCapitalization.words,
                   ),
                   const SizedBox(height: 14),
@@ -973,23 +1046,26 @@ class _FormPage extends StatelessWidget {
                   ),
                   const SizedBox(height: 28),
 
-                  // Submit button
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primary,
                         foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        padding:
+                            const EdgeInsets.symmetric(vertical: 16),
                         elevation: 4,
-                        shadowColor: AppColors.primary.withOpacity(0.4),
+                        shadowColor:
+                            AppColors.primary.withOpacity(0.4),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(14),
                         ),
                       ),
                       onPressed: onSubmit,
                       child: Text(
-                        isStudent ? 'Create Student Account' : 'Create Buyer Account',
+                        isStudent
+                            ? 'Create Student Account'
+                            : 'Create Buyer Account',
                         style: const TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w700,
@@ -1001,15 +1077,23 @@ class _FormPage extends StatelessWidget {
 
                   const SizedBox(height: 16),
 
-                  // Divider
                   Row(
                     children: [
-                      Expanded(child: Container(height: 1, color: const Color(0xFFF0F0F0))),
+                      Expanded(
+                          child: Container(
+                              height: 1,
+                              color: const Color(0xFFF0F0F0))),
                       const Padding(
                         padding: EdgeInsets.symmetric(horizontal: 12),
-                        child: Text('or', style: TextStyle(color: AppColors.textGrey, fontSize: 12)),
+                        child: Text('or',
+                            style: TextStyle(
+                                color: AppColors.textGrey,
+                                fontSize: 12)),
                       ),
-                      Expanded(child: Container(height: 1, color: const Color(0xFFF0F0F0))),
+                      Expanded(
+                          child: Container(
+                              height: 1,
+                              color: const Color(0xFFF0F0F0))),
                     ],
                   ),
 
@@ -1018,11 +1102,20 @@ class _FormPage extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      _SocialBtn(icon: Icons.g_mobiledata_rounded, label: 'Google', onTap: () {}),
+                      _SocialBtn(
+                          icon: Icons.g_mobiledata_rounded,
+                          label: 'Google',
+                          onTap: () {}),
                       const SizedBox(width: 12),
-                      _SocialBtn(icon: Icons.facebook_rounded, label: 'Facebook', onTap: () {}),
+                      _SocialBtn(
+                          icon: Icons.facebook_rounded,
+                          label: 'Facebook',
+                          onTap: () {}),
                       const SizedBox(width: 12),
-                      _SocialBtn(icon: Icons.apple_rounded, label: 'Apple', onTap: () {}),
+                      _SocialBtn(
+                          icon: Icons.apple_rounded,
+                          label: 'Apple',
+                          onTap: () {}),
                     ],
                   ),
 
@@ -1034,7 +1127,8 @@ class _FormPage extends StatelessWidget {
                       child: RichText(
                         text: const TextSpan(
                           text: 'Already have an account? ',
-                          style: TextStyle(color: AppColors.textGrey, fontSize: 14),
+                          style: TextStyle(
+                              color: AppColors.textGrey, fontSize: 14),
                           children: [
                             TextSpan(
                               text: 'Log In',
@@ -1058,18 +1152,19 @@ class _FormPage extends StatelessWidget {
   }
 
   Widget _label(String text) => Text(text,
-    style: const TextStyle(
-      fontSize: 12,
-      fontWeight: FontWeight.w600,
-      color: AppColors.textGrey,
-      letterSpacing: 0.2,
-    ));
+      style: const TextStyle(
+        fontSize: 12,
+        fontWeight: FontWeight.w600,
+        color: AppColors.textGrey,
+        letterSpacing: 0.2,
+      ));
 
   Widget _tab(String label, bool selected, VoidCallback onTap) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+        padding:
+            const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
         decoration: BoxDecoration(
           border: Border(
             bottom: BorderSide(
@@ -1079,11 +1174,12 @@ class _FormPage extends StatelessWidget {
           ),
         ),
         child: Text(label,
-          style: TextStyle(
-            color: selected ? AppColors.primary : AppColors.textGrey,
-            fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-            fontSize: 15,
-          )),
+            style: TextStyle(
+              color: selected ? AppColors.primary : AppColors.textGrey,
+              fontWeight:
+                  selected ? FontWeight.w700 : FontWeight.w500,
+              fontSize: 15,
+            )),
       ),
     );
   }
@@ -1101,33 +1197,44 @@ class _FormPage extends StatelessWidget {
       validator: validator,
       keyboardType: keyboardType,
       textCapitalization: capitalization,
-      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: AppColors.textDark),
+      style: const TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.w500,
+          color: AppColors.textDark),
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: const TextStyle(color: Color(0xFFBBBBBB), fontSize: 13),
-        prefixIcon: Icon(icon, color: const Color(0xFFBBBBBB), size: 20),
+        hintStyle:
+            const TextStyle(color: Color(0xFFBBBBBB), fontSize: 13),
+        prefixIcon:
+            Icon(icon, color: const Color(0xFFBBBBBB), size: 20),
         filled: true,
         fillColor: const Color(0xFFFAFAFA),
-        contentPadding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+        contentPadding:
+            const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.inputBorder),
+          borderSide:
+              const BorderSide(color: AppColors.inputBorder),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.inputBorder),
+          borderSide:
+              const BorderSide(color: AppColors.inputBorder),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
+          borderSide: const BorderSide(
+              color: AppColors.primary, width: 1.5),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(0xFFEF4444)),
+          borderSide:
+              const BorderSide(color: Color(0xFFEF4444)),
         ),
         focusedErrorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(0xFFEF4444), width: 1.5),
+          borderSide: const BorderSide(
+              color: Color(0xFFEF4444), width: 1.5),
         ),
       ),
     );
@@ -1158,40 +1265,54 @@ class _PasswordField extends StatelessWidget {
       controller: controller,
       obscureText: obscure,
       validator: validator,
-      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: AppColors.textDark),
+      style: const TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.w500,
+          color: AppColors.textDark),
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: const TextStyle(color: Color(0xFFBBBBBB), fontSize: 13),
-        prefixIcon: const Icon(Icons.lock_outline_rounded, color: Color(0xFFBBBBBB), size: 20),
+        hintStyle:
+            const TextStyle(color: Color(0xFFBBBBBB), fontSize: 13),
+        prefixIcon: const Icon(Icons.lock_outline_rounded,
+            color: Color(0xFFBBBBBB), size: 20),
         suffixIcon: IconButton(
           icon: Icon(
-            obscure ? Icons.visibility_outlined : Icons.visibility_off_outlined,
-            color: const Color(0xFFBBBBBB), size: 20,
+            obscure
+                ? Icons.visibility_outlined
+                : Icons.visibility_off_outlined,
+            color: const Color(0xFFBBBBBB),
+            size: 20,
           ),
           onPressed: onToggle,
         ),
         filled: true,
         fillColor: const Color(0xFFFAFAFA),
-        contentPadding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+        contentPadding:
+            const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.inputBorder),
+          borderSide:
+              const BorderSide(color: AppColors.inputBorder),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.inputBorder),
+          borderSide:
+              const BorderSide(color: AppColors.inputBorder),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
+          borderSide: const BorderSide(
+              color: AppColors.primary, width: 1.5),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(0xFFEF4444)),
+          borderSide:
+              const BorderSide(color: Color(0xFFEF4444)),
         ),
         focusedErrorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(0xFFEF4444), width: 1.5),
+          borderSide: const BorderSide(
+              color: Color(0xFFEF4444), width: 1.5),
         ),
       ),
     );
@@ -1225,29 +1346,37 @@ class _DropdownField extends StatelessWidget {
       isExpanded: true,
       validator: validator,
       onChanged: onChanged,
-      style: const TextStyle(fontSize: 13, color: AppColors.textDark),
+      style:
+          const TextStyle(fontSize: 13, color: AppColors.textDark),
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: const TextStyle(color: Color(0xFFBBBBBB), fontSize: 13),
-        prefixIcon: Icon(icon, color: const Color(0xFFBBBBBB), size: 20),
+        hintStyle:
+            const TextStyle(color: Color(0xFFBBBBBB), fontSize: 13),
+        prefixIcon:
+            Icon(icon, color: const Color(0xFFBBBBBB), size: 20),
         filled: true,
         fillColor: const Color(0xFFFAFAFA),
-        contentPadding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+        contentPadding:
+            const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.inputBorder),
+          borderSide:
+              const BorderSide(color: AppColors.inputBorder),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.inputBorder),
+          borderSide:
+              const BorderSide(color: AppColors.inputBorder),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
+          borderSide: const BorderSide(
+              color: AppColors.primary, width: 1.5),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(0xFFEF4444)),
+          borderSide:
+              const BorderSide(color: Color(0xFFEF4444)),
         ),
       ),
       items: items,
@@ -1262,7 +1391,8 @@ class _SocialBtn extends StatelessWidget {
   final IconData icon;
   final String label;
   final VoidCallback onTap;
-  const _SocialBtn({required this.icon, required this.label, required this.onTap});
+  const _SocialBtn(
+      {required this.icon, required this.label, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -1274,7 +1404,10 @@ class _SocialBtn extends StatelessWidget {
           color: Colors.white,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: const Color(0xFFEEEEEE)),
-          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 6)],
+          boxShadow: [
+            BoxShadow(
+                color: Colors.black.withOpacity(0.04), blurRadius: 6)
+          ],
         ),
         child: Icon(icon, size: 22, color: const Color(0xFF444444)),
       ),
@@ -1283,7 +1416,7 @@ class _SocialBtn extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────
-// WAVE PAINTER — diagonal wave between red + white
+// WAVE PAINTER
 // ─────────────────────────────────────────────
 class _WavePainter extends CustomPainter {
   @override
@@ -1292,12 +1425,16 @@ class _WavePainter extends CustomPainter {
     final path = Path();
     path.moveTo(0, size.height * 0.55);
     path.quadraticBezierTo(
-      size.width * 0.25, size.height * 0.1,
-      size.width * 0.5, size.height * 0.45,
+      size.width * 0.25,
+      size.height * 0.1,
+      size.width * 0.5,
+      size.height * 0.45,
     );
     path.quadraticBezierTo(
-      size.width * 0.75, size.height * 0.8,
-      size.width, size.height * 0.35,
+      size.width * 0.75,
+      size.height * 0.8,
+      size.width,
+      size.height * 0.35,
     );
     path.lineTo(size.width, size.height);
     path.lineTo(0, size.height);
