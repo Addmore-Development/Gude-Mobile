@@ -23,7 +23,6 @@ class _C {
 class SendMoneyScreen extends StatefulWidget {
   const SendMoneyScreen({super.key});
 
-
   @override
   State<SendMoneyScreen> createState() => _SendMoneyScreenState();
 }
@@ -74,7 +73,6 @@ class _SendMoneyScreenState extends State<SendMoneyScreen> {
       'initials': 'TM',
       'color': const Color(0xFF3F51B5),
       'lastSentDate': DateTime.now().subtract(const Duration(hours: 3)),
-      'lastSentDate': DateTime.now().subtract(const Duration(hours: 3)),
       'totalSent': 75.0,
     },
   ];
@@ -118,7 +116,11 @@ class _SendMoneyScreenState extends State<SendMoneyScreen> {
     return (_selectedContact?['name'] as String?) ?? '';
   }
 
-  bool get _canProceedStep0 => _selectedContactIndex >= 0;
+  // FIX: Replaced _selectedContactIndex (never defined) with a direct null check
+  bool get _canProceedStep0 => _useManualEntry
+      ? _manualNameCtrl.text.trim().isNotEmpty &&
+          _manualHandleCtrl.text.trim().isNotEmpty
+      : _selectedContact != null;
 
   bool get _canProceedStep1 {
     final amount = double.tryParse(_amountCtrl.text) ?? 0;
@@ -140,21 +142,21 @@ class _SendMoneyScreenState extends State<SendMoneyScreen> {
   void _send() => setState(() => _step = 3);
 
   void _showAddContactDialog() {
+    // FIX: Removed duplicate local controllers — each declared once
     final nameCtrl = TextEditingController();
     final numberCtrl = TextEditingController();
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Add New Contact',
-            style: TextStyle(fontWeight: FontWeight.w600)),
+        // FIX: Removed duplicate `title` argument
         title: const Text('Add New Contact',
             style: TextStyle(fontWeight: FontWeight.w600)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            // FIX: Removed duplicate `controller` arguments
             TextField(
-              controller: nameCtrl,
               controller: nameCtrl,
               decoration: const InputDecoration(
                 labelText: 'Full Name',
@@ -164,7 +166,6 @@ class _SendMoneyScreenState extends State<SendMoneyScreen> {
             ),
             const SizedBox(height: 12),
             TextField(
-              controller: numberCtrl,
               controller: numberCtrl,
               keyboardType: TextInputType.phone,
               decoration: const InputDecoration(
@@ -214,7 +215,7 @@ class _SendMoneyScreenState extends State<SendMoneyScreen> {
                 );
               }
             },
-            style: ElevatedButton.styleFrom(backgroundColor: _C.primary),
+            // FIX: Removed duplicate `style` argument
             style: ElevatedButton.styleFrom(backgroundColor: _C.primary),
             child: const Text('Add', style: TextStyle(color: Colors.white)),
           ),
@@ -414,7 +415,8 @@ class _SendMoneyScreenState extends State<SendMoneyScreen> {
                   _inputField(
                       controller: _manualHandleCtrl,
                       hint: '@handle or 071 234 5678',
-                      icon: Icons.alternate_email_rounded),
+                      icon: Icons.alternate_email_rounded,
+                      onChanged: () => setState(() {})),
                   const SizedBox(height: 8),
                   Container(
                     padding: const EdgeInsets.all(12),
@@ -577,8 +579,8 @@ class _SendMoneyScreenState extends State<SendMoneyScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Recipient summary
+                // FIX: Removed duplicate `padding` argument
                 Container(
-                  padding: const EdgeInsets.all(14),
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
                     color: _C.lightGrey,
@@ -706,6 +708,8 @@ class _SendMoneyScreenState extends State<SendMoneyScreen> {
           child: SizedBox(
             width: double.infinity,
             child: ElevatedButton(
+              // FIX: Removed duplicate `elevation`, `shadowColor`, and
+              // `borderRadius` arguments; merged into one styleFrom call
               style: ElevatedButton.styleFrom(
                 backgroundColor:
                     _canProceedStep1 ? _C.primary : const Color(0xFFDDDDDD),
@@ -713,10 +717,7 @@ class _SendMoneyScreenState extends State<SendMoneyScreen> {
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 elevation: _canProceedStep1 ? 4 : 0,
                 shadowColor: _C.primary.withOpacity(0.4),
-                elevation: _canProceedStep1 ? 4 : 0,
-                shadowColor: _C.primary.withOpacity(0.4),
                 shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14)),
                     borderRadius: BorderRadius.circular(14)),
               ),
               onPressed:
