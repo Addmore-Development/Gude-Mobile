@@ -1,41 +1,170 @@
+// lib/features/profile/presentation/profile_page.dart
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:gude_app/core/theme/app_theme.dart';
+import 'package:gude_app/services/user_role_service.dart';
 
-// ─────────────────────────────────────────────
-// AVAILABLE SKILLS
-// ─────────────────────────────────────────────
-
+// Expanded skills list with categories
 const List<Map<String, dynamic>> _availableSkills = [
-  {'label': 'Mathematics', 'icon': Icons.calculate_outlined},
-  {'label': 'Tutoring', 'icon': Icons.menu_book_outlined},
-  {'label': 'Python', 'icon': Icons.code_rounded},
-  {'label': 'Design', 'icon': Icons.brush_outlined},
-  {'label': 'Photography', 'icon': Icons.camera_alt_outlined},
-  {'label': 'Writing', 'icon': Icons.edit_note_outlined},
-  {'label': 'Video Editing', 'icon': Icons.movie_filter_outlined},
-  {'label': 'Translation', 'icon': Icons.translate_outlined},
-  {'label': 'Music', 'icon': Icons.music_note_outlined},
-  {'label': 'Social Media', 'icon': Icons.smartphone_outlined},
-  {'label': 'Delivery', 'icon': Icons.delivery_dining_outlined},
-  {'label': 'Campus Help', 'icon': Icons.school_outlined},
-  {'label': 'Accounting', 'icon': Icons.receipt_long_outlined},
-  {'label': 'Data Analysis', 'icon': Icons.bar_chart_outlined},
-  {'label': 'Web Development', 'icon': Icons.language_outlined},
-  {'label': 'Graphic Design', 'icon': Icons.palette_outlined},
-  {'label': 'Content Writing', 'icon': Icons.article_outlined},
-  {'label': 'Marketing', 'icon': Icons.campaign_outlined},
-  {'label': 'Economics', 'icon': Icons.trending_up_rounded},
-  {'label': 'Cooking', 'icon': Icons.restaurant_outlined},
-  {'label': 'Cleaning', 'icon': Icons.cleaning_services_outlined},
-  {'label': 'Babysitting', 'icon': Icons.child_care_outlined},
-  {'label': 'Haircare', 'icon': Icons.content_cut_outlined},
-  {'label': 'Fitness Coaching', 'icon': Icons.fitness_center_outlined},
-];
+  // Academic Skills
+  {
+    'label': 'Mathematics',
+    'icon': Icons.calculate_outlined,
+    'category': 'Academic'
+  },
+  {'label': 'Physics', 'icon': Icons.science_outlined, 'category': 'Academic'},
+  {
+    'label': 'Chemistry',
+    'icon': Icons.science_outlined,
+    'category': 'Academic'
+  },
+  {'label': 'Biology', 'icon': Icons.biotech_outlined, 'category': 'Academic'},
+  {
+    'label': 'Accounting',
+    'icon': Icons.receipt_long_outlined,
+    'category': 'Academic'
+  },
+  {
+    'label': 'Economics',
+    'icon': Icons.trending_up_rounded,
+    'category': 'Academic'
+  },
+  {
+    'label': 'Statistics',
+    'icon': Icons.bar_chart_outlined,
+    'category': 'Academic'
+  },
+  {
+    'label': 'Computer Science',
+    'icon': Icons.computer_outlined,
+    'category': 'Academic'
+  },
 
-// ─────────────────────────────────────────────
-// PROFILE PAGE
-// ─────────────────────────────────────────────
+  // Tutoring & Mentorship
+  {
+    'label': 'Tutoring',
+    'icon': Icons.menu_book_outlined,
+    'category': 'Tutoring'
+  },
+  {'label': 'Mentorship', 'icon': Icons.people_outline, 'category': 'Tutoring'},
+  {
+    'label': 'Study Coaching',
+    'icon': Icons.school_outlined,
+    'category': 'Tutoring'
+  },
+  {'label': 'Exam Prep', 'icon': Icons.quiz_outlined, 'category': 'Tutoring'},
+
+  // Technical Skills
+  {'label': 'Python', 'icon': Icons.code_rounded, 'category': 'Technical'},
+  {'label': 'JavaScript', 'icon': Icons.code_rounded, 'category': 'Technical'},
+  {
+    'label': 'Web Development',
+    'icon': Icons.language_outlined,
+    'category': 'Technical'
+  },
+  {
+    'label': 'Mobile Development',
+    'icon': Icons.phone_android_outlined,
+    'category': 'Technical'
+  },
+  {
+    'label': 'Data Analysis',
+    'icon': Icons.bar_chart_outlined,
+    'category': 'Technical'
+  },
+  {
+    'label': 'Machine Learning',
+    'icon': Icons.psychology_outlined,
+    'category': 'Technical'
+  },
+
+  // Creative Skills
+  {
+    'label': 'Graphic Design',
+    'icon': Icons.brush_outlined,
+    'category': 'Creative'
+  },
+  {
+    'label': 'Photography',
+    'icon': Icons.camera_alt_outlined,
+    'category': 'Creative'
+  },
+  {
+    'label': 'Video Editing',
+    'icon': Icons.movie_filter_outlined,
+    'category': 'Creative'
+  },
+  {
+    'label': 'Content Writing',
+    'icon': Icons.article_outlined,
+    'category': 'Creative'
+  },
+  {'label': 'Music', 'icon': Icons.music_note_outlined, 'category': 'Creative'},
+
+  // Language & Communication
+  {
+    'label': 'Translation',
+    'icon': Icons.translate_outlined,
+    'category': 'Language'
+  },
+  {
+    'label': 'Public Speaking',
+    'icon': Icons.mic_outlined,
+    'category': 'Language'
+  },
+  {
+    'label': 'Writing',
+    'icon': Icons.edit_note_outlined,
+    'category': 'Language'
+  },
+
+  // Campus Services
+  {
+    'label': 'Campus Help',
+    'icon': Icons.school_outlined,
+    'category': 'Services'
+  },
+  {
+    'label': 'Delivery',
+    'icon': Icons.delivery_dining_outlined,
+    'category': 'Services'
+  },
+  {
+    'label': 'Social Media',
+    'icon': Icons.smartphone_outlined,
+    'category': 'Services'
+  },
+  {
+    'label': 'Marketing',
+    'icon': Icons.campaign_outlined,
+    'category': 'Services'
+  },
+  {
+    'label': 'Cleaning',
+    'icon': Icons.cleaning_services_outlined,
+    'category': 'Services'
+  },
+  {
+    'label': 'Babysitting',
+    'icon': Icons.child_care_outlined,
+    'category': 'Services'
+  },
+  {
+    'label': 'Haircare',
+    'icon': Icons.content_cut_outlined,
+    'category': 'Services'
+  },
+  {
+    'label': 'Fitness Coaching',
+    'icon': Icons.fitness_center_outlined,
+    'category': 'Services'
+  },
+  {
+    'label': 'Cooking',
+    'icon': Icons.restaurant_outlined,
+    'category': 'Services'
+  },
+];
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -45,16 +174,43 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
-  // ── Verification state ──────────────────────
+  // Profile data
+  String _name = 'Student Name';
+  String _email = 'student@university.ac.za';
+  String _university = 'Nelson Mandela University';
+  bool _isEditing = false;
+
+  // Verification state
   bool _emailVerified = true;
   bool _studentIdUploaded = false;
   bool _universityVerified = false;
   bool _isUploadingId = false;
 
-  // ── Skills ──────────────────────────────────
+  // Skills
   List<String> _skills = ['Mathematics', 'Tutoring', 'Python'];
 
-  // ── Simulate ID upload & auto-verify ────────
+  // About bio
+  String _bio = '';
+  final TextEditingController _bioController = TextEditingController();
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _universityController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _nameController.text = _name;
+    _universityController.text = _university;
+    _bioController.text = _bio;
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _universityController.dispose();
+    _bioController.dispose();
+    super.dispose();
+  }
+
   Future<void> _handleUploadStudentId() async {
     final confirmed = await _showUploadSheet();
     if (!confirmed) return;
@@ -88,7 +244,6 @@ class _ProfilePageState extends State<ProfilePage> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Handle
                 Center(
                   child: Container(
                     width: 36,
@@ -175,7 +330,6 @@ class _ProfilePageState extends State<ProfilePage> {
     ));
   }
 
-  // ── Add Skill sheet ──────────────────────────
   void _showAddSkillSheet() {
     showModalBottomSheet(
       context: context,
@@ -192,9 +346,28 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  // ── Remove skill ─────────────────────────────
   void _removeSkill(String skill) {
     setState(() => _skills.remove(skill));
+  }
+
+  void _toggleEditMode() {
+    if (_isEditing) {
+      // Save changes
+      setState(() {
+        _name = _nameController.text;
+        _university = _universityController.text;
+        _bio = _bioController.text;
+        _isEditing = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Profile updated successfully!'),
+          backgroundColor: Color(0xFF10B981),
+        ),
+      );
+    } else {
+      setState(() => _isEditing = true);
+    }
   }
 
   @override
@@ -216,15 +389,15 @@ class _ProfilePageState extends State<ProfilePage> {
                 fontSize: 20)),
         actions: [
           IconButton(
-            icon: const Icon(Icons.edit_outlined, color: AppColors.textDark),
-            onPressed: () {},
+            icon: Icon(_isEditing ? Icons.save_outlined : Icons.edit_outlined,
+                color: AppColors.textDark),
+            onPressed: _toggleEditMode,
           ),
         ],
       ),
       body: SingleChildScrollView(
         child: Column(
           children: [
-            // ── Profile header ─────────────────
             Container(
               color: Colors.white,
               padding: const EdgeInsets.all(20),
@@ -235,7 +408,7 @@ class _ProfilePageState extends State<ProfilePage> {
                       CircleAvatar(
                         radius: 44,
                         backgroundColor: AppColors.primary.withOpacity(0.1),
-                        child: const Text('S',
+                        child: Text(_name[0],
                             style: TextStyle(
                                 color: AppColors.primary,
                                 fontWeight: FontWeight.bold,
@@ -260,14 +433,29 @@ class _ProfilePageState extends State<ProfilePage> {
                     ],
                   ),
                   const SizedBox(height: 12),
-                  const Text('Student Name',
-                      style: TextStyle(
+                  if (_isEditing)
+                    TextField(
+                      controller: _nameController,
+                      style: const TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
-                          color: AppColors.textDark)),
-                  const Text('s21961082@mandela.ac.za',
-                      style:
-                          TextStyle(fontSize: 13, color: AppColors.textGrey)),
+                          color: AppColors.textDark),
+                      decoration: const InputDecoration(
+                        hintText: 'Your name',
+                        border: InputBorder.none,
+                        contentPadding: EdgeInsets.symmetric(horizontal: 12),
+                      ),
+                      textAlign: TextAlign.center,
+                    )
+                  else
+                    Text(_name,
+                        style: const TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.textDark)),
+                  Text(_email,
+                      style: const TextStyle(
+                          fontSize: 13, color: AppColors.textGrey)),
                   const SizedBox(height: 8),
                   Container(
                     padding:
@@ -275,14 +463,35 @@ class _ProfilePageState extends State<ProfilePage> {
                     decoration: BoxDecoration(
                         color: AppColors.primary.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(20)),
-                    child: const Text('Nelson Mandela University',
-                        style: TextStyle(
-                            fontSize: 12,
-                            color: AppColors.primary,
-                            fontWeight: FontWeight.w600)),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (_isEditing)
+                          Expanded(
+                            child: TextField(
+                              controller: _universityController,
+                              style: const TextStyle(
+                                  fontSize: 12,
+                                  color: AppColors.primary,
+                                  fontWeight: FontWeight.w600),
+                              decoration: const InputDecoration(
+                                hintText: 'University name',
+                                border: InputBorder.none,
+                                contentPadding:
+                                    EdgeInsets.symmetric(horizontal: 8),
+                              ),
+                            ),
+                          )
+                        else
+                          Text(_university,
+                              style: const TextStyle(
+                                  fontSize: 12,
+                                  color: AppColors.primary,
+                                  fontWeight: FontWeight.w600)),
+                      ],
+                    ),
                   ),
                   const SizedBox(height: 16),
-                  // Stats row
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
@@ -298,10 +507,42 @@ class _ProfilePageState extends State<ProfilePage> {
                 ],
               ),
             ),
-
             const SizedBox(height: 8),
-
-            // ── Verification ───────────────────
+            Container(
+              color: Colors.white,
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('About Me',
+                      style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                          color: AppColors.textDark)),
+                  const SizedBox(height: 8),
+                  if (_isEditing)
+                    TextField(
+                      controller: _bioController,
+                      maxLines: 3,
+                      decoration: const InputDecoration(
+                        hintText:
+                            'Tell others about yourself, your skills, and what you can help with...',
+                        border: OutlineInputBorder(),
+                        contentPadding: EdgeInsets.all(12),
+                      ),
+                    )
+                  else
+                    Text(
+                      _bio.isEmpty
+                          ? 'No bio added yet. Tap edit to add one!'
+                          : _bio,
+                      style: const TextStyle(
+                          fontSize: 13, color: AppColors.textGrey, height: 1.5),
+                    ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 8),
             Container(
               color: Colors.white,
               padding: const EdgeInsets.all(16),
@@ -314,12 +555,10 @@ class _ProfilePageState extends State<ProfilePage> {
                           fontSize: 16,
                           color: AppColors.textDark)),
                   const SizedBox(height: 12),
-
                   _VerificationRow(
                     label: 'Email verified',
                     done: _emailVerified,
                   ),
-
                   _VerificationRow(
                     label: 'Student ID uploaded',
                     done: _studentIdUploaded,
@@ -327,7 +566,6 @@ class _ProfilePageState extends State<ProfilePage> {
                     onVerify:
                         _studentIdUploaded ? null : _handleUploadStudentId,
                   ),
-
                   _VerificationRow(
                     label: 'University verified',
                     done: _universityVerified,
@@ -338,10 +576,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 ],
               ),
             ),
-
             const SizedBox(height: 8),
-
-            // ── Skills ─────────────────────────
             Container(
               color: Colors.white,
               padding: const EdgeInsets.all(16),
@@ -351,7 +586,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text('Skills',
+                      const Text('Skills & Expertise',
                           style: TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 16,
@@ -424,10 +659,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 ],
               ),
             ),
-
             const SizedBox(height: 8),
-
-            // ── Settings ────────────────────────
             Container(
               color: Colors.white,
               child: Column(
@@ -464,8 +696,7 @@ class _ProfilePageState extends State<ProfilePage> {
                             TextButton(
                               onPressed: () => Navigator.pop(context),
                               child: const Text('Cancel',
-                                  style:
-                                      TextStyle(color: AppColors.textGrey)),
+                                  style: TextStyle(color: AppColors.textGrey)),
                             ),
                             ElevatedButton(
                               style: ElevatedButton.styleFrom(
@@ -475,6 +706,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                 minimumSize: const Size(80, 36),
                               ),
                               onPressed: () {
+                                UserRoleService().clear();
                                 Navigator.pop(context);
                                 context.go('/login');
                               },
@@ -498,9 +730,234 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 }
 
-// ─────────────────────────────────────────────
-// ADD SKILL SHEET
-// ─────────────────────────────────────────────
+// ============================================================================
+// HELPER CLASSES
+// ============================================================================
+
+class _UploadOption extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  const _UploadOption({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF8F8F8),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: const Color(0xFFEEEEEE)),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 38,
+              height: 38,
+              decoration: BoxDecoration(
+                color: AppColors.primary.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(icon, color: AppColors.primary, size: 20),
+            ),
+            const SizedBox(width: 12),
+            Text(label,
+                style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF1A1A1A))),
+            const Spacer(),
+            const Icon(Icons.chevron_right_rounded,
+                color: Color(0xFFCCCCCC), size: 20),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _VerificationRow extends StatelessWidget {
+  final String label;
+  final bool done;
+  final bool isLoading;
+  final String? subtitle;
+  final VoidCallback? onVerify;
+
+  const _VerificationRow({
+    required this.label,
+    required this.done,
+    this.isLoading = false,
+    this.subtitle,
+    this.onVerify,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              if (isLoading)
+                const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                      strokeWidth: 2, color: AppColors.primary),
+                )
+              else
+                Icon(
+                  done ? Icons.check_circle : Icons.radio_button_unchecked,
+                  color: done ? Colors.green : AppColors.textGrey,
+                  size: 20,
+                ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(label,
+                    style: TextStyle(
+                        fontSize: 14,
+                        color: done ? AppColors.textDark : AppColors.textGrey)),
+              ),
+              if (!done && !isLoading && onVerify != null)
+                GestureDetector(
+                  onTap: onVerify,
+                  child: Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(20),
+                      border:
+                          Border.all(color: AppColors.primary.withOpacity(0.3)),
+                    ),
+                    child: const Text('Verify',
+                        style: TextStyle(
+                            color: AppColors.primary,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700)),
+                  ),
+                ),
+              if (isLoading)
+                const Text('Processing…',
+                    style: TextStyle(fontSize: 12, color: AppColors.textGrey)),
+            ],
+          ),
+          if (subtitle != null && !done) ...[
+            const SizedBox(height: 3),
+            Padding(
+              padding: const EdgeInsets.only(left: 32),
+              child: Text(subtitle!,
+                  style: const TextStyle(
+                      fontSize: 11,
+                      color: Color(0xFFAAAAAA),
+                      fontStyle: FontStyle.italic)),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _SkillChip extends StatelessWidget {
+  final String label;
+  final VoidCallback onRemove;
+
+  const _SkillChip({required this.label, required this.onRemove});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.only(left: 12, right: 4, top: 6, bottom: 6),
+      decoration: BoxDecoration(
+        color: AppColors.primary.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.primary.withOpacity(0.3)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(label,
+              style: const TextStyle(
+                  color: AppColors.primary,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600)),
+          const SizedBox(width: 4),
+          GestureDetector(
+            onTap: onRemove,
+            child: Container(
+              width: 18,
+              height: 18,
+              decoration: BoxDecoration(
+                color: AppColors.primary.withOpacity(0.15),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.close_rounded,
+                  size: 11, color: AppColors.primary),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ProfileStat extends StatelessWidget {
+  final String label, value;
+  const _ProfileStat({required this.label, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(children: [
+      Text(value,
+          style: const TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: AppColors.textDark)),
+      Text(label,
+          style: const TextStyle(fontSize: 12, color: AppColors.textGrey)),
+    ]);
+  }
+}
+
+class _SettingsTile extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+  final bool isRed;
+
+  const _SettingsTile({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+    this.isRed = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      leading:
+          Icon(icon, color: isRed ? AppColors.primary : AppColors.textGrey),
+      title: Text(label,
+          style: TextStyle(
+              fontSize: 14,
+              color: isRed ? AppColors.primary : AppColors.textDark)),
+      trailing: isRed
+          ? null
+          : const Icon(Icons.chevron_right, color: AppColors.textGrey),
+      onTap: onTap,
+    );
+  }
+}
 
 class _AddSkillSheet extends StatefulWidget {
   final List<String> currentSkills;
@@ -519,6 +976,7 @@ class _AddSkillSheetState extends State<_AddSkillSheet> {
   late Set<String> _selected;
   final TextEditingController _customCtrl = TextEditingController();
   String _filter = '';
+  String _selectedCategory = 'All';
 
   @override
   void initState() {
@@ -534,9 +992,19 @@ class _AddSkillSheetState extends State<_AddSkillSheet> {
     super.dispose();
   }
 
+  List<String> get _skillCategories {
+    final categories =
+        _availableSkills.map((s) => s['category'] as String).toSet().toList();
+    return ['All', ...categories];
+  }
+
   List<Map<String, dynamic>> get _filtered {
-    if (_filter.isEmpty) return _availableSkills;
-    return _availableSkills
+    var skills = _availableSkills;
+    if (_selectedCategory != 'All') {
+      skills = skills.where((s) => s['category'] == _selectedCategory).toList();
+    }
+    if (_filter.isEmpty) return skills;
+    return skills
         .where((s) => (s['label'] as String).toLowerCase().contains(_filter))
         .toList();
   }
@@ -567,7 +1035,7 @@ class _AddSkillSheetState extends State<_AddSkillSheet> {
 
     return DraggableScrollableSheet(
       expand: false,
-      initialChildSize: 0.78,
+      initialChildSize: 0.85,
       minChildSize: 0.5,
       maxChildSize: 0.92,
       builder: (_, scrollCtrl) => Column(
@@ -612,9 +1080,43 @@ class _AddSkillSheetState extends State<_AddSkillSheet> {
             ),
           ),
 
-          // Search / custom input
+          // Category filter
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: _skillCategories
+                    .map((cat) => Padding(
+                          padding: const EdgeInsets.only(right: 8),
+                          child: FilterChip(
+                            label: Text(cat),
+                            selected: _selectedCategory == cat,
+                            onSelected: (selected) {
+                              setState(() {
+                                _selectedCategory = selected ? cat : 'All';
+                              });
+                            },
+                            selectedColor: AppColors.primary.withOpacity(0.1),
+                            checkmarkColor: AppColors.primary,
+                            labelStyle: TextStyle(
+                              color: _selectedCategory == cat
+                                  ? AppColors.primary
+                                  : AppColors.textGrey,
+                              fontWeight: _selectedCategory == cat
+                                  ? FontWeight.w600
+                                  : FontWeight.normal,
+                            ),
+                          ),
+                        ))
+                    .toList(),
+              ),
+            ),
+          ),
+
+          // Search / custom input
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
             child: Row(
               children: [
                 Expanded(
@@ -670,8 +1172,8 @@ class _AddSkillSheetState extends State<_AddSkillSheet> {
             child: filtered.isEmpty
                 ? const Center(
                     child: Text('No skills match your search',
-                        style: TextStyle(
-                            color: Color(0xFF888888), fontSize: 13)))
+                        style:
+                            TextStyle(color: Color(0xFF888888), fontSize: 13)))
                 : GridView.builder(
                     controller: scrollCtrl,
                     padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
@@ -762,252 +1264,6 @@ class _AddSkillSheetState extends State<_AddSkillSheet> {
           ),
         ],
       ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────
-// UPLOAD OPTION TILE
-// ─────────────────────────────────────────────
-
-class _UploadOption extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-
-  const _UploadOption({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: const Color(0xFFF8F8F8),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: const Color(0xFFEEEEEE)),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 38,
-              height: 38,
-              decoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Icon(icon, color: AppColors.primary, size: 20),
-            ),
-            const SizedBox(width: 12),
-            Text(label,
-                style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF1A1A1A))),
-            const Spacer(),
-            const Icon(Icons.chevron_right_rounded,
-                color: Color(0xFFCCCCCC), size: 20),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────
-// VERIFICATION ROW
-// ─────────────────────────────────────────────
-
-class _VerificationRow extends StatelessWidget {
-  final String label;
-  final bool done;
-  final bool isLoading;
-  final String? subtitle;
-  final VoidCallback? onVerify;
-
-  const _VerificationRow({
-    required this.label,
-    required this.done,
-    this.isLoading = false,
-    this.subtitle,
-    this.onVerify,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              if (isLoading)
-                const SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(
-                      strokeWidth: 2, color: AppColors.primary),
-                )
-              else
-                Icon(
-                  done ? Icons.check_circle : Icons.radio_button_unchecked,
-                  color: done ? Colors.green : AppColors.textGrey,
-                  size: 20,
-                ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(label,
-                    style: TextStyle(
-                        fontSize: 14,
-                        color: done ? AppColors.textDark : AppColors.textGrey)),
-              ),
-              if (!done && !isLoading && onVerify != null)
-                GestureDetector(
-                  onTap: onVerify,
-                  child: Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: AppColors.primary.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                          color: AppColors.primary.withOpacity(0.3)),
-                    ),
-                    child: const Text('Verify',
-                        style: TextStyle(
-                            color: AppColors.primary,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700)),
-                  ),
-                ),
-              if (isLoading)
-                const Text('Processing…',
-                    style:
-                        TextStyle(fontSize: 12, color: AppColors.textGrey)),
-            ],
-          ),
-          if (subtitle != null && !done) ...[
-            const SizedBox(height: 3),
-            Padding(
-              padding: const EdgeInsets.only(left: 32),
-              child: Text(subtitle!,
-                  style: const TextStyle(
-                      fontSize: 11,
-                      color: Color(0xFFAAAAAA),
-                      fontStyle: FontStyle.italic)),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────
-// SKILL CHIP — with remove ×
-// ─────────────────────────────────────────────
-
-class _SkillChip extends StatelessWidget {
-  final String label;
-  final VoidCallback onRemove;
-
-  const _SkillChip({required this.label, required this.onRemove});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.only(left: 12, right: 4, top: 6, bottom: 6),
-      decoration: BoxDecoration(
-        color: AppColors.primary.withOpacity(0.08),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.primary.withOpacity(0.3)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(label,
-              style: const TextStyle(
-                  color: AppColors.primary,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600)),
-          const SizedBox(width: 4),
-          GestureDetector(
-            onTap: onRemove,
-            child: Container(
-              width: 18,
-              height: 18,
-              decoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.15),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(Icons.close_rounded,
-                  size: 11, color: AppColors.primary),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────
-// PROFILE STAT
-// ─────────────────────────────────────────────
-
-class _ProfileStat extends StatelessWidget {
-  final String label, value;
-  const _ProfileStat({required this.label, required this.value});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(children: [
-      Text(value,
-          style: const TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: AppColors.textDark)),
-      Text(label,
-          style: const TextStyle(fontSize: 12, color: AppColors.textGrey)),
-    ]);
-  }
-}
-
-// ─────────────────────────────────────────────
-// SETTINGS TILE
-// ─────────────────────────────────────────────
-
-class _SettingsTile extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-  final bool isRed;
-
-  const _SettingsTile({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-    this.isRed = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return ListTile(
-      leading:
-          Icon(icon, color: isRed ? AppColors.primary : AppColors.textGrey),
-      title: Text(label,
-          style: TextStyle(
-              fontSize: 14,
-              color: isRed ? AppColors.primary : AppColors.textDark)),
-      trailing: isRed
-          ? null
-          : const Icon(Icons.chevron_right, color: AppColors.textGrey),
-      onTap: onTap,
     );
   }
 }

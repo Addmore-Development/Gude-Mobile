@@ -99,7 +99,6 @@ class _StabilityPageState extends State<StabilityPage>
     ),
   ];
 
-  // ── Labels ─────────────────────────────────────────────────
   String get _scoreLabel {
     if (_score >= 75) return 'Thriving';
     if (_score >= 55) return 'Steady';
@@ -394,7 +393,6 @@ class _StabilityPageState extends State<StabilityPage>
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5),
       body: CustomScrollView(slivers: [
-        // ── App bar ────────────────────────────────────────
         SliverAppBar(
           pinned: true,
           backgroundColor: Colors.white,
@@ -408,13 +406,12 @@ class _StabilityPageState extends State<StabilityPage>
                 onPressed: _showScoreExplanationDialog)
           ],
         ),
-
         SliverToBoxAdapter(
           child: Padding(
             padding: const EdgeInsets.only(bottom: 32),
             child:
                 Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              // ── Score Card ─────────────────────────────────
+              // ── Score Card ──────────────────────────────
               Container(
                 margin: const EdgeInsets.all(16),
                 padding: const EdgeInsets.all(20),
@@ -427,7 +424,6 @@ class _StabilityPageState extends State<StabilityPage>
                     ]),
                 child: Column(children: [
                   Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    // ── Left: label + message ─────────────────
                     Expanded(
                       child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -472,8 +468,6 @@ class _StabilityPageState extends State<StabilityPage>
                           ]),
                     ),
                     const SizedBox(width: 16),
-
-                    // ── Right: animated score ring ──────────────
                     GestureDetector(
                       onTap: () =>
                           setState(() => _scoreExpanded = !_scoreExpanded),
@@ -488,10 +482,7 @@ class _StabilityPageState extends State<StabilityPage>
                       ),
                     ),
                   ]),
-
                   const SizedBox(height: 16),
-
-                  // Progress bar
                   ClipRRect(
                     borderRadius: BorderRadius.circular(6),
                     child: AnimatedBuilder(
@@ -505,8 +496,6 @@ class _StabilityPageState extends State<StabilityPage>
                     ),
                   ),
                   const SizedBox(height: 8),
-
-                  // Legend row
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -519,8 +508,6 @@ class _StabilityPageState extends State<StabilityPage>
                           color: const Color(0xFFB91C1C), label: 'Support'),
                     ],
                   ),
-
-                  // ── Expandable breakdown ──────────────────────
                   AnimatedSize(
                     duration: const Duration(milliseconds: 350),
                     curve: Curves.easeInOut,
@@ -598,8 +585,6 @@ class _StabilityPageState extends State<StabilityPage>
                           ])
                         : const SizedBox(height: 4),
                   ),
-
-                  // Toggle
                   GestureDetector(
                     onTap: () =>
                         setState(() => _scoreExpanded = !_scoreExpanded),
@@ -631,7 +616,7 @@ class _StabilityPageState extends State<StabilityPage>
                 ]),
               ),
 
-              // ── Weekly Check-in (moved here, below score card) ──
+              // ── Weekly Check-in Card ────────────────────
               Container(
                 margin: const EdgeInsets.fromLTRB(16, 0, 16, 0),
                 decoration: BoxDecoration(
@@ -643,7 +628,6 @@ class _StabilityPageState extends State<StabilityPage>
                 ),
                 child: Column(
                   children: [
-                    // ── Check-in body ──
                     Padding(
                       padding: const EdgeInsets.all(18),
                       child: _checkinDone
@@ -704,11 +688,44 @@ class _StabilityPageState extends State<StabilityPage>
                                           mood: _moods[3],
                                           onTap: _submitCheckin)),
                                 ]),
+                                const SizedBox(height: 12),
+                                // ── Full check-in button ──────────────
+                                GestureDetector(
+                                  onTap: () =>
+                                      context.push('/stability/checkin'),
+                                  child: Container(
+                                    width: double.infinity,
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 10),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white.withOpacity(0.15),
+                                      borderRadius: BorderRadius.circular(10),
+                                      border: Border.all(
+                                          color: Colors.white.withOpacity(0.4)),
+                                    ),
+                                    child: const Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Icon(Icons.checklist_rtl_rounded,
+                                            color: Colors.white, size: 16),
+                                        SizedBox(width: 8),
+                                        Text(
+                                          'Full Weekly Check-in →',
+                                          style: TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.w600),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
                               ],
                             ),
                     ),
 
-                    // ── Check-in History Dropdown ──
+                    // ── Check-in History Dropdown ───────────
                     if (_checkinHistory.isNotEmpty)
                       GestureDetector(
                         onTap: () => setState(
@@ -716,15 +733,9 @@ class _StabilityPageState extends State<StabilityPage>
                         child: Container(
                           decoration: BoxDecoration(
                             color: Colors.black.withOpacity(0.15),
-                            borderRadius: BorderRadius.only(
-                              bottomLeft: const Radius.circular(18),
-                              bottomRight: const Radius.circular(18),
-                              topLeft: _checkinDone
-                                  ? const Radius.circular(0)
-                                  : const Radius.circular(0),
-                              topRight: _checkinDone
-                                  ? const Radius.circular(0)
-                                  : const Radius.circular(0),
+                            borderRadius: const BorderRadius.only(
+                              bottomLeft: Radius.circular(18),
+                              bottomRight: Radius.circular(18),
                             ),
                           ),
                           child: Column(
@@ -804,7 +815,7 @@ class _StabilityPageState extends State<StabilityPage>
                 ),
               ),
 
-              // ── Support Hub ──────────────────────────────────
+              // ── Support Hub ──────────────────────────────
               const Padding(
                 padding: EdgeInsets.fromLTRB(16, 22, 16, 10),
                 child: Column(
@@ -853,15 +864,6 @@ class _StabilityPageState extends State<StabilityPage>
         ),
       ]),
     );
-  }
-
-  void _showComingSoon(String title) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text('$title — coming soon!'),
-        backgroundColor: _C.primary,
-        behavior: SnackBarBehavior.floating,
-        shape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))));
   }
 }
 
@@ -954,7 +956,6 @@ class _SupportDetailSheet extends StatelessWidget {
         ),
         child: Column(
           children: [
-            // Handle
             Container(
               margin: const EdgeInsets.only(top: 12),
               width: 40,
@@ -969,7 +970,6 @@ class _SupportDetailSheet extends StatelessWidget {
                 controller: controller,
                 padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
                 children: [
-                  // Icon + title row
                   Row(children: [
                     Container(
                       width: 52,
@@ -997,12 +997,9 @@ class _SupportDetailSheet extends StatelessWidget {
                       ),
                     ),
                   ]),
-
                   const SizedBox(height: 24),
                   const Divider(color: Color(0xFFF0F0F0)),
                   const SizedBox(height: 20),
-
-                  // How it helps section
                   Row(children: [
                     Icon(Icons.lightbulb_outline_rounded,
                         color: item.color, size: 18),
@@ -1027,10 +1024,7 @@ class _SupportDetailSheet extends StatelessWidget {
                             color: Color(0xFF444444),
                             height: 1.6)),
                   ),
-
                   const SizedBox(height: 22),
-
-                  // How it is implemented
                   Row(children: [
                     Icon(Icons.checklist_rounded, color: item.color, size: 18),
                     const SizedBox(width: 8),
@@ -1054,10 +1048,7 @@ class _SupportDetailSheet extends StatelessWidget {
                             color: Color(0xFF444444),
                             height: 1.8)),
                   ),
-
                   const SizedBox(height: 28),
-
-                  // CTA button
                   SizedBox(
                     width: double.infinity,
                     height: 50,

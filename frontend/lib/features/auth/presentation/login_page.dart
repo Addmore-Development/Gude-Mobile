@@ -5,18 +5,15 @@ import 'package:gude_app/core/widgets/gude_logo.dart';
 import 'package:gude_app/services/user_role_service.dart';
 
 class _C {
-  static const primary     = Color(0xFFE30613);
+  static const primary = Color(0xFFE30613);
   static const primaryDark = Color(0xFFB0000E);
-  static const dark        = Color(0xFF1A1A1A);
-  static const grey        = Color(0xFF888888);
-  static const border      = Color(0xFFE0E0E0);
-  static const inputBg     = Color(0xFFFAFAFA);
-  static const errorRed    = Color(0xFFE30613);
+  static const dark = Color(0xFF1A1A1A);
+  static const grey = Color(0xFF888888);
+  static const border = Color(0xFFE0E0E0);
+  static const inputBg = Color(0xFFFAFAFA);
+  static const errorRed = Color(0xFFE30613);
 }
 
-// ─────────────────────────────────────────────────────────────
-// LOGIN PAGE
-// ─────────────────────────────────────────────────────────────
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
   @override
@@ -24,40 +21,59 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  final _formKey  = GlobalKey<FormState>();
-  final _email    = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
+  final _email = TextEditingController();
   final _password = TextEditingController();
+  final _institutionCode = TextEditingController();
 
-  bool    _obscure       = true;
-  bool    _rememberMe    = false;
-  bool    _emailError    = false;
-  bool    _passwordError = false;
+  bool _obscure = true;
+  bool _rememberMe = false;
+  bool _emailError = false;
+  bool _passwordError = false;
   String? _emailValidationError;
-  String  _role = 'student';
+  String _role = 'student';
+  String _userType = 'student';
 
   bool _isValidStudentEmail(String email) {
-    final re = RegExp(r'^[^@]+@[^@]+\.(ac\.za|edu\.za)$',
-        caseSensitive: false);
+    final re = RegExp(r'^[^@]+@[^@]+\.(ac\.za|edu\.za)$', caseSensitive: false);
+    return re.hasMatch(email.trim());
+  }
+
+  bool _isValidInstitutionEmail(String email) {
+    final re = RegExp(r'^[^@]+@[^@]+\.(ac\.za|edu\.za)$', caseSensitive: false);
     return re.hasMatch(email.trim());
   }
 
   void _login() {
     setState(() {
-      _emailError    = _email.text.trim().isEmpty;
+      _emailError = _email.text.trim().isEmpty;
       _passwordError = _password.text.isEmpty;
       _emailValidationError = null;
-      if (_role == 'student' && !_emailError) {
+
+      if (_userType == 'student' && !_emailError) {
         if (!_isValidStudentEmail(_email.text)) {
           _emailValidationError =
               'Use your student email ending in .ac.za or .edu.za';
+          _emailError = true;
+        }
+      } else if (_userType == 'institution' && !_emailError) {
+        if (!_isValidInstitutionEmail(_email.text)) {
+          _emailValidationError =
+              'Use your institution email ending in .ac.za or .edu.za';
           _emailError = true;
         }
       }
     });
 
     if (!_emailError && !_passwordError) {
-      UserRoleService().role = _role;
-      if (_role == 'buyer') {
+      final userService = UserRoleService();
+      userService.userType = _userType;
+      userService.role = _role;
+
+      if (_userType == 'institution') {
+        userService.institutionName = _institutionCode.text.trim();
+        context.go('/institution/marketplace');
+      } else if (_userType == 'buyer') {
         context.go('/buyer/marketplace');
       } else {
         context.go('/home');
@@ -74,6 +90,7 @@ class _LoginPageState extends State<LoginPage> {
   void dispose() {
     _email.dispose();
     _password.dispose();
+    _institutionCode.dispose();
     super.dispose();
   }
 
@@ -84,10 +101,7 @@ class _LoginPageState extends State<LoginPage> {
       body: SingleChildScrollView(
         child: Column(
           children: [
-            // ── Hero section ─────────────────────────────────
-            _HeroSection(role: _role),
-
-            // ── Form ─────────────────────────────────────────
+            _HeroSection(role: _role, userType: _userType),
             Padding(
               padding: const EdgeInsets.fromLTRB(24, 20, 24, 40),
               child: Form(
@@ -95,17 +109,22 @@ class _LoginPageState extends State<LoginPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Role toggle
                     _RoleToggle(
-                      selected: _role,
-                      onChanged: (r) {
-                        setState(() => _role = r);
+                      selected: _userType,
+                      onChanged: (t) {
+                        setState(() {
+                          _userType = t;
+                          if (t == 'institution')
+                            _role = 'institution';
+                          else if (t == 'student')
+                            _role = 'student';
+                          else
+                            _role = 'buyer';
+                        });
                         _clearEmailErrors();
                       },
                     ),
                     const SizedBox(height: 22),
-
-                    // Login heading
                     const Text(
                       'Login',
                       style: TextStyle(
@@ -115,27 +134,35 @@ class _LoginPageState extends State<LoginPage> {
                           letterSpacing: -0.8),
                     ),
                     const SizedBox(height: 18),
-
-                    // Email
                     _label('Email Address'),
                     const SizedBox(height: 6),
                     _InputField(
                       controller: _email,
-                      hint: _role == 'student'
+                      hint: _userType == 'student'
                           ? 'your.name@university.ac.za'
-                          : 'Enter your email',
+                          : _userType == 'institution'
+                              ? 'institution@domain.ac.za'
+                              : 'Enter your email',
                       prefixIcon: Icons.email_outlined,
                       hasError: _emailError,
                       keyboardType: TextInputType.emailAddress,
                       onChanged: _clearEmailErrors,
                     ),
                     if (_emailError)
-                      _ErrorText(
-                          _emailValidationError ?? 'Email is required'),
-
+                      _ErrorText(_emailValidationError ?? 'Email is required'),
                     const SizedBox(height: 14),
-
-                    // Password
+                    if (_userType == 'institution') ...[
+                      _label('Institution Name'),
+                      const SizedBox(height: 6),
+                      _InputField(
+                        controller: _institutionCode,
+                        hint: 'e.g. University of Cape Town',
+                        prefixIcon: Icons.business_outlined,
+                        hasError: false,
+                        onChanged: () {},
+                      ),
+                      const SizedBox(height: 14),
+                    ],
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -158,20 +185,15 @@ class _LoginPageState extends State<LoginPage> {
                       hint: 'Enter Password',
                       obscure: _obscure,
                       hasError: _passwordError,
-                      onToggle: () =>
-                          setState(() => _obscure = !_obscure),
-                      onChanged: () => setState(
-                          () => _passwordError = false),
+                      onToggle: () => setState(() => _obscure = !_obscure),
+                      onChanged: () => setState(() => _passwordError = false),
                     ),
-                    if (_passwordError)
-                      const _ErrorText('Enter your password'),
-
+                    if (_passwordError) const _ErrorText('Enter your password'),
                     const SizedBox(height: 10),
-
-                    // Remember me
                     Row(children: [
                       SizedBox(
-                        width: 20, height: 20,
+                        width: 20,
+                        height: 20,
                         child: Checkbox(
                           value: _rememberMe,
                           onChanged: (v) =>
@@ -185,21 +207,16 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                       const SizedBox(width: 8),
                       const Text('Keep me logged in',
-                          style: TextStyle(
-                              fontSize: 12, color: _C.grey)),
+                          style: TextStyle(fontSize: 12, color: _C.grey)),
                     ]),
-
                     const SizedBox(height: 28),
-
-                    // Sign in button
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
                         style: ElevatedButton.styleFrom(
                           backgroundColor: _C.primary,
                           foregroundColor: Colors.white,
-                          padding:
-                              const EdgeInsets.symmetric(vertical: 16),
+                          padding: const EdgeInsets.symmetric(vertical: 16),
                           elevation: 4,
                           shadowColor: _C.primary.withOpacity(0.4),
                           shape: RoundedRectangleBorder(
@@ -207,9 +224,11 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                         onPressed: _login,
                         child: Text(
-                          _role == 'buyer'
-                              ? 'Log in as Buyer'
-                              : 'Log in as Student',
+                          _userType == 'institution'
+                              ? 'Log in as Institution'
+                              : _userType == 'buyer'
+                                  ? 'Log in as Buyer'
+                                  : 'Log in as Student',
                           style: const TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.w700,
@@ -217,12 +236,9 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                       ),
                     ),
-
                     const SizedBox(height: 16),
                     _Divider(),
                     const SizedBox(height: 16),
-
-                    // Social buttons
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
@@ -242,17 +258,14 @@ class _LoginPageState extends State<LoginPage> {
                             onTap: () {}),
                       ],
                     ),
-
                     const SizedBox(height: 24),
-
                     Center(
                       child: GestureDetector(
                         onTap: () => context.go('/signup'),
                         child: RichText(
                           text: const TextSpan(
                             text: "Don't have an account? ",
-                            style: TextStyle(
-                                color: _C.grey, fontSize: 14),
+                            style: TextStyle(color: _C.grey, fontSize: 14),
                             children: [
                               TextSpan(
                                 text: 'Register Now',
@@ -283,12 +296,10 @@ class _LoginPageState extends State<LoginPage> {
           letterSpacing: 0.2));
 }
 
-// ─────────────────────────────────────────────────────────────
-// HERO SECTION — red card with illustration + welcome copy
-// ─────────────────────────────────────────────────────────────
 class _HeroSection extends StatelessWidget {
   final String role;
-  const _HeroSection({required this.role});
+  final String userType;
+  const _HeroSection({required this.role, required this.userType});
 
   @override
   Widget build(BuildContext context) {
@@ -308,11 +319,12 @@ class _HeroSection extends StatelessWidget {
       ),
       child: Stack(
         children: [
-          // Decorative circles
           Positioned(
-            top: -30, right: -20,
+            top: -30,
+            right: -20,
             child: Container(
-              width: 140, height: 140,
+              width: 140,
+              height: 140,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: Colors.white.withOpacity(0.07),
@@ -320,31 +332,28 @@ class _HeroSection extends StatelessWidget {
             ),
           ),
           Positioned(
-            bottom: 20, left: -20,
+            bottom: 20,
+            left: -20,
             child: Container(
-              width: 90, height: 90,
+              width: 90,
+              height: 90,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: Colors.white.withOpacity(0.06),
               ),
             ),
           ),
-
-          // Content
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  // Text block
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        GudeLockup(
-                            logoSize: 30,
-                            textColor: Colors.white),
+                        GudeLockup(logoSize: 30, textColor: Colors.white),
                         const Spacer(),
                         const Text(
                           'Welcome\nBack',
@@ -358,9 +367,11 @@ class _HeroSection extends StatelessWidget {
                         ),
                         const SizedBox(height: 6),
                         Text(
-                          role == 'buyer'
-                              ? 'Access services from talented students.'
-                              : 'You\'re one step away from unlocking\nthe key to a better student life.',
+                          userType == 'institution'
+                              ? 'Post jobs and find talented students.'
+                              : userType == 'buyer'
+                                  ? 'Access services from talented students.'
+                                  : 'You\'re one step away from unlocking\nthe key to a better student life.',
                           style: const TextStyle(
                             color: Colors.white70,
                             fontSize: 12,
@@ -370,18 +381,16 @@ class _HeroSection extends StatelessWidget {
                       ],
                     ),
                   ),
-
-                  // Illustration placeholder — replace with Image.asset
                   const SizedBox(width: 12),
                   Container(
-                    width: 100, height: 120,
+                    width: 100,
+                    height: 120,
                     decoration: BoxDecoration(
                       color: Colors.white.withOpacity(0.12),
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: const Center(
-                      child: Text('🧑‍🎓',
-                          style: TextStyle(fontSize: 52)),
+                      child: Text('🧑‍🎓', style: TextStyle(fontSize: 52)),
                     ),
                   ),
                 ],
@@ -394,15 +403,11 @@ class _HeroSection extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────
-// ROLE TOGGLE
-// ─────────────────────────────────────────────────────────────
 class _RoleToggle extends StatelessWidget {
   final String selected;
   final void Function(String) onChanged;
 
-  const _RoleToggle(
-      {required this.selected, required this.onChanged});
+  const _RoleToggle({required this.selected, required this.onChanged});
 
   @override
   Widget build(BuildContext context) {
@@ -415,6 +420,7 @@ class _RoleToggle extends StatelessWidget {
       child: Row(
         children: [
           _tab('student', '🎓 Student'),
+          _tab('institution', '🏛️ Institution'),
           _tab('buyer', '🛒 Buyer'),
         ],
       ),
@@ -430,8 +436,7 @@ class _RoleToggle extends StatelessWidget {
           duration: const Duration(milliseconds: 220),
           padding: const EdgeInsets.symmetric(vertical: 10),
           decoration: BoxDecoration(
-            color:
-                isSelected ? Colors.white : Colors.transparent,
+            color: isSelected ? Colors.white : Colors.transparent,
             borderRadius: BorderRadius.circular(9),
             boxShadow: isSelected
                 ? [
@@ -461,9 +466,6 @@ class _RoleToggle extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────
-// SHARED FORM WIDGETS
-// ─────────────────────────────────────────────────────────────
 class _InputField extends StatelessWidget {
   final TextEditingController controller;
   final String hint;
@@ -490,29 +492,22 @@ class _InputField extends StatelessWidget {
       style: const TextStyle(fontSize: 14, color: _C.dark),
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: const TextStyle(
-            color: Color(0xFFBBBBBB), fontSize: 13),
-        prefixIcon:
-            Icon(prefixIcon, color: const Color(0xFFBBBBBB), size: 20),
+        hintStyle: const TextStyle(color: Color(0xFFBBBBBB), fontSize: 13),
+        prefixIcon: Icon(prefixIcon, color: const Color(0xFFBBBBBB), size: 20),
         filled: true,
-        fillColor: hasError
-            ? _C.errorRed.withOpacity(0.04)
-            : _C.inputBg,
-        contentPadding: const EdgeInsets.symmetric(
-            vertical: 14, horizontal: 16),
+        fillColor: hasError ? _C.errorRed.withOpacity(0.04) : _C.inputBg,
+        contentPadding:
+            const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
         border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(
-                color: hasError ? _C.errorRed : _C.border)),
+            borderSide: BorderSide(color: hasError ? _C.errorRed : _C.border)),
         enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(
-                color: hasError ? _C.errorRed : _C.border)),
+            borderSide: BorderSide(color: hasError ? _C.errorRed : _C.border)),
         focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
             borderSide: BorderSide(
-                color: hasError ? _C.errorRed : _C.primary,
-                width: 1.5)),
+                color: hasError ? _C.errorRed : _C.primary, width: 1.5)),
       ),
     );
   }
@@ -544,38 +539,31 @@ class _PasswordField extends StatelessWidget {
       style: const TextStyle(fontSize: 14, color: _C.dark),
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: const TextStyle(
-            color: Color(0xFFBBBBBB), fontSize: 13),
+        hintStyle: const TextStyle(color: Color(0xFFBBBBBB), fontSize: 13),
         prefixIcon: const Icon(Icons.lock_outline_rounded,
             color: Color(0xFFBBBBBB), size: 20),
         suffixIcon: IconButton(
           icon: Icon(
-            obscure
-                ? Icons.visibility_outlined
-                : Icons.visibility_off_outlined,
+            obscure ? Icons.visibility_outlined : Icons.visibility_off_outlined,
             color: const Color(0xFFBBBBBB),
             size: 20,
           ),
           onPressed: onToggle,
         ),
         filled: true,
-        fillColor:
-            hasError ? _C.errorRed.withOpacity(0.04) : _C.inputBg,
-        contentPadding: const EdgeInsets.symmetric(
-            vertical: 14, horizontal: 16),
+        fillColor: hasError ? _C.errorRed.withOpacity(0.04) : _C.inputBg,
+        contentPadding:
+            const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
         border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(
-                color: hasError ? _C.errorRed : _C.border)),
+            borderSide: BorderSide(color: hasError ? _C.errorRed : _C.border)),
         enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(
-                color: hasError ? _C.errorRed : _C.border)),
+            borderSide: BorderSide(color: hasError ? _C.errorRed : _C.border)),
         focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
             borderSide: BorderSide(
-                color: hasError ? _C.errorRed : _C.primary,
-                width: 1.5)),
+                color: hasError ? _C.errorRed : _C.primary, width: 1.5)),
       ),
     );
   }
@@ -601,15 +589,12 @@ class _Divider extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Row(children: [
-      Expanded(
-          child: Container(height: 1, color: const Color(0xFFF0F0F0))),
+      Expanded(child: Container(height: 1, color: const Color(0xFFF0F0F0))),
       const Padding(
         padding: EdgeInsets.symmetric(horizontal: 12),
-        child: Text('or',
-            style: TextStyle(color: _C.grey, fontSize: 12)),
+        child: Text('or', style: TextStyle(color: _C.grey, fontSize: 12)),
       ),
-      Expanded(
-          child: Container(height: 1, color: const Color(0xFFF0F0F0))),
+      Expanded(child: Container(height: 1, color: const Color(0xFFF0F0F0))),
     ]);
   }
 }
@@ -633,8 +618,7 @@ class _SocialBtn extends StatelessWidget {
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: const Color(0xFFEEEEEE)),
           boxShadow: [
-            BoxShadow(
-                color: Colors.black.withOpacity(0.04), blurRadius: 6),
+            BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 6),
           ],
         ),
         child: Icon(icon, size: 22, color: const Color(0xFF444444)),

@@ -15,9 +15,10 @@ import 'package:gude_app/features/marketplace/presentation/job_dashboard_page.da
 import 'package:gude_app/features/wallet/presentation/wallet_page.dart';
 import 'package:gude_app/features/wallet/presentation/budget_planner_page.dart';
 import 'package:gude_app/features/wallet/presentation/savings_goals_page.dart';
-// SendMoneyScreen AND ReceivedMoneyScreen both live in send_money_screen.dart
-import 'package:gude_app/features/wallet/presentation/screens/send_money_screen.dart';
+import 'package:gude_app/features/wallet/presentation/screens/send_money_screen.dart'
+    hide ReceivedMoneyScreen; // ← fixes the naming conflict
 import 'package:gude_app/features/wallet/presentation/screens/withdraw_screen.dart';
+import 'package:gude_app/features/wallet/presentation/screens/received_money_screen.dart';
 import 'package:gude_app/features/stability/presentation/stability_page.dart';
 import 'package:gude_app/features/stability/presentation/weekly_checkin_page.dart';
 import 'package:gude_app/features/support_hub/presentation/support_page.dart';
@@ -25,15 +26,18 @@ import 'package:gude_app/features/home/presentation/home_page.dart';
 import 'package:gude_app/features/profile/presentation/profile_page.dart';
 import 'package:gude_app/features/messaging/presentation/messaging_inbox_page.dart';
 import 'package:gude_app/features/community/presentation/community_chat_page.dart';
+import 'package:gude_app/features/community/presentation/notice_board_page.dart';
 import 'package:gude_app/features/buyer/presentation/buyer_profile_page.dart';
 import 'package:gude_app/shared/widgets/bottom_nav_shell.dart';
 import 'package:gude_app/features/auth/presentation/buyer_onboarding_welcome_page.dart';
+import 'package:gude_app/features/institution/presentation/institution_marketplace_page.dart';
+import 'package:gude_app/features/institution/presentation/institution_profile_page.dart';
 
 class AppRouter {
   static final router = GoRouter(
     initialLocation: '/splash',
     routes: [
-      // ── Auth & onboarding ────────────────────────────────────
+      // Auth & onboarding
       GoRoute(path: '/splash', builder: (c, s) => const SplashPage()),
       GoRoute(path: '/onboarding', builder: (c, s) => const OnboardingPage()),
       GoRoute(path: '/login', builder: (c, s) => const LoginPage()),
@@ -45,8 +49,6 @@ class AppRouter {
       GoRoute(
           path: '/verify-student',
           builder: (c, s) => const StudentVerificationPage()),
-
-      // ── Buyer onboarding flow ────────────────────────────────
       GoRoute(
           path: '/buyer-onboarding/welcome',
           builder: (c, s) => const BuyerOnboardingWelcomePage()),
@@ -65,7 +67,7 @@ class AppRouter {
           path: '/buyer-onboarding/complete',
           builder: (c, s) => const BuyerOnboardingCompletePage()),
 
-      // ── Marketplace sub-screens (outside shell) ──────────────
+      // Marketplace sub-screens
       GoRoute(
           path: '/marketplace/create',
           builder: (c, s) => const CreateListingPage()),
@@ -101,7 +103,7 @@ class AppRouter {
             return HireStudentPage(listing: listing);
           }),
 
-      // ── Wallet sub-screens (outside shell) ───────────────────
+      // Wallet sub-screens
       GoRoute(
           path: '/wallet/budget', builder: (c, s) => const BudgetPlannerPage()),
       GoRoute(
@@ -114,14 +116,16 @@ class AppRouter {
           path: '/wallet/received',
           builder: (_, __) => const ReceivedMoneyScreen()),
 
-      // ── Stability (outside shell) ────────────────────────────
+      // Stability
       GoRoute(
           path: '/stability/checkin',
           builder: (c, s) => const WeeklyCheckinPage()),
 
-      // ════════════════════════════════════════════════════════
-      // STUDENT SHELL
-      // ════════════════════════════════════════════════════════
+      // Notice Board
+      GoRoute(
+          path: '/notice-board', builder: (c, s) => const NoticeBoardPage()),
+
+      // Student Shell
       ShellRoute(
         builder: (context, state, child) => BottomNavShell(child: child),
         routes: [
@@ -129,10 +133,8 @@ class AppRouter {
           GoRoute(
               path: '/marketplace', builder: (c, s) => const MarketplacePage()),
           GoRoute(path: '/wallet', builder: (c, s) => const WalletPage()),
-          // Direct 1-to-1 messaging (student ↔ buyer / peer)
           GoRoute(
               path: '/messages', builder: (c, s) => const MessagingInboxPage()),
-          // Community group rooms + service request feed
           GoRoute(
               path: '/community', builder: (c, s) => const CommunityChatPage()),
           GoRoute(path: '/support', builder: (c, s) => const SupportPage()),
@@ -141,9 +143,20 @@ class AppRouter {
         ],
       ),
 
-      // ════════════════════════════════════════════════════════
-      // BUYER SHELL
-      // ════════════════════════════════════════════════════════
+      // Institution Shell
+      ShellRoute(
+        builder: (context, state, child) => BottomNavShell(child: child),
+        routes: [
+          GoRoute(
+              path: '/institution/marketplace',
+              builder: (c, s) => const InstitutionMarketplacePage()),
+          GoRoute(
+              path: '/institution/profile',
+              builder: (c, s) => const InstitutionProfilePage()),
+        ],
+      ),
+
+      // Buyer Shell
       ShellRoute(
         builder: (context, state, child) => BottomNavShell(child: child),
         routes: [
