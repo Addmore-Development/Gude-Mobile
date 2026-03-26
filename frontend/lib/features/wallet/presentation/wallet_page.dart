@@ -7,13 +7,13 @@ import 'package:gude_app/core/state/financial_health.dart';
 // COLORS
 // ─────────────────────────────────────────────────────────────
 class _C {
-  static const primary   = Color(0xFFE30613);
-  static const dark      = Color(0xFF1A1A1A);
-  static const grey      = Color(0xFF888888);
+  static const primary = Color(0xFFE30613);
+  static const dark = Color(0xFF1A1A1A);
+  static const grey = Color(0xFF888888);
   static const lightGrey = Color(0xFFF5F5F5);
-  static const border    = Color(0xFFEEEEEE);
-  static const green     = Color(0xFF10B981);
-  static const amber     = Color(0xFFF59E0B);
+  static const border = Color(0xFFEEEEEE);
+  static const green = Color(0xFF10B981);
+  static const amber = Color(0xFFF59E0B);
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -30,44 +30,81 @@ class _WalletPageState extends State<WalletPage> {
   bool _balanceVisible = true;
 
   double get _monthlyBudget => FinancialHealth.monthlyBudget;
-  double get _totalSpent    => FinancialHealth.totalSpent;
-  double get _income        => FinancialHealth.income;
-  double get _healthScore   => FinancialHealth.score;
+  double get _totalSpent => FinancialHealth.totalSpent;
+  double get _income => FinancialHealth.income;
+  double get _healthScore => FinancialHealth.score;
 
-  Color  get _healthColor => Color(FinancialHealth.colorValue);
+  Color get _healthColor => Color(FinancialHealth.colorValue);
   String get _healthLabel => FinancialHealth.label;
   String get _healthEmoji => FinancialHealth.emoji;
 
   // ── Pocket data ───────────────────────────────────────────
   static const _pockets = [
-    {'name': 'Saving',        'balance': 190.0,  'emoji': '💰', 'color': 0xFF1A1A1A},
-    {'name': 'Transport',     'balance': 100.0,  'emoji': '🚌', 'color': 0xFF1A3A8F},
-    {'name': 'Grocery',       'balance': 120.0,  'emoji': '🛒', 'color': 0xFF065F46},
-    {'name': 'Accommodation', 'balance': 200.0,  'emoji': '🏠', 'color': 0xFF5B21B6},
+    {'name': 'Saving', 'balance': 190.0, 'emoji': '💰', 'color': 0xFF1A1A1A},
+    {
+      'name': 'Transport',
+      'balance': 100.0,
+      'emoji': '🚌',
+      'color': 0xFF1A3A8F
+    },
+    {'name': 'Grocery', 'balance': 120.0, 'emoji': '🛒', 'color': 0xFF065F46},
+    {
+      'name': 'Accommodation',
+      'balance': 200.0,
+      'emoji': '🏠',
+      'color': 0xFF5B21B6
+    },
   ];
 
   final List<_SpendingCategory> _categories = [
-    _SpendingCategory('Food',          650, 500, const Color(0xFF10B981), Icons.fastfood_outlined),
-    _SpendingCategory('Transport',     420, 300, const Color(0xFF3B82F6), Icons.directions_bus_outlined),
-    _SpendingCategory('Entertainment', 380, 150, const Color(0xFFF59E0B), Icons.sports_esports_outlined),
-    _SpendingCategory('Data/Airtime',  180, 200, const Color(0xFF8B5CF6), Icons.wifi_outlined),
-    _SpendingCategory('Textbooks',     150, 300, const Color(0xFFEC4899), Icons.book_outlined),
+    _SpendingCategory(
+        'Food', 650, 500, const Color(0xFF10B981), Icons.fastfood_outlined),
+    _SpendingCategory('Transport', 420, 300, const Color(0xFF3B82F6),
+        Icons.directions_bus_outlined),
+    _SpendingCategory('Entertainment', 380, 150, const Color(0xFFF59E0B),
+        Icons.sports_esports_outlined),
+    _SpendingCategory(
+        'Data/Airtime', 180, 200, const Color(0xFF8B5CF6), Icons.wifi_outlined),
+    _SpendingCategory(
+        'Textbooks', 150, 300, const Color(0xFFEC4899), Icons.book_outlined),
   ];
 
   final List<_Transaction> _transactions = [
-    _Transaction('Tutoring Session — James', 150.00, true,  'Today, 10:30',     Icons.school_outlined),
-    _Transaction('Withdrawal to FNB',        500.00, false, 'Today, 08:15',     Icons.arrow_upward_rounded),
-    _Transaction('Design Work — Sipho',      300.00, true,  'Yesterday, 15:42', Icons.brush_outlined),
-    _Transaction('Chicken Licken',            89.00, false, 'Yesterday, 13:10', Icons.fastfood_outlined),
-    _Transaction('Photography Gig',          450.00, true,  'Mon, 09:00',       Icons.camera_alt_outlined),
-    _Transaction('Uber',                      75.00, false, 'Mon, 07:30',       Icons.directions_car_outlined),
+    _Transaction('Tutoring Session — James', 150.00, true, 'Today, 10:30',
+        Icons.school_outlined),
+    _Transaction('Withdrawal to FNB', 500.00, false, 'Today, 08:15',
+        Icons.arrow_upward_rounded),
+    _Transaction('Design Work — Sipho', 300.00, true, 'Yesterday, 15:42',
+        Icons.brush_outlined),
+    _Transaction('Chicken Licken', 89.00, false, 'Yesterday, 13:10',
+        Icons.fastfood_outlined),
+    _Transaction('Photography Gig', 450.00, true, 'Mon, 09:00',
+        Icons.camera_alt_outlined),
+    _Transaction(
+        'Uber', 75.00, false, 'Mon, 07:30', Icons.directions_car_outlined),
   ];
 
   final List<_Resource> _resources = [
-    _Resource(title: 'The 50/30/20 Budget Rule',        source: 'National Credit Regulator', icon: Icons.pie_chart_outline,    tag: 'Budgeting'),
-    _Resource(title: 'Make Your NSFAS Money Last',       source: 'MyBursary SA',              icon: Icons.savings_outlined,     tag: 'NSFAS Guide'),
-    _Resource(title: 'Free Financial Literacy Course',   source: 'Coursera (Audit Free)',      icon: Icons.play_circle_outline,  tag: 'Free Course'),
-    _Resource(title: 'Student Debt & Budgeting Toolkit', source: 'NSFAS Official',             icon: Icons.description_outlined, tag: 'Official'),
+    _Resource(
+        title: 'The 50/30/20 Budget Rule',
+        source: 'National Credit Regulator',
+        icon: Icons.pie_chart_outline,
+        tag: 'Budgeting'),
+    _Resource(
+        title: 'Make Your NSFAS Money Last',
+        source: 'MyBursary SA',
+        icon: Icons.savings_outlined,
+        tag: 'NSFAS Guide'),
+    _Resource(
+        title: 'Free Financial Literacy Course',
+        source: 'Coursera (Audit Free)',
+        icon: Icons.play_circle_outline,
+        tag: 'Free Course'),
+    _Resource(
+        title: 'Student Debt & Budgeting Toolkit',
+        source: 'NSFAS Official',
+        icon: Icons.description_outlined,
+        tag: 'Official'),
   ];
 
   @override
@@ -107,7 +144,8 @@ class _WalletPageState extends State<WalletPage> {
                   income: _income,
                   spent: _totalSpent,
                   visible: _balanceVisible,
-                  onToggle: () => setState(() => _balanceVisible = !_balanceVisible),
+                  onToggle: () =>
+                      setState(() => _balanceVisible = !_balanceVisible),
                   pockets: _pockets,
                 ),
 
@@ -124,8 +162,7 @@ class _WalletPageState extends State<WalletPage> {
                         color: _healthColor.withOpacity(0.4), width: 1.5),
                     boxShadow: [
                       BoxShadow(
-                          color: Colors.black.withOpacity(0.04),
-                          blurRadius: 8),
+                          color: Colors.black.withOpacity(0.04), blurRadius: 8),
                     ],
                   ),
                   child: Column(
@@ -272,8 +309,7 @@ class _WalletPageState extends State<WalletPage> {
                         style: TextButton.styleFrom(
                             padding: EdgeInsets.zero,
                             minimumSize: Size.zero,
-                            tapTargetSize:
-                                MaterialTapTargetSize.shrinkWrap),
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap),
                         child: const Text('Fix →',
                             style: TextStyle(
                                 color: Color(0xFFE30613),
@@ -335,8 +371,7 @@ class _WalletPageState extends State<WalletPage> {
                     borderRadius: BorderRadius.circular(16),
                     boxShadow: [
                       BoxShadow(
-                          color: Colors.black.withOpacity(0.04),
-                          blurRadius: 8),
+                          color: Colors.black.withOpacity(0.04), blurRadius: 8),
                     ],
                   ),
                   child: Column(
@@ -374,8 +409,7 @@ class _WalletPageState extends State<WalletPage> {
                     borderRadius: BorderRadius.circular(16),
                     boxShadow: [
                       BoxShadow(
-                          color: Colors.black.withOpacity(0.04),
-                          blurRadius: 8),
+                          color: Colors.black.withOpacity(0.04), blurRadius: 8),
                     ],
                   ),
                   child: ListView.separated(
@@ -405,8 +439,7 @@ class _WalletPageState extends State<WalletPage> {
       backgroundColor: Colors.white,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
-          borderRadius:
-              BorderRadius.vertical(top: Radius.circular(24))),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (_) => DraggableScrollableSheet(
         expand: false,
         initialChildSize: 0.55,
@@ -427,8 +460,7 @@ class _WalletPageState extends State<WalletPage> {
                   color: Color(0xFF1A1A1A))),
           const SizedBox(height: 4),
           const Text('Earnings from completed gigs & marketplace sales',
-              style:
-                  TextStyle(fontSize: 12, color: Color(0xFF888888))),
+              style: TextStyle(fontSize: 12, color: Color(0xFF888888))),
           const SizedBox(height: 20),
           Container(
             margin: const EdgeInsets.symmetric(horizontal: 16),
@@ -447,8 +479,8 @@ class _WalletPageState extends State<WalletPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text('Total Earned this month',
-                          style: TextStyle(
-                              color: Colors.white70, fontSize: 12)),
+                          style:
+                              TextStyle(color: Colors.white70, fontSize: 12)),
                       SizedBox(height: 4),
                       Text('R 900.00',
                           style: TextStyle(
@@ -458,8 +490,8 @@ class _WalletPageState extends State<WalletPage> {
                               letterSpacing: -1)),
                       SizedBox(height: 8),
                       Text('3 gigs completed ✓',
-                          style: TextStyle(
-                              color: Colors.white70, fontSize: 12)),
+                          style:
+                              TextStyle(color: Colors.white70, fontSize: 12)),
                     ]),
               ),
               const Text('💸', style: TextStyle(fontSize: 42)),
@@ -495,8 +527,8 @@ class _WalletPageState extends State<WalletPage> {
 // ─────────────────────────────────────────────────────────────
 // WALLET CARD + POCKETS SIDE SCROLL
 // The main wallet card sits on the left; pockets scroll vertically
-// on the right so you can see all pockets immediately on the
-// wallet screen without navigating away.
+// on the right so all pockets are visible immediately without
+// navigating away.
 // ─────────────────────────────────────────────────────────────
 class _WalletCardWithPockets extends StatelessWidget {
   final double balance, income, spent;
@@ -551,8 +583,7 @@ class _WalletCardWithPockets extends StatelessWidget {
                   child: ListView.separated(
                     padding: EdgeInsets.zero,
                     itemCount: pockets.length,
-                    separatorBuilder: (_, __) =>
-                        const SizedBox(height: 6),
+                    separatorBuilder: (_, __) => const SizedBox(height: 6),
                     itemBuilder: (_, i) {
                       final p = pockets[i];
                       final color = Color(p['color'] as int);
@@ -577,19 +608,16 @@ class _WalletCardWithPockets extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Row(
-                              mainAxisAlignment:
-                                  MainAxisAlignment.spaceBetween,
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Text(p['emoji'] as String,
-                                    style:
-                                        const TextStyle(fontSize: 12)),
+                                    style: const TextStyle(fontSize: 12)),
                                 Container(
                                   width: 14,
                                   height: 10,
                                   decoration: BoxDecoration(
                                       color: const Color(0xFFD4AF37),
-                                      borderRadius:
-                                          BorderRadius.circular(2)),
+                                      borderRadius: BorderRadius.circular(2)),
                                 ),
                               ],
                             ),
@@ -662,9 +690,11 @@ class _RealisticWalletCard extends StatelessWidget {
       child: Stack(
         children: [
           Positioned(
-            top: -40, right: -30,
+            top: -40,
+            right: -30,
             child: Container(
-              width: 160, height: 160,
+              width: 160,
+              height: 160,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: Colors.white.withOpacity(0.06),
@@ -672,9 +702,11 @@ class _RealisticWalletCard extends StatelessWidget {
             ),
           ),
           Positioned(
-            bottom: -50, left: -20,
+            bottom: -50,
+            left: -20,
             child: Container(
-              width: 130, height: 130,
+              width: 130,
+              height: 130,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: Colors.white.withOpacity(0.05),
@@ -695,7 +727,8 @@ class _RealisticWalletCard extends StatelessWidget {
                         width: 26,
                         height: 26,
                         errorBuilder: (_, __, ___) => Container(
-                          width: 26, height: 26,
+                          width: 26,
+                          height: 26,
                           decoration: BoxDecoration(
                             color: Colors.white.withOpacity(0.25),
                             borderRadius: BorderRadius.circular(6),
@@ -724,24 +757,25 @@ class _RealisticWalletCard extends StatelessWidget {
                           visible
                               ? Icons.visibility_outlined
                               : Icons.visibility_off_outlined,
-                          color: Colors.white70, size: 16,
+                          color: Colors.white70,
+                          size: 16,
                         ),
                       ),
                       const SizedBox(width: 10),
                       Stack(children: [
                         Container(
-                          width: 20, height: 20,
+                          width: 20,
+                          height: 20,
                           decoration: const BoxDecoration(
-                              color: Color(0xFFEB001B),
-                              shape: BoxShape.circle),
+                              color: Color(0xFFEB001B), shape: BoxShape.circle),
                         ),
                         Positioned(
                           left: 12,
                           child: Container(
-                            width: 20, height: 20,
+                            width: 20,
+                            height: 20,
                             decoration: BoxDecoration(
-                                color: const Color(0xFFF79E1B)
-                                    .withOpacity(0.9),
+                                color: const Color(0xFFF79E1B).withOpacity(0.9),
                                 shape: BoxShape.circle),
                           ),
                         ),
@@ -751,7 +785,8 @@ class _RealisticWalletCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 Container(
-                  width: 30, height: 22,
+                  width: 30,
+                  height: 22,
                   decoration: BoxDecoration(
                     color: const Color(0xFFD4AF37),
                     borderRadius: BorderRadius.circular(4),
@@ -760,9 +795,7 @@ class _RealisticWalletCard extends StatelessWidget {
                 ),
                 const Spacer(),
                 Text(
-                  visible
-                      ? 'R ${balance.toStringAsFixed(2)}'
-                      : 'R ••••••',
+                  visible ? 'R ${balance.toStringAsFixed(2)}' : 'R ••••••',
                   style: const TextStyle(
                       color: Colors.white,
                       fontSize: 22,
@@ -776,17 +809,15 @@ class _RealisticWalletCard extends StatelessWidget {
                 Row(children: [
                   _CardStat(
                       label: 'Income',
-                      value: visible
-                          ? '+R ${income.toStringAsFixed(0)}'
-                          : '••••',
+                      value:
+                          visible ? '+R ${income.toStringAsFixed(0)}' : '••••',
                       icon: Icons.arrow_downward_rounded,
                       color: Colors.greenAccent),
                   const SizedBox(width: 16),
                   _CardStat(
                       label: 'Spent',
-                      value: visible
-                          ? '-R ${spent.toStringAsFixed(0)}'
-                          : '••••',
+                      value:
+                          visible ? '-R ${spent.toStringAsFixed(0)}' : '••••',
                       icon: Icons.arrow_upward_rounded,
                       color: Colors.orangeAccent),
                 ]),
@@ -821,8 +852,7 @@ class _CardStat extends StatelessWidget {
       ),
       const SizedBox(width: 5),
       Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text(label,
-            style: const TextStyle(color: Colors.white60, fontSize: 9)),
+        Text(label, style: const TextStyle(color: Colors.white60, fontSize: 9)),
         Text(value,
             style: const TextStyle(
                 color: Colors.white,
@@ -840,10 +870,10 @@ class _ChipPainter extends CustomPainter {
       ..color = const Color(0xFFB8964A)
       ..strokeWidth = 0.7
       ..style = PaintingStyle.stroke;
-    canvas.drawLine(Offset(size.width / 2, 0),
-        Offset(size.width / 2, size.height), paint);
-    canvas.drawLine(Offset(0, size.height / 2),
-        Offset(size.width, size.height / 2), paint);
+    canvas.drawLine(
+        Offset(size.width / 2, 0), Offset(size.width / 2, size.height), paint);
+    canvas.drawLine(
+        Offset(0, size.height / 2), Offset(size.width, size.height / 2), paint);
     canvas.drawLine(Offset(0, size.height * 0.3),
         Offset(size.width, size.height * 0.3), paint);
     canvas.drawLine(Offset(0, size.height * 0.7),
@@ -870,12 +900,12 @@ class _ProfitEntry extends StatelessWidget {
       decoration: BoxDecoration(
         color: const Color(0xFFF0FFF4),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-            color: const Color(0xFF10B981).withOpacity(0.3)),
+        border: Border.all(color: const Color(0xFF10B981).withOpacity(0.3)),
       ),
       child: Row(children: [
         Container(
-          width: 36, height: 36,
+          width: 36,
+          height: 36,
           decoration: BoxDecoration(
             color: const Color(0xFF10B981).withOpacity(0.15),
             borderRadius: BorderRadius.circular(10),
@@ -885,18 +915,16 @@ class _ProfitEntry extends StatelessWidget {
         ),
         const SizedBox(width: 12),
         Expanded(
-          child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title,
-                    style: const TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFF1A1A1A))),
-                Text(date,
-                    style: const TextStyle(
-                        fontSize: 11, color: Color(0xFF888888))),
-              ]),
+          child:
+              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(title,
+                style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF1A1A1A))),
+            Text(date,
+                style: const TextStyle(fontSize: 11, color: Color(0xFF888888))),
+          ]),
         ),
         Text('+$amount',
             style: const TextStyle(
@@ -949,8 +977,7 @@ class _CategoryBar extends StatelessWidget {
     final pct = (cat.spent / cat.budget).clamp(0.0, 1.0);
     return Padding(
       padding: const EdgeInsets.only(bottom: 14),
-      child:
-          Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Row(children: [
           Icon(cat.icon, size: 16, color: cat.color),
           const SizedBox(width: 8),
@@ -970,8 +997,7 @@ class _CategoryBar extends StatelessWidget {
           if (cat.isOver) ...[
             const SizedBox(width: 4),
             Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
               decoration: BoxDecoration(
                   color: const Color(0xFFEF4444),
                   borderRadius: BorderRadius.circular(4)),
@@ -1015,31 +1041,28 @@ class _ResourceTile extends StatelessWidget {
       ),
       child: Row(children: [
         Container(
-          width: 36, height: 36,
+          width: 36,
+          height: 36,
           decoration: BoxDecoration(
               color: const Color(0xFFE30613).withOpacity(0.1),
               borderRadius: BorderRadius.circular(10)),
-          child: Icon(resource.icon,
-              size: 18, color: const Color(0xFFE30613)),
+          child: Icon(resource.icon, size: 18, color: const Color(0xFFE30613)),
         ),
         const SizedBox(width: 10),
         Expanded(
-          child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(resource.title,
-                    style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFF1A1A1A))),
-                Text(resource.source,
-                    style: const TextStyle(
-                        fontSize: 11, color: Color(0xFF888888))),
-              ]),
+          child:
+              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(resource.title,
+                style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF1A1A1A))),
+            Text(resource.source,
+                style: const TextStyle(fontSize: 11, color: Color(0xFF888888))),
+          ]),
         ),
         Container(
-          padding:
-              const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
           decoration: BoxDecoration(
               color: const Color(0xFFE30613).withOpacity(0.1),
               borderRadius: BorderRadius.circular(6)),
@@ -1064,11 +1087,11 @@ class _TransactionTile extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Row(children: [
         Container(
-          width: 40, height: 40,
+          width: 40,
+          height: 40,
           decoration: BoxDecoration(
-            color: tx.isCredit
-                ? const Color(0xFFE8F5E9)
-                : const Color(0xFFFFF3E0),
+            color:
+                tx.isCredit ? const Color(0xFFE8F5E9) : const Color(0xFFFFF3E0),
             borderRadius: BorderRadius.circular(12),
           ),
           child: Icon(tx.icon,
@@ -1079,20 +1102,18 @@ class _TransactionTile extends StatelessWidget {
         ),
         const SizedBox(width: 12),
         Expanded(
-          child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(tx.title,
-                    style: const TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF1A1A1A)),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis),
-                Text(tx.date,
-                    style: const TextStyle(
-                        fontSize: 11, color: Color(0xFF999999))),
-              ]),
+          child:
+              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(tx.title,
+                style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF1A1A1A)),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis),
+            Text(tx.date,
+                style: const TextStyle(fontSize: 11, color: Color(0xFF999999))),
+          ]),
         ),
         Text(
           '${tx.isCredit ? '+' : '-'}R ${tx.amount.toStringAsFixed(2)}',
@@ -1121,7 +1142,8 @@ class _QuickAction extends StatelessWidget {
       onTap: onTap,
       child: Column(children: [
         Container(
-          width: 46, height: 46,
+          width: 46,
+          height: 46,
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(14),
