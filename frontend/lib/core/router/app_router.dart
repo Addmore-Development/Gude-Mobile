@@ -24,7 +24,6 @@ import 'package:gude_app/features/support_hub/presentation/support_page.dart';
 import 'package:gude_app/features/home/presentation/home_page.dart';
 import 'package:gude_app/features/profile/presentation/profile_page.dart';
 import 'package:gude_app/features/messaging/presentation/messaging_inbox_page.dart';
-import 'package:gude_app/features/wallet/presentation/screens/received_money_screen.dart';
 import 'package:gude_app/features/community/presentation/community_chat_page.dart';
 import 'package:gude_app/features/buyer/presentation/buyer_profile_page.dart';
 import 'package:gude_app/shared/widgets/bottom_nav_shell.dart';
