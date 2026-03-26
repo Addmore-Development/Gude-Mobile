@@ -23,6 +23,7 @@ class _C {
 class SendMoneyScreen extends StatefulWidget {
   const SendMoneyScreen({super.key});
 
+
   @override
   State<SendMoneyScreen> createState() => _SendMoneyScreenState();
 }
@@ -73,6 +74,7 @@ class _SendMoneyScreenState extends State<SendMoneyScreen> {
       'initials': 'TM',
       'color': const Color(0xFF3F51B5),
       'lastSentDate': DateTime.now().subtract(const Duration(hours: 3)),
+      'lastSentDate': DateTime.now().subtract(const Duration(hours: 3)),
       'totalSent': 75.0,
     },
   ];
@@ -116,10 +118,7 @@ class _SendMoneyScreenState extends State<SendMoneyScreen> {
     return (_selectedContact?['name'] as String?) ?? '';
   }
 
-  bool get _canProceedStep0 {
-    if (_useManualEntry) return _manualNameCtrl.text.trim().isNotEmpty;
-    return _selectedContact != null;
-  }
+  bool get _canProceedStep0 => _selectedContactIndex >= 0;
 
   bool get _canProceedStep1 {
     final amount = double.tryParse(_amountCtrl.text) ?? 0;
@@ -149,19 +148,23 @@ class _SendMoneyScreenState extends State<SendMoneyScreen> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Text('Add New Contact',
             style: TextStyle(fontWeight: FontWeight.w600)),
+        title: const Text('Add New Contact',
+            style: TextStyle(fontWeight: FontWeight.w600)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             TextField(
               controller: nameCtrl,
+              controller: nameCtrl,
               decoration: const InputDecoration(
                 labelText: 'Full Name',
                 border: OutlineInputBorder(),
-                hintText: 'e.g., John Doe',
+                hintText: 'e.g. John Doe',
               ),
             ),
             const SizedBox(height: 12),
             TextField(
+              controller: numberCtrl,
               controller: numberCtrl,
               keyboardType: TextInputType.phone,
               decoration: const InputDecoration(
@@ -211,6 +214,7 @@ class _SendMoneyScreenState extends State<SendMoneyScreen> {
                 );
               }
             },
+            style: ElevatedButton.styleFrom(backgroundColor: _C.primary),
             style: ElevatedButton.styleFrom(backgroundColor: _C.primary),
             child: const Text('Add', style: TextStyle(color: Colors.white)),
           ),
@@ -575,6 +579,7 @@ class _SendMoneyScreenState extends State<SendMoneyScreen> {
                 // Recipient summary
                 Container(
                   padding: const EdgeInsets.all(14),
+                  padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
                     color: _C.lightGrey,
                     borderRadius: BorderRadius.circular(12),
@@ -708,7 +713,10 @@ class _SendMoneyScreenState extends State<SendMoneyScreen> {
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 elevation: _canProceedStep1 ? 4 : 0,
                 shadowColor: _C.primary.withOpacity(0.4),
+                elevation: _canProceedStep1 ? 4 : 0,
+                shadowColor: _C.primary.withOpacity(0.4),
                 shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14)),
                     borderRadius: BorderRadius.circular(14)),
               ),
               onPressed:
