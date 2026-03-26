@@ -1,11 +1,4 @@
-// ═══════════════════════════════════════════════════════════════
-// app_router.dart — updated
-// Changes:
-//   • /community  route added to Student shell (replaces /messages
-//     OR sits alongside it — community chat is auto-joined by university/city)
-//   • /messages   kept for direct 1-to-1 messaging inbox
-//   • Buyer shell unchanged
-// ═══════════════════════════════════════════════════════════════
+// lib/core/router/app_router.dart
 import 'package:go_router/go_router.dart';
 import 'package:gude_app/features/auth/presentation/splash_page.dart';
 import 'package:gude_app/features/auth/presentation/onboarding_page.dart';
@@ -22,6 +15,7 @@ import 'package:gude_app/features/marketplace/presentation/job_dashboard_page.da
 import 'package:gude_app/features/wallet/presentation/wallet_page.dart';
 import 'package:gude_app/features/wallet/presentation/budget_planner_page.dart';
 import 'package:gude_app/features/wallet/presentation/savings_goals_page.dart';
+// SendMoneyScreen AND ReceivedMoneyScreen both live in send_money_screen.dart
 import 'package:gude_app/features/wallet/presentation/screens/send_money_screen.dart';
 import 'package:gude_app/features/wallet/presentation/screens/withdraw_screen.dart';
 import 'package:gude_app/features/stability/presentation/stability_page.dart';
@@ -30,15 +24,9 @@ import 'package:gude_app/features/support_hub/presentation/support_page.dart';
 import 'package:gude_app/features/home/presentation/home_page.dart';
 import 'package:gude_app/features/profile/presentation/profile_page.dart';
 import 'package:gude_app/features/messaging/presentation/messaging_inbox_page.dart';
-
-// ── NEW: Community Chat ──────────────────────────────────────
 import 'package:gude_app/features/community/presentation/community_chat_page.dart';
-
 import 'package:gude_app/features/buyer/presentation/buyer_profile_page.dart';
 import 'package:gude_app/shared/widgets/bottom_nav_shell.dart';
-import 'package:gude_app/features/auth/presentation/buyer_onboarding_welcome_page.dart';
-
-// Buyer onboarding
 import 'package:gude_app/features/auth/presentation/buyer_onboarding_welcome_page.dart';
 
 class AppRouter {
@@ -54,14 +42,14 @@ class AppRouter {
       GoRoute(path: '/skills',          builder: (c, s) => const SkillsSelectionPage()),
       GoRoute(path: '/verify-student',  builder: (c, s) => const StudentVerificationPage()),
 
-      // ── Buyer onboarding flow ───────────────────────────────
+      // ── Buyer onboarding ─────────────────────────────────────
       GoRoute(path: '/buyer-onboarding/welcome',   builder: (c, s) => const BuyerOnboardingWelcomePage()),
       GoRoute(path: '/buyer-onboarding/type',      builder: (c, s) => const BuyerTypePage()),
       GoRoute(path: '/buyer-onboarding/interests', builder: (c, s) => BuyerInterestsPage(extra: s.extra as Map<String, dynamic>?)),
       GoRoute(path: '/buyer-onboarding/profile',   builder: (c, s) => BuyerProfileSetupPage(extra: s.extra as Map<String, dynamic>?)),
       GoRoute(path: '/buyer-onboarding/complete',  builder: (c, s) => const BuyerOnboardingCompletePage()),
 
-      // ── Marketplace sub-screens (outside shell) ────────────
+      // ── Marketplace sub-screens ───────────────────────────────
       GoRoute(path: '/marketplace/create', builder: (c, s) => const CreateListingPage()),
       GoRoute(path: '/marketplace/jobs',   builder: (c, s) => const JobDashboardPage()),
       GoRoute(path: '/marketplace/listing', builder: (c, s) {
@@ -81,21 +69,19 @@ class AppRouter {
         return HireStudentPage(listing: listing);
       }),
 
-      // ── Wallet sub-screens (outside shell) ─────────────────
+      // ── Wallet sub-screens ────────────────────────────────────
       GoRoute(path: '/wallet/budget',   builder: (c, s) => const BudgetPlannerPage()),
       GoRoute(path: '/wallet/savings',  builder: (c, s) => const SavingsGoalsPage()),
       GoRoute(path: '/wallet/send',     builder: (_, __) => const SendMoneyScreen()),
       GoRoute(path: '/wallet/withdraw', builder: (_, __) => const WithdrawScreen()),
+      // ReceivedMoneyScreen is defined in send_money_screen.dart
       GoRoute(path: '/wallet/received', builder: (_, __) => const ReceivedMoneyScreen()),
 
-      // ── Stability (outside shell) ───────────────────────────
+      // ── Stability ─────────────────────────────────────────────
       GoRoute(path: '/stability/checkin', builder: (c, s) => const WeeklyCheckinPage()),
 
       // ════════════════════════════════════════════════════════
-      // STUDENT SHELL — full navigation
-      //
-      // Bottom nav tabs (in order):
-      //   Home | Marketplace | Wallet | Community | Stability | Support | Profile
+      // STUDENT SHELL
       // ════════════════════════════════════════════════════════
       ShellRoute(
         builder: (context, state, child) => BottomNavShell(child: child),
@@ -103,9 +89,9 @@ class AppRouter {
           GoRoute(path: '/home',        builder: (c, s) => const HomePage()),
           GoRoute(path: '/marketplace', builder: (c, s) => const MarketplacePage()),
           GoRoute(path: '/wallet',      builder: (c, s) => const WalletPage()),
-          // ── Direct messaging (1-to-1) kept as before ────────
+          // Direct 1-to-1 messaging (student ↔ buyer / peer)
           GoRoute(path: '/messages',    builder: (c, s) => const MessagingInboxPage()),
-          // ── NEW: Community group chats ───────────────────────
+          // Community group rooms + service request feed
           GoRoute(path: '/community',   builder: (c, s) => const CommunityChatPage()),
           GoRoute(path: '/support',     builder: (c, s) => const SupportPage()),
           GoRoute(path: '/stability',   builder: (c, s) => const StabilityPage()),
@@ -114,7 +100,7 @@ class AppRouter {
       ),
 
       // ════════════════════════════════════════════════════════
-      // BUYER SHELL — marketplace + profile only
+      // BUYER SHELL
       // ════════════════════════════════════════════════════════
       ShellRoute(
         builder: (context, state, child) => BottomNavShell(child: child),

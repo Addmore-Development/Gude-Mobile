@@ -38,6 +38,14 @@ class _WalletPageState extends State<WalletPage> {
   String get _healthLabel => FinancialHealth.label;
   String get _healthEmoji => FinancialHealth.emoji;
 
+  // ── Pocket data ───────────────────────────────────────────
+  static const _pockets = [
+    {'name': 'Saving',        'balance': 190.0,  'emoji': '💰', 'color': 0xFF1A1A1A},
+    {'name': 'Transport',     'balance': 100.0,  'emoji': '🚌', 'color': 0xFF1A3A8F},
+    {'name': 'Grocery',       'balance': 120.0,  'emoji': '🛒', 'color': 0xFF065F46},
+    {'name': 'Accommodation', 'balance': 200.0,  'emoji': '🏠', 'color': 0xFF5B21B6},
+  ];
+
   final List<_SpendingCategory> _categories = [
     _SpendingCategory('Food',          650, 500, const Color(0xFF10B981), Icons.fastfood_outlined),
     _SpendingCategory('Transport',     420, 300, const Color(0xFF3B82F6), Icons.directions_bus_outlined),
@@ -93,14 +101,14 @@ class _WalletPageState extends State<WalletPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // ── REALISTIC CARD ────────────────────────
-                _RealisticWalletCard(
+                // ── WALLET CARD + POCKETS SIDE SCROLL ────
+                _WalletCardWithPockets(
                   balance: _income - _totalSpent,
                   income: _income,
                   spent: _totalSpent,
                   visible: _balanceVisible,
-                  onToggle: () =>
-                      setState(() => _balanceVisible = !_balanceVisible),
+                  onToggle: () => setState(() => _balanceVisible = !_balanceVisible),
+                  pockets: _pockets,
                 ),
 
                 // ── Financial health card ─────────────────
@@ -290,6 +298,7 @@ class _WalletPageState extends State<WalletPage> {
                           icon: Icons.call_received_rounded,
                           label: 'Received',
                           onTap: () => context.push('/wallet/received')),
+                      _QuickAction(
                           icon: Icons.trending_up_rounded,
                           label: 'Profit',
                           onTap: () => _showProfitSheet(context)),
@@ -308,9 +317,6 @@ class _WalletPageState extends State<WalletPage> {
                     ],
                   ),
                 ),
-
-                // ── Pockets quick-view ────────────────────
-                _PocketsQuickView(),
 
                 // ── Spending by category ──────────────────
                 const Padding(
@@ -487,7 +493,140 @@ class _WalletPageState extends State<WalletPage> {
 }
 
 // ─────────────────────────────────────────────────────────────
-// REALISTIC WALLET CARD  (Gude-branded physical-style card)
+// WALLET CARD + POCKETS SIDE SCROLL
+// The main wallet card sits on the left; pockets scroll vertically
+// on the right so you can see all pockets immediately on the
+// wallet screen without navigating away.
+// ─────────────────────────────────────────────────────────────
+class _WalletCardWithPockets extends StatelessWidget {
+  final double balance, income, spent;
+  final bool visible;
+  final VoidCallback onToggle;
+  final List<Map<String, dynamic>> pockets;
+
+  const _WalletCardWithPockets({
+    required this.balance,
+    required this.income,
+    required this.spent,
+    required this.visible,
+    required this.onToggle,
+    required this.pockets,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // ── Main wallet card ────────────────────────────
+          Expanded(
+            flex: 3,
+            child: _RealisticWalletCard(
+              balance: balance,
+              income: income,
+              spent: spent,
+              visible: visible,
+              onToggle: onToggle,
+            ),
+          ),
+          const SizedBox(width: 10),
+          // ── Pockets column (scrollable) ──────────────────
+          SizedBox(
+            width: 82,
+            height: 200,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Pockets',
+                  style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF888888)),
+                ),
+                const SizedBox(height: 4),
+                Expanded(
+                  child: ListView.separated(
+                    padding: EdgeInsets.zero,
+                    itemCount: pockets.length,
+                    separatorBuilder: (_, __) =>
+                        const SizedBox(height: 6),
+                    itemBuilder: (_, i) {
+                      final p = pockets[i];
+                      final color = Color(p['color'] as int);
+                      return Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 7),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [color, color.withOpacity(0.75)],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          borderRadius: BorderRadius.circular(10),
+                          boxShadow: [
+                            BoxShadow(
+                                color: color.withOpacity(0.3),
+                                blurRadius: 4,
+                                offset: const Offset(0, 2)),
+                          ],
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment:
+                                  MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(p['emoji'] as String,
+                                    style:
+                                        const TextStyle(fontSize: 12)),
+                                Container(
+                                  width: 14,
+                                  height: 10,
+                                  decoration: BoxDecoration(
+                                      color: const Color(0xFFD4AF37),
+                                      borderRadius:
+                                          BorderRadius.circular(2)),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'R${(p['balance'] as double).toStringAsFixed(0)}',
+                              style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w800),
+                            ),
+                            Text(
+                              p['name'] as String,
+                              style: const TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 8,
+                                  fontWeight: FontWeight.w500),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────
+// REALISTIC WALLET CARD
 // ─────────────────────────────────────────────────────────────
 class _RealisticWalletCard extends StatelessWidget {
   final double balance, income, spent;
@@ -505,7 +644,6 @@ class _RealisticWalletCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
       height: 200,
       decoration: BoxDecoration(
         gradient: const LinearGradient(
@@ -523,7 +661,6 @@ class _RealisticWalletCard extends StatelessWidget {
       ),
       child: Stack(
         children: [
-          // ── Decorative circles ────────────────────────
           Positioned(
             top: -40, right: -30,
             child: Container(
@@ -544,72 +681,67 @@ class _RealisticWalletCard extends StatelessWidget {
               ),
             ),
           ),
-          // ── Card content ──────────────────────────────
           Padding(
-            padding: const EdgeInsets.all(22),
+            padding: const EdgeInsets.all(18),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Top row: logo + mastercard + eye
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    // Gude logo mark from assets
                     Row(children: [
                       Image.asset(
                         'assets/images/gude_logo.webp',
-                        width: 30,
-                        height: 30,
+                        width: 26,
+                        height: 26,
                         errorBuilder: (_, __, ___) => Container(
-                          width: 30, height: 30,
+                          width: 26, height: 26,
                           decoration: BoxDecoration(
                             color: Colors.white.withOpacity(0.25),
-                            borderRadius: BorderRadius.circular(7),
+                            borderRadius: BorderRadius.circular(6),
                           ),
                           child: const Center(
                             child: Text('G',
                                 style: TextStyle(
                                     color: Colors.white,
                                     fontWeight: FontWeight.w900,
-                                    fontSize: 16)),
+                                    fontSize: 14)),
                           ),
                         ),
                       ),
-                      const SizedBox(width: 6),
+                      const SizedBox(width: 5),
                       const Text('GUDE',
                           style: TextStyle(
                               color: Colors.white,
                               fontWeight: FontWeight.w900,
-                              fontSize: 13,
+                              fontSize: 11,
                               letterSpacing: 1)),
                     ]),
                     Row(children: [
-                      // Visibility toggle
                       GestureDetector(
                         onTap: onToggle,
                         child: Icon(
                           visible
                               ? Icons.visibility_outlined
                               : Icons.visibility_off_outlined,
-                          color: Colors.white70, size: 18,
+                          color: Colors.white70, size: 16,
                         ),
                       ),
-                      const SizedBox(width: 12),
-                      // Mastercard logo
+                      const SizedBox(width: 10),
                       Stack(children: [
                         Container(
-                          width: 24, height: 24,
+                          width: 20, height: 20,
                           decoration: const BoxDecoration(
                               color: Color(0xFFEB001B),
                               shape: BoxShape.circle),
                         ),
                         Positioned(
-                          left: 14,
+                          left: 12,
                           child: Container(
-                            width: 24, height: 24,
+                            width: 20, height: 20,
                             decoration: BoxDecoration(
-                                color:
-                                    const Color(0xFFF79E1B).withOpacity(0.9),
+                                color: const Color(0xFFF79E1B)
+                                    .withOpacity(0.9),
                                 shape: BoxShape.circle),
                           ),
                         ),
@@ -617,40 +749,30 @@ class _RealisticWalletCard extends StatelessWidget {
                     ]),
                   ],
                 ),
-
-                const SizedBox(height: 10),
-
-                // EMV chip
+                const SizedBox(height: 8),
                 Container(
-                  width: 34, height: 24,
+                  width: 30, height: 22,
                   decoration: BoxDecoration(
                     color: const Color(0xFFD4AF37),
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: CustomPaint(painter: _ChipPainter()),
                 ),
-
                 const Spacer(),
-
-                // Balance
                 Text(
                   visible
                       ? 'R ${balance.toStringAsFixed(2)}'
                       : 'R ••••••',
                   style: const TextStyle(
                       color: Colors.white,
-                      fontSize: 28,
+                      fontSize: 22,
                       fontWeight: FontWeight.w800,
                       letterSpacing: -0.8),
                 ),
                 const SizedBox(height: 2),
                 const Text('Available Balance',
-                    style:
-                        TextStyle(color: Colors.white60, fontSize: 11)),
-
-                const SizedBox(height: 10),
-
-                // Income / Spent row
+                    style: TextStyle(color: Colors.white60, fontSize: 10)),
+                const SizedBox(height: 8),
                 Row(children: [
                   _CardStat(
                       label: 'Income',
@@ -659,7 +781,7 @@ class _RealisticWalletCard extends StatelessWidget {
                           : '••••',
                       icon: Icons.arrow_downward_rounded,
                       color: Colors.greenAccent),
-                  const SizedBox(width: 24),
+                  const SizedBox(width: 16),
                   _CardStat(
                       label: 'Spent',
                       value: visible
@@ -695,23 +817,22 @@ class _CardStat extends StatelessWidget {
         decoration: BoxDecoration(
             color: Colors.white.withOpacity(0.15),
             borderRadius: BorderRadius.circular(5)),
-        child: Icon(icon, color: color, size: 12),
+        child: Icon(icon, color: color, size: 10),
       ),
-      const SizedBox(width: 6),
+      const SizedBox(width: 5),
       Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Text(label,
             style: const TextStyle(color: Colors.white60, fontSize: 9)),
         Text(value,
             style: const TextStyle(
                 color: Colors.white,
-                fontSize: 11,
+                fontSize: 10,
                 fontWeight: FontWeight.w700)),
       ]),
     ]);
   }
 }
 
-// EMV chip painter
 class _ChipPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
@@ -731,165 +852,6 @@ class _ChipPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_) => false;
-}
-
-// ─────────────────────────────────────────────────────────────
-// POCKETS QUICK-VIEW  (inline — no separate page navigation)
-// ─────────────────────────────────────────────────────────────
-class _PocketsQuickView extends StatefulWidget {
-  @override
-  State<_PocketsQuickView> createState() => _PocketsQuickViewState();
-}
-
-class _PocketsQuickViewState extends State<_PocketsQuickView> {
-  bool _expanded = false;
-
-  static const _pockets = [
-    {'name': 'Saving',         'balance': 190.0,  'emoji': '💰', 'color': 0xFF1A1A1A},
-    {'name': 'Transport',      'balance': 100.0,  'emoji': '🚌', 'color': 0xFF1A3A8F},
-    {'name': 'Grocery',        'balance': 120.0,  'emoji': '🛒', 'color': 0xFF065F46},
-    {'name': 'Accommodation',  'balance': 200.0,  'emoji': '🏠', 'color': 0xFF5B21B6},
-  ];
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(children: [
-      // ── Header row ───────────────────────────────────
-      Padding(
-        padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            const Text('My Pockets',
-                style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xFF1A1A1A))),
-            GestureDetector(
-              onTap: () => setState(() => _expanded = !_expanded),
-              child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: _expanded
-                      ? const Color(0xFFE30613)
-                      : const Color(0xFFF5F5F5),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                      color: _expanded
-                          ? const Color(0xFFE30613)
-                          : const Color(0xFFEEEEEE)),
-                ),
-                child: Row(children: [
-                  Icon(
-                    _expanded
-                        ? Icons.keyboard_arrow_up_rounded
-                        : Icons.credit_card_rounded,
-                    size: 14,
-                    color: _expanded ? Colors.white : const Color(0xFF555555),
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    _expanded ? 'Hide' : 'View Pockets',
-                    style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: _expanded
-                            ? Colors.white
-                            : const Color(0xFF555555)),
-                  ),
-                ]),
-              ),
-            ),
-          ],
-        ),
-      ),
-
-      // ── Expandable pocket cards ───────────────────────
-      AnimatedSize(
-        duration: const Duration(milliseconds: 320),
-        curve: Curves.easeInOut,
-        child: _expanded
-            ? SizedBox(
-                height: 130,
-                child: ListView.separated(
-                  scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  itemCount: _pockets.length,
-                  separatorBuilder: (_, __) => const SizedBox(width: 12),
-                  itemBuilder: (_, i) {
-                    final p = _pockets[i];
-                    return _PocketMiniCard(pocket: p);
-                  },
-                ),
-              )
-            : const SizedBox.shrink(),
-      ),
-    ]);
-  }
-}
-
-class _PocketMiniCard extends StatelessWidget {
-  final Map<String, dynamic> pocket;
-  const _PocketMiniCard({required this.pocket});
-
-  @override
-  Widget build(BuildContext context) {
-    final baseColor = Color(pocket['color'] as int);
-    return Container(
-      width: 150,
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [baseColor, baseColor.withOpacity(0.75)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(14),
-        boxShadow: [
-          BoxShadow(
-              color: baseColor.withOpacity(0.3),
-              blurRadius: 10,
-              offset: const Offset(0, 4)),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(pocket['emoji'] as String,
-                  style: const TextStyle(fontSize: 18)),
-              Container(
-                width: 20, height: 14,
-                decoration: BoxDecoration(
-                    color: const Color(0xFFD4AF37),
-                    borderRadius: BorderRadius.circular(3)),
-              ),
-            ],
-          ),
-          const Spacer(),
-          Text(
-            'R ${(pocket['balance'] as double).toStringAsFixed(2)}',
-            style: const TextStyle(
-                color: Colors.white,
-                fontSize: 16,
-                fontWeight: FontWeight.w800,
-                letterSpacing: -0.5),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            '${pocket['name']} Pocket',
-            style: const TextStyle(
-                color: Colors.white70,
-                fontSize: 10,
-                fontWeight: FontWeight.w500),
-          ),
-        ],
-      ),
-    );
-  }
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -1146,40 +1108,6 @@ class _TransactionTile extends StatelessWidget {
   }
 }
 
-class _BalanceStat extends StatelessWidget {
-  final String label, value;
-  final IconData icon;
-  final Color color;
-  const _BalanceStat(
-      {required this.label,
-      required this.value,
-      required this.icon,
-      required this.color});
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(children: [
-      Container(
-        padding: const EdgeInsets.all(4),
-        decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.15),
-            borderRadius: BorderRadius.circular(6)),
-        child: Icon(icon, color: color, size: 14),
-      ),
-      const SizedBox(width: 8),
-      Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text(label,
-            style: const TextStyle(color: Colors.white60, fontSize: 11)),
-        Text(value,
-            style: const TextStyle(
-                color: Colors.white,
-                fontSize: 13,
-                fontWeight: FontWeight.w700)),
-      ]),
-    ]);
-  }
-}
-
 class _QuickAction extends StatelessWidget {
   final IconData icon;
   final String label;
@@ -1193,7 +1121,7 @@ class _QuickAction extends StatelessWidget {
       onTap: onTap,
       child: Column(children: [
         Container(
-          width: 52, height: 52,
+          width: 46, height: 46,
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(14),
@@ -1204,12 +1132,12 @@ class _QuickAction extends StatelessWidget {
                   offset: const Offset(0, 2)),
             ],
           ),
-          child: Icon(icon, color: AppColors.primary, size: 22),
+          child: Icon(icon, color: AppColors.primary, size: 20),
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: 5),
         Text(label,
             style: const TextStyle(
-                fontSize: 11,
+                fontSize: 10,
                 fontWeight: FontWeight.w600,
                 color: Color(0xFF555555))),
       ]),

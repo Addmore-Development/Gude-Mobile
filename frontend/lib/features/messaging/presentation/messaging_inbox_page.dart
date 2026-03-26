@@ -1,8 +1,10 @@
+// lib/features/messaging/presentation/messaging_inbox_page.dart
+// ─────────────────────────────────────────────────────────────
+// STUDENT ↔ BUYER MESSAGING
+// Direct 1-to-1 conversations about gigs, services, and listings.
+// ─────────────────────────────────────────────────────────────
 import 'package:flutter/material.dart';
 
-// ─────────────────────────────────────────────
-// COLORS
-// ─────────────────────────────────────────────
 class _C {
   static const primary   = Color(0xFFE30613);
   static const dark      = Color(0xFF1A1A1A);
@@ -11,15 +13,14 @@ class _C {
   static const border    = Color(0xFFEEEEEE);
 }
 
-// ─────────────────────────────────────────────
-// MESSAGE MODEL
-// ─────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────
+// MODELS
+// ─────────────────────────────────────────────────────────────
 class _Message {
   final String senderId;
   final String text;
   final DateTime time;
   final bool isRead;
-
   const _Message({
     required this.senderId,
     required this.text,
@@ -28,18 +29,15 @@ class _Message {
   });
 }
 
-// ─────────────────────────────────────────────
-// CONVERSATION MODEL
-// ─────────────────────────────────────────────
 class _Conversation {
   final String id;
   final String name;
   final String avatarLetter;
-  final String context;
+  final String context; // listing or gig title
   final bool isOnline;
+  final bool isBuyer; // true = buyer, false = student peer
   List<_Message> messages;
   final bool isFavourite;
-  final bool isUnread;
 
   _Conversation({
     required this.id,
@@ -48,175 +46,97 @@ class _Conversation {
     required this.context,
     required this.messages,
     this.isOnline = false,
+    this.isBuyer = true,
     this.isFavourite = false,
-    this.isUnread = false,
   });
 
   String get lastMessageText =>
       messages.isEmpty ? '' : messages.last.text;
-
   DateTime? get lastMessageTime =>
       messages.isEmpty ? null : messages.last.time;
+  bool get hasUnread =>
+      messages.any((m) => m.senderId != 'me' && !m.isRead);
 }
 
-// ─────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────
 // SEED DATA
-// ─────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────
 List<_Conversation> _buildConversations() {
   final now = DateTime.now();
   return [
     _Conversation(
-      id: 'u2',
+      id: 'b1',
       name: 'Vanessa Top',
-      avatarLetter: 'V',
+      avatarLetter: 'VT',
       context: 'HP Laptop',
       isOnline: true,
-      isUnread: true,
+      isBuyer: true,
       isFavourite: true,
       messages: [
-        _Message(
-          senderId: 'u2',
-          text: 'Good morning Featuring, are we going together today or not?',
-          time: now.subtract(const Duration(minutes: 5)),
-          isRead: false,
-        ),
-        _Message(
-          senderId: 'me',
-          text: 'Ok, I guess I will meet you in the afternoon class today.',
-          time: now.subtract(const Duration(minutes: 3)),
-        ),
-        _Message(
-          senderId: 'u2',
-          text: 'Thanks for asking, but I\'ll see you then, have a wonderful day 😊',
-          time: now.subtract(const Duration(minutes: 1)),
-          isRead: false,
-        ),
+        _Message(senderId: 'b1', text: 'Good morning! Are we still on for today?', time: now.subtract(const Duration(minutes: 5)), isRead: false),
+        _Message(senderId: 'me', text: 'Yes, I\'ll meet you at 2pm.', time: now.subtract(const Duration(minutes: 3))),
+        _Message(senderId: 'b1', text: 'Perfect, see you then 😊', time: now.subtract(const Duration(minutes: 1)), isRead: false),
       ],
     ),
     _Conversation(
-      id: 'u3',
+      id: 'b2',
       name: 'Paul Gabler',
-      avatarLetter: 'P',
+      avatarLetter: 'PG',
       context: 'Maths Tutoring',
       isOnline: false,
+      isBuyer: true,
       messages: [
-        _Message(
-          senderId: 'u3',
-          text: 'Thank you so much for the e...',
-          time: now.subtract(const Duration(hours: 2)),
-        ),
+        _Message(senderId: 'b2', text: 'Thank you so much for the session!', time: now.subtract(const Duration(hours: 2))),
       ],
     ),
     _Conversation(
-      id: 'u4',
+      id: 'b3',
       name: 'Mia Scott',
-      avatarLetter: 'M',
+      avatarLetter: 'MS',
       context: 'Graphic Design',
       isOnline: true,
+      isBuyer: true,
       messages: [
-        _Message(
-          senderId: 'u4',
-          text: 'Thank you very much for the e...',
-          time: now.subtract(const Duration(hours: 4)),
-        ),
+        _Message(senderId: 'b3', text: 'Can you send me the final files?', time: now.subtract(const Duration(hours: 4)), isRead: false),
       ],
     ),
     _Conversation(
-      id: 'u5',
+      id: 'b4',
       name: 'David Pred',
-      avatarLetter: 'D',
+      avatarLetter: 'DP',
       context: 'Study Table',
+      isBuyer: false,
       messages: [
-        _Message(
-          senderId: 'me',
-          text: 'Are you writing tomorrow I are part of the group for this coming week?',
-          time: now.subtract(const Duration(days: 1)),
-        ),
-        _Message(
-          senderId: 'u5',
-          text: 'I\'m writing tomorrow too, join us are you writing today if you are writing today.',
-          time: now.subtract(const Duration(hours: 20)),
-          isRead: false,
-        ),
+        _Message(senderId: 'me', text: 'Are you writing tomorrow?', time: now.subtract(const Duration(days: 1))),
+        _Message(senderId: 'b4', text: 'Yes, let\'s study together.', time: now.subtract(const Duration(hours: 20)), isRead: false),
       ],
     ),
     _Conversation(
-      id: 'u6',
+      id: 'b5',
       name: 'Mason Margelis',
-      avatarLetter: 'M',
+      avatarLetter: 'MM',
       context: 'Photography',
       messages: [
-        _Message(
-          senderId: 'u6',
-          text: 'Let\'s meet at the plumber in 2…',
-          time: now.subtract(const Duration(days: 2)),
-        ),
+        _Message(senderId: 'b5', text: 'Let\'s meet at the plaza at 2pm', time: now.subtract(const Duration(days: 2))),
       ],
     ),
     _Conversation(
-      id: 'u7',
+      id: 'b6',
       name: 'Stacey Clerk',
-      avatarLetter: 'S',
+      avatarLetter: 'SC',
       context: 'iPhone 12',
       isOnline: true,
+      isBuyer: true,
       messages: [
-        _Message(
-          senderId: 'me',
-          text: 'Stacey, It',
-          time: now.subtract(const Duration(days: 3)),
-        ),
-      ],
-    ),
-    _Conversation(
-      id: 'u8',
-      name: 'Eviss Preme',
-      avatarLetter: 'E',
-      context: 'CV Writing',
-      messages: [
-        _Message(
-          senderId: 'u8',
-          text: 'Are you going able to join us for a class tomorrow?',
-          time: now.subtract(const Duration(days: 3)),
-        ),
-      ],
-    ),
-    _Conversation(
-      id: 'u9',
-      name: 'Shelly Given',
-      avatarLetter: 'S',
-      context: 'Coding Help',
-      messages: [
-        _Message(
-          senderId: 'u9',
-          text: 'Let\'s meet at the gate at 12 ↑…',
-          time: now.subtract(const Duration(days: 4)),
-        ),
-        _Message(
-          senderId: 'me',
-          text: 'Let\'s meet at the gate at 12 pm',
-          time: now.subtract(const Duration(days: 4)),
-        ),
-      ],
-    ),
-    _Conversation(
-      id: 'u10',
-      name: 'Social Undercover',
-      avatarLetter: 'S',
-      context: 'Air Fryer',
-      messages: [
-        _Message(
-          senderId: 'u10',
-          text: 'Drag. Thank you so much…',
-          time: now.subtract(const Duration(days: 5)),
-        ),
+        _Message(senderId: 'me', text: 'I can deliver tomorrow.', time: now.subtract(const Duration(days: 3))),
       ],
     ),
   ];
 }
 
-// ─────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────
 // MESSAGING INBOX PAGE
-// ─────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────
 class MessagingInboxPage extends StatefulWidget {
   const MessagingInboxPage({super.key});
 
@@ -250,7 +170,19 @@ class _MessagingInboxPageState extends State<MessagingInboxPage>
             c.context.toLowerCase().contains(_searchQuery.toLowerCase());
       }).toList();
 
-  void _addOrUpdateConv(_Conversation updated) {
+  int get _unreadCount =>
+      _conversations.where((c) => c.hasUnread).length;
+
+  String _formatTime(DateTime? t) {
+    if (t == null) return '';
+    final diff = DateTime.now().difference(t);
+    if (diff.inMinutes < 60) return '${diff.inMinutes}m';
+    if (diff.inHours < 24) return '${diff.inHours}h';
+    if (diff.inDays == 1) return 'Yesterday';
+    return '${t.day}/${t.month}';
+  }
+
+  void _addOrUpdate(_Conversation updated) {
     setState(() {
       final idx = _conversations.indexWhere((c) => c.id == updated.id);
       if (idx >= 0) {
@@ -261,156 +193,81 @@ class _MessagingInboxPageState extends State<MessagingInboxPage>
     });
   }
 
-  String _formatTime(DateTime? t) {
-    if (t == null) return '';
-    final now = DateTime.now();
-    final diff = now.difference(t);
-    if (diff.inMinutes < 60) return 'now ${diff.inMinutes} min';
-    if (diff.inHours < 24) return '${diff.inHours}h ago';
-    if (diff.inDays == 1) return 'Yesterday';
-    return '${t.day}/${t.month}';
-  }
-
   @override
   Widget build(BuildContext context) {
-    final unread = _conversations
-        .where((c) => c.messages.any((m) => m.senderId != 'me' && !m.isRead))
-        .length;
-
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        title: Row(
-          children: [
-            const Text(
-              'Messaging',
+        title: Row(children: [
+          const Text('Messages',
               style: TextStyle(
                   color: _C.dark,
                   fontWeight: FontWeight.w800,
-                  fontSize: 18),
-            ),
-            if (unread > 0) ...[
-              const SizedBox(width: 8),
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
+                  fontSize: 18)),
+          if (_unreadCount > 0) ...[
+            const SizedBox(width: 8),
+            Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              decoration: BoxDecoration(
                   color: _C.primary,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  '$unread',
+                  borderRadius: BorderRadius.circular(12)),
+              child: Text('$_unreadCount',
                   style: const TextStyle(
                       color: Colors.white,
                       fontSize: 11,
-                      fontWeight: FontWeight.w700),
-                ),
-              ),
-            ],
+                      fontWeight: FontWeight.w700)),
+            ),
           ],
-        ),
+        ]),
         actions: [
           IconButton(
-            icon: const Icon(Icons.edit_outlined, color: _C.dark, size: 22),
-            onPressed: () {},
-          ),
-          IconButton(
-            icon: const Icon(Icons.more_vert_rounded,
-                color: _C.dark, size: 22),
-            onPressed: () {},
-          ),
+              icon: const Icon(Icons.edit_outlined, color: _C.dark, size: 22),
+              onPressed: () {}),
         ],
         bottom: TabBar(
           controller: _tabCtrl,
           labelColor: _C.primary,
           unselectedLabelColor: _C.grey,
           indicatorColor: _C.primary,
-          labelStyle:
-              const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
-          tabs: [
-            Tab(
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Text('All'),
-                  if (unread > 0) ...[
-                    const SizedBox(width: 4),
-                    Container(
-                      width: 16, height: 16,
-                      decoration: const BoxDecoration(
-                          color: _C.primary, shape: BoxShape.circle),
-                      child: Center(
-                        child: Text(
-                          '$unread',
-                          style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 9,
-                              fontWeight: FontWeight.w700),
-                        ),
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-            const Tab(text: 'Favourite'),
-            const Tab(text: 'Unread'),
+          labelStyle: const TextStyle(
+              fontWeight: FontWeight.w700, fontSize: 13),
+          tabs: const [
+            Tab(text: 'All'),
+            Tab(text: 'Buyers'),
+            Tab(text: 'Favourites'),
           ],
         ),
       ),
       body: Column(
         children: [
-          // Search bar
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 10, 16, 6),
-            child: Container(
-              height: 40,
-              decoration: BoxDecoration(
-                color: _C.lightGrey,
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: _C.border),
-              ),
-              child: TextField(
-                controller: _searchCtrl,
-                onChanged: (v) => setState(() => _searchQuery = v),
-                style: const TextStyle(fontSize: 13, color: _C.dark),
-                decoration: const InputDecoration(
-                  hintText: 'Search messages…',
-                  hintStyle:
-                      TextStyle(color: Color(0xFFAAAAAA), fontSize: 13),
-                  border: InputBorder.none,
-                  prefixIcon:
-                      Icon(Icons.search, color: _C.grey, size: 18),
-                  contentPadding: EdgeInsets.symmetric(vertical: 11),
-                ),
-              ),
+            child: _SearchBar(
+              controller: _searchCtrl,
+              onChanged: (v) => setState(() => _searchQuery = v),
             ),
           ),
-
           Expanded(
             child: TabBarView(
               controller: _tabCtrl,
               children: [
                 _ConvList(
-                  conversations: _filtered,
+                  convs: _filtered,
                   formatTime: _formatTime,
-                  onTap: (conv) => _openChat(conv),
+                  onTap: _openChat,
                 ),
                 _ConvList(
-                  conversations:
-                      _filtered.where((c) => c.isFavourite).toList(),
+                  convs: _filtered.where((c) => c.isBuyer).toList(),
                   formatTime: _formatTime,
-                  onTap: (conv) => _openChat(conv),
+                  onTap: _openChat,
                 ),
                 _ConvList(
-                  conversations: _filtered
-                      .where((c) => c.messages
-                          .any((m) => m.senderId != 'me' && !m.isRead))
-                      .toList(),
+                  convs: _filtered.where((c) => c.isFavourite).toList(),
                   formatTime: _formatTime,
-                  onTap: (conv) => _openChat(conv),
+                  onTap: _openChat,
                 ),
               ],
             ),
@@ -423,170 +280,152 @@ class _MessagingInboxPageState extends State<MessagingInboxPage>
   void _openChat(_Conversation conv) async {
     final updated = await Navigator.push<_Conversation>(
       context,
-      MaterialPageRoute(
-        builder: (_) => ChatPage(conversation: conv),
-      ),
+      MaterialPageRoute(builder: (_) => ChatPage(conversation: conv)),
     );
-    if (updated != null) _addOrUpdateConv(updated);
+    if (updated != null) _addOrUpdate(updated);
   }
 }
 
-// ─────────────────────────────────────────────
-// CONVERSATION LIST WIDGET
-// ─────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────
+// CONVERSATION LIST
+// ─────────────────────────────────────────────────────────────
 class _ConvList extends StatelessWidget {
-  final List<_Conversation> conversations;
+  final List<_Conversation> convs;
   final String Function(DateTime?) formatTime;
   final void Function(_Conversation) onTap;
 
   const _ConvList({
-    required this.conversations,
+    required this.convs,
     required this.formatTime,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    if (conversations.isEmpty) {
+    if (convs.isEmpty) {
       return const Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.message_outlined, size: 48, color: _C.grey),
-            SizedBox(height: 12),
-            Text('No messages yet',
-                style: TextStyle(color: _C.grey, fontSize: 14)),
-          ],
-        ),
+        child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+          Icon(Icons.message_outlined, size: 48, color: _C.grey),
+          SizedBox(height: 12),
+          Text('No messages yet',
+              style: TextStyle(color: _C.grey, fontSize: 14)),
+        ]),
       );
     }
     return ListView.separated(
-      itemCount: conversations.length,
+      itemCount: convs.length,
       separatorBuilder: (_, __) =>
-          const Divider(height: 1, indent: 72, endIndent: 0),
+          const Divider(height: 1, indent: 72, color: _C.border),
       itemBuilder: (_, i) {
-        final conv = conversations[i];
-        final hasUnread = conv.messages
-            .any((m) => m.senderId != 'me' && !m.isRead);
-        final lastMsg = conv.messages.isNotEmpty ? conv.messages.last : null;
-        final isLastFromMe = lastMsg?.senderId == 'me';
-
+        final c = convs[i];
         return InkWell(
-          onTap: () => onTap(conv),
+          onTap: () => onTap(c),
           child: Padding(
             padding:
-                const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Avatar
-                Stack(
-                  children: [
-                    CircleAvatar(
-                      radius: 22,
-                      backgroundColor: _C.primary.withOpacity(0.15),
-                      child: Text(
-                        conv.avatarLetter,
+                Stack(children: [
+                  CircleAvatar(
+                    radius: 22,
+                    backgroundColor: _C.primary.withOpacity(0.12),
+                    child: Text(c.avatarLetter,
                         style: const TextStyle(
                             color: _C.primary,
                             fontWeight: FontWeight.w800,
-                            fontSize: 16),
-                      ),
-                    ),
-                    if (conv.isOnline)
-                      Positioned(
-                        bottom: 1,
-                        right: 1,
-                        child: Container(
-                          width: 10,
-                          height: 10,
-                          decoration: BoxDecoration(
+                            fontSize: 13)),
+                  ),
+                  if (c.isOnline)
+                    Positioned(
+                      bottom: 1, right: 1,
+                      child: Container(
+                        width: 10, height: 10,
+                        decoration: BoxDecoration(
                             color: const Color(0xFF10B981),
                             shape: BoxShape.circle,
                             border: Border.all(
-                                color: Colors.white, width: 1.5),
-                          ),
-                        ),
+                                color: Colors.white, width: 1.5)),
                       ),
-                  ],
-                ),
+                    ),
+                ]),
                 const SizedBox(width: 12),
-
-                // Content
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              conv.name,
+                      Row(children: [
+                        Expanded(
+                          child: Text(c.name,
                               style: TextStyle(
-                                  fontWeight: hasUnread
+                                  fontWeight: c.hasUnread
                                       ? FontWeight.w800
                                       : FontWeight.w600,
                                   fontSize: 14,
-                                  color: _C.dark),
-                            ),
-                          ),
-                          Text(
-                            formatTime(conv.lastMessageTime),
+                                  color: _C.dark)),
+                        ),
+                        Text(formatTime(c.lastMessageTime),
                             style: TextStyle(
                                 fontSize: 11,
-                                color: hasUnread ? _C.primary : _C.grey),
-                          ),
-                        ],
-                      ),
+                                color: c.hasUnread
+                                    ? _C.primary
+                                    : _C.grey)),
+                      ]),
                       const SizedBox(height: 2),
                       // Context badge
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 6, vertical: 1),
-                        decoration: BoxDecoration(
-                          color: _C.primary.withOpacity(0.08),
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: Text(
-                          conv.context,
-                          style: const TextStyle(
-                              fontSize: 9,
-                              color: _C.primary,
-                              fontWeight: FontWeight.w700),
-                        ),
-                      ),
-                      const SizedBox(height: 3),
-                      Row(
-                        children: [
-                          if (isLastFromMe)
-                            const Padding(
-                              padding: EdgeInsets.only(right: 4),
-                              child: Icon(Icons.done_all_rounded,
-                                  size: 13, color: _C.primary),
-                            ),
-                          Expanded(
-                            child: Text(
-                              conv.lastMessageText,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                  fontSize: 12,
-                                  color: hasUnread ? _C.dark : _C.grey,
-                                  fontWeight: hasUnread
-                                      ? FontWeight.w600
-                                      : FontWeight.normal),
-                            ),
+                      Row(children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 6, vertical: 1),
+                          decoration: BoxDecoration(
+                            color: c.isBuyer
+                                ? _C.primary.withOpacity(0.08)
+                                : const Color(0xFF3B82F6)
+                                    .withOpacity(0.08),
+                            borderRadius: BorderRadius.circular(4),
                           ),
-                          if (hasUnread)
-                            Container(
-                              margin: const EdgeInsets.only(left: 6),
-                              width: 9,
-                              height: 9,
-                              decoration: const BoxDecoration(
-                                  color: _C.primary, shape: BoxShape.circle),
-                            ),
-                        ],
-                      ),
+                          child: Text(
+                            c.isBuyer ? '🛒 ${c.context}' : '🎓 ${c.context}',
+                            style: TextStyle(
+                                fontSize: 9,
+                                color: c.isBuyer
+                                    ? _C.primary
+                                    : const Color(0xFF3B82F6),
+                                fontWeight: FontWeight.w700),
+                          ),
+                        ),
+                      ]),
+                      const SizedBox(height: 3),
+                      Row(children: [
+                        if (c.messages.isNotEmpty &&
+                            c.messages.last.senderId == 'me')
+                          const Padding(
+                            padding: EdgeInsets.only(right: 4),
+                            child: Icon(Icons.done_all_rounded,
+                                size: 13, color: _C.primary),
+                          ),
+                        Expanded(
+                          child: Text(
+                            c.lastMessageText,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                                fontSize: 12,
+                                color: c.hasUnread ? _C.dark : _C.grey,
+                                fontWeight: c.hasUnread
+                                    ? FontWeight.w600
+                                    : FontWeight.normal),
+                          ),
+                        ),
+                        if (c.hasUnread)
+                          Container(
+                            margin: const EdgeInsets.only(left: 6),
+                            width: 9, height: 9,
+                            decoration: const BoxDecoration(
+                                color: _C.primary, shape: BoxShape.circle),
+                          ),
+                      ]),
                     ],
                   ),
                 ),
@@ -599,9 +438,9 @@ class _ConvList extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────
-// CHAT PAGE (thread view)
-// ─────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────
+// CHAT PAGE (shared by both messaging screens)
+// ─────────────────────────────────────────────────────────────
 class ChatPage extends StatefulWidget {
   final _Conversation conversation;
   const ChatPage({super.key, required this.conversation});
@@ -632,43 +471,50 @@ class _ChatPageState extends State<ChatPage> {
     }
   }
 
-  void _sendMessage() {
+  void _send() {
     final text = _msgCtrl.text.trim();
     if (text.isEmpty) return;
-    final msg = _Message(senderId: 'me', text: text, time: DateTime.now());
     setState(() {
-      _conv.messages.add(msg);
+      _conv.messages.add(_Message(
+          senderId: 'me', text: text, time: DateTime.now()));
       _msgCtrl.clear();
     });
     WidgetsBinding.instance
         .addPostFrameCallback((_) => _scrollToBottom());
 
-    // Simulate reply after 1.5s
     Future.delayed(const Duration(milliseconds: 1500), () {
       if (!mounted) return;
       final replies = [
-        'Thanks! When would you like to meet?',
-        'Sure, I can help with that!',
-        'Great! Let me know your availability.',
-        'I\'ll get back to you shortly.',
-        'Sounds good! Send me more details.',
+        'Thanks! When can we meet?',
+        'Sounds good!',
+        'Let me check and get back to you.',
+        'Perfect, I\'ll send the details.',
+        'Noted, thanks!',
       ];
-      final reply = _Message(
-        senderId: _conv.id,
-        text: replies[DateTime.now().millisecond % replies.length],
-        time: DateTime.now(),
-        isRead: false,
-      );
-      setState(() => _conv.messages.add(reply));
+      setState(() {
+        _conv.messages.add(_Message(
+          senderId: _conv.id,
+          text: replies[DateTime.now().millisecond % replies.length],
+          time: DateTime.now(),
+          isRead: false,
+        ));
+      });
       WidgetsBinding.instance
           .addPostFrameCallback((_) => _scrollToBottom());
     });
   }
 
-  String _formatMsgTime(DateTime t) {
+  String _fmt(DateTime t) {
     final h = t.hour.toString().padLeft(2, '0');
     final m = t.minute.toString().padLeft(2, '0');
     return '$h:$m';
+  }
+
+  String _fmtDate(DateTime t) {
+    final now = DateTime.now();
+    if (t.day == now.day) return 'Today';
+    if (t.day == now.day - 1) return 'Yesterday';
+    return '${t.day} ${['', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][t.month]}';
   }
 
   @override
@@ -694,72 +540,58 @@ class _ChatPageState extends State<ChatPage> {
             icon: const Icon(Icons.arrow_back, color: _C.dark),
             onPressed: () => Navigator.pop(context, _conv),
           ),
-          title: Row(
-            children: [
-              Stack(
-                children: [
-                  CircleAvatar(
-                    radius: 18,
-                    backgroundColor: _C.primary.withOpacity(0.15),
-                    child: Text(
-                      _conv.avatarLetter,
-                      style: const TextStyle(
-                          color: _C.primary,
-                          fontWeight: FontWeight.w800,
-                          fontSize: 14),
-                    ),
-                  ),
-                  if (_conv.isOnline)
-                    Positioned(
-                      bottom: 0, right: 0,
-                      child: Container(
-                        width: 9, height: 9,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF10B981),
-                          shape: BoxShape.circle,
-                          border:
-                              Border.all(color: Colors.white, width: 1.5),
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-              const SizedBox(width: 10),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    _conv.name,
+          title: Row(children: [
+            Stack(children: [
+              CircleAvatar(
+                radius: 18,
+                backgroundColor: _C.primary.withOpacity(0.12),
+                child: Text(_conv.avatarLetter,
                     style: const TextStyle(
-                        color: _C.dark,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 15),
-                  ),
-                  Text(
-                    _conv.isOnline ? 'Online' : 'Offline',
-                    style: TextStyle(
-                        color:
-                            _conv.isOnline ? const Color(0xFF10B981) : _C.grey,
-                        fontSize: 11),
-                  ),
-                ],
+                        color: _C.primary,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 12)),
               ),
-            ],
-          ),
+              if (_conv.isOnline)
+                Positioned(
+                  bottom: 0, right: 0,
+                  child: Container(
+                    width: 9, height: 9,
+                    decoration: BoxDecoration(
+                        color: const Color(0xFF10B981),
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                            color: Colors.white, width: 1.5)),
+                  ),
+                ),
+            ]),
+            const SizedBox(width: 10),
+            Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(_conv.name,
+                  style: const TextStyle(
+                      color: _C.dark,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 14)),
+              Text(
+                _conv.isOnline ? 'Online' : 'Offline',
+                style: TextStyle(
+                    color: _conv.isOnline
+                        ? const Color(0xFF10B981)
+                        : _C.grey,
+                    fontSize: 11),
+              ),
+            ]),
+          ]),
           actions: [
             IconButton(
-              icon: const Icon(Icons.videocam_outlined,
-                  color: _C.dark, size: 22),
-              onPressed: () {},
-            ),
+                icon: const Icon(Icons.videocam_outlined,
+                    color: _C.dark, size: 22),
+                onPressed: () {}),
             IconButton(
-              icon: const Icon(Icons.call_outlined,
-                  color: _C.primary, size: 20),
-              onPressed: () {},
-            ),
+                icon: const Icon(Icons.call_outlined,
+                    color: _C.primary, size: 20),
+                onPressed: () {}),
           ],
         ),
-
         body: Column(
           children: [
             // Context banner
@@ -768,20 +600,16 @@ class _ChatPageState extends State<ChatPage> {
               padding:
                   const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               color: _C.primary.withOpacity(0.06),
-              child: Row(
-                children: [
-                  const Icon(Icons.info_outline_rounded,
-                      color: _C.primary, size: 14),
-                  const SizedBox(width: 6),
-                  Text(
-                    'Re: ${_conv.context}',
+              child: Row(children: [
+                const Icon(Icons.info_outline_rounded,
+                    color: _C.primary, size: 14),
+                const SizedBox(width: 6),
+                Text('Re: ${_conv.context}',
                     style: const TextStyle(
                         color: _C.primary,
                         fontSize: 12,
-                        fontWeight: FontWeight.w600),
-                  ),
-                ],
-              ),
+                        fontWeight: FontWeight.w600)),
+              ]),
             ),
 
             // Messages
@@ -793,92 +621,84 @@ class _ChatPageState extends State<ChatPage> {
                 itemBuilder: (_, i) {
                   final msg = _conv.messages[i];
                   final isMe = msg.senderId == 'me';
-
                   final showDate = i == 0 ||
                       _conv.messages[i - 1].time.day != msg.time.day;
 
-                  return Column(
-                    children: [
-                      if (showDate)
-                        Padding(
-                          padding:
-                              const EdgeInsets.symmetric(vertical: 10),
-                          child: Text(
-                            _formatDate(msg.time),
+                  return Column(children: [
+                    if (showDate)
+                      Padding(
+                        padding:
+                            const EdgeInsets.symmetric(vertical: 10),
+                        child: Text(_fmtDate(msg.time),
                             style: const TextStyle(
                                 color: _C.grey,
                                 fontSize: 11,
-                                fontWeight: FontWeight.w500),
-                          ),
-                        ),
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 6),
-                        child: Row(
-                          mainAxisAlignment: isMe
-                              ? MainAxisAlignment.end
-                              : MainAxisAlignment.start,
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            if (!isMe) ...[
-                              CircleAvatar(
-                                radius: 14,
-                                backgroundColor:
-                                    _C.primary.withOpacity(0.15),
-                                child: Text(
-                                  _conv.avatarLetter,
+                                fontWeight: FontWeight.w500)),
+                      ),
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 6),
+                      child: Row(
+                        mainAxisAlignment: isMe
+                            ? MainAxisAlignment.end
+                            : MainAxisAlignment.start,
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          if (!isMe) ...[
+                            CircleAvatar(
+                              radius: 13,
+                              backgroundColor:
+                                  _C.primary.withOpacity(0.12),
+                              child: Text(_conv.avatarLetter,
                                   style: const TextStyle(
                                       color: _C.primary,
                                       fontWeight: FontWeight.w700,
-                                      fontSize: 10),
+                                      fontSize: 9)),
+                            ),
+                            const SizedBox(width: 6),
+                          ],
+                          Flexible(
+                            child: Container(
+                              constraints: BoxConstraints(
+                                  maxWidth: MediaQuery.of(context)
+                                          .size
+                                          .width *
+                                      0.68),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 14, vertical: 10),
+                              decoration: BoxDecoration(
+                                color: isMe
+                                    ? _C.primary
+                                    : const Color(0xFFF5F5F5),
+                                borderRadius: BorderRadius.only(
+                                  topLeft: const Radius.circular(16),
+                                  topRight: const Radius.circular(16),
+                                  bottomLeft:
+                                      Radius.circular(isMe ? 16 : 4),
+                                  bottomRight:
+                                      Radius.circular(isMe ? 4 : 16),
                                 ),
                               ),
-                              const SizedBox(width: 6),
-                            ],
-                            Flexible(
-                              child: Container(
-                                constraints: BoxConstraints(
-                                  maxWidth:
-                                      MediaQuery.of(context).size.width *
-                                          0.68,
-                                ),
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 14, vertical: 10),
-                                decoration: BoxDecoration(
-                                  color: isMe
-                                      ? _C.primary
-                                      : _C.lightGrey,
-                                  borderRadius: BorderRadius.only(
-                                    topLeft: const Radius.circular(16),
-                                    topRight: const Radius.circular(16),
-                                    bottomLeft: Radius.circular(isMe ? 16 : 4),
-                                    bottomRight:
-                                        Radius.circular(isMe ? 4 : 16),
-                                  ),
-                                ),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.end,
-                                  children: [
-                                    Text(
-                                      msg.text,
+                              child: Column(
+                                crossAxisAlignment:
+                                    CrossAxisAlignment.end,
+                                children: [
+                                  Text(msg.text,
                                       style: TextStyle(
                                           fontSize: 13,
                                           color: isMe
                                               ? Colors.white
                                               : _C.dark,
-                                          height: 1.4),
-                                    ),
-                                    const SizedBox(height: 3),
-                                    Row(
+                                          height: 1.4)),
+                                  const SizedBox(height: 3),
+                                  Row(
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
-                                        Text(
-                                          _formatMsgTime(msg.time),
-                                          style: TextStyle(
-                                              fontSize: 10,
-                                              color: isMe
-                                                  ? Colors.white70
-                                                  : _C.grey),
-                                        ),
+                                        Text(_fmt(msg.time),
+                                            style: TextStyle(
+                                                fontSize: 10,
+                                                color: isMe
+                                                    ? Colors.white70
+                                                    : _C.grey)),
                                         if (isMe) ...[
                                           const SizedBox(width: 3),
                                           Icon(
@@ -889,17 +709,15 @@ class _ChatPageState extends State<ChatPage> {
                                                 : Colors.white54,
                                           ),
                                         ],
-                                      ],
-                                    ),
-                                  ],
-                                ),
+                                      ]),
+                                ],
                               ),
                             ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
-                    ],
-                  );
+                    ),
+                  ]);
                 },
               ),
             ),
@@ -908,68 +726,86 @@ class _ChatPageState extends State<ChatPage> {
             Container(
               padding: const EdgeInsets.fromLTRB(12, 8, 12, 24),
               decoration: const BoxDecoration(
-                color: Colors.white,
-                border: Border(top: BorderSide(color: _C.border)),
-              ),
-              child: Row(
-                children: [
-                  IconButton(
+                  color: Colors.white,
+                  border:
+                      Border(top: BorderSide(color: _C.border))),
+              child: Row(children: [
+                IconButton(
                     icon: const Icon(Icons.attach_file_rounded,
                         color: _C.grey, size: 20),
-                    onPressed: () {},
-                  ),
-                  Expanded(
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: _C.lightGrey,
+                    onPressed: () {}),
+                Expanded(
+                  child: Container(
+                    decoration: BoxDecoration(
+                        color: const Color(0xFFF5F5F5),
                         borderRadius: BorderRadius.circular(24),
-                        border: Border.all(color: _C.border),
-                      ),
-                      child: TextField(
-                        controller: _msgCtrl,
-                        onSubmitted: (_) => _sendMessage(),
-                        style: const TextStyle(fontSize: 13),
-                        decoration: const InputDecoration(
-                          hintText: 'Type a message…',
-                          hintStyle: TextStyle(
-                              color: Color(0xFFAAAAAA), fontSize: 13),
-                          border: InputBorder.none,
-                          contentPadding: EdgeInsets.symmetric(
-                              horizontal: 14, vertical: 10),
-                        ),
+                        border: Border.all(color: _C.border)),
+                    child: TextField(
+                      controller: _msgCtrl,
+                      onSubmitted: (_) => _send(),
+                      style: const TextStyle(fontSize: 13),
+                      decoration: const InputDecoration(
+                        hintText: 'Type a message…',
+                        hintStyle: TextStyle(
+                            color: Color(0xFFAAAAAA), fontSize: 13),
+                        border: InputBorder.none,
+                        contentPadding: EdgeInsets.symmetric(
+                            horizontal: 14, vertical: 10),
                       ),
                     ),
                   ),
-                  const SizedBox(width: 6),
-                  GestureDetector(
-                    onTap: _sendMessage,
-                    child: Container(
-                      width: 40, height: 40,
-                      decoration: const BoxDecoration(
-                          color: _C.primary, shape: BoxShape.circle),
-                      child: const Icon(
-                          Icons.send_rounded,
-                          color: Colors.white, size: 18),
-                    ),
+                ),
+                const SizedBox(width: 6),
+                GestureDetector(
+                  onTap: _send,
+                  child: Container(
+                    width: 40, height: 40,
+                    decoration: const BoxDecoration(
+                        color: _C.primary, shape: BoxShape.circle),
+                    child: const Icon(Icons.send_rounded,
+                        color: Colors.white, size: 18),
                   ),
-                ],
-              ),
+                ),
+              ]),
             ),
           ],
         ),
       ),
     );
   }
+}
 
-  String _formatDate(DateTime t) {
-    final now = DateTime.now();
-    if (t.day == now.day) return 'Today';
-    if (t.day == now.day - 1) return 'Yesterday';
-    return '${t.day} ${_monthName(t.month)} ${t.year}';
+// ─────────────────────────────────────────────────────────────
+// SHARED WIDGETS
+// ─────────────────────────────────────────────────────────────
+class _SearchBar extends StatelessWidget {
+  final TextEditingController controller;
+  final void Function(String) onChanged;
+
+  const _SearchBar(
+      {required this.controller, required this.onChanged});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 40,
+      decoration: BoxDecoration(
+          color: _C.lightGrey,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: _C.border)),
+      child: TextField(
+        controller: controller,
+        onChanged: onChanged,
+        style: const TextStyle(fontSize: 13, color: _C.dark),
+        decoration: const InputDecoration(
+          hintText: 'Search messages…',
+          hintStyle:
+              TextStyle(color: Color(0xFFAAAAAA), fontSize: 13),
+          border: InputBorder.none,
+          prefixIcon: Icon(Icons.search, color: _C.grey, size: 18),
+          contentPadding: EdgeInsets.symmetric(vertical: 11),
+        ),
+      ),
+    );
   }
-
-  String _monthName(int m) => [
-        '', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
-      ][m];
 }
