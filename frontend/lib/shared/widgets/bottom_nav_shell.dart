@@ -1,8 +1,4 @@
-// ═══════════════════════════════════════════════════════════════
-// bottom_nav_shell.dart
-// Buyer users see only: Marketplace + Profile
-// Student users see all tabs
-// ═══════════════════════════════════════════════════════════════
+// frontend/lib/shared/widgets/bottom_nav_shell.dart
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:gude_app/services/user_role_service.dart';
@@ -11,77 +7,147 @@ class BottomNavShell extends StatelessWidget {
   final Widget child;
   const BottomNavShell({super.key, required this.child});
 
-  // ── All student tabs ───────────────────────────────────────────
-  static const _studentTabs = [
-    _TabItem(path: '/home',        icon: Icons.home_outlined,            activeIcon: Icons.home_rounded,                label: 'Home'),
-    _TabItem(path: '/marketplace', icon: Icons.storefront_outlined,      activeIcon: Icons.storefront_rounded,          label: 'Market'),
-    _TabItem(path: '/wallet',      icon: Icons.account_balance_wallet_outlined, activeIcon: Icons.account_balance_wallet_rounded, label: 'Wallet'),
-    _TabItem(path: '/messages',    icon: Icons.chat_bubble_outline_rounded,     activeIcon: Icons.chat_bubble_rounded,          label: 'Messages'),
-    _TabItem(path: '/stability',   icon: Icons.monitor_heart_outlined,          activeIcon: Icons.monitor_heart_rounded,         label: 'Wellbeing'),
-    _TabItem(path: '/profile',     icon: Icons.person_outline_rounded,          activeIcon: Icons.person_rounded,               label: 'Profile'),
-  ];
-
-  // ── Buyer tabs: marketplace + profile only ──────────────────────
-  static const _buyerTabs = [
-    _TabItem(path: '/marketplace', icon: Icons.storefront_outlined,  activeIcon: Icons.storefront_rounded,   label: 'Market'),
-    _TabItem(path: '/buyer/profile', icon: Icons.person_outline_rounded, activeIcon: Icons.person_rounded, label: 'Profile'),
-  ];
-
   @override
   Widget build(BuildContext context) {
-    final isBuyer = UserRoleService().role == 'buyer';
-    final tabs    = isBuyer ? _buyerTabs : _studentTabs;
+    final userService = UserRoleService();
+    final isInstitution = userService.isInstitution;
+    final isBuyer = userService.isBuyer;
 
-    final location = GoRouterState.of(context).uri.toString();
-    final currentIndex = _indexForLocation(tabs, location);
+    List<NavItem> getNavItems() {
+      if (isInstitution) {
+        return const [
+          NavItem(
+              icon: Icons.work_outline,
+              label: 'Jobs',
+              route: '/institution/marketplace'),
+          NavItem(
+              icon: Icons.person_outline,
+              label: 'Profile',
+              route: '/institution/profile'),
+        ];
+      } else if (isBuyer) {
+        return const [
+          NavItem(
+              icon: Icons.storefront_outlined,
+              label: 'Marketplace',
+              route: '/buyer/marketplace'),
+          NavItem(
+              icon: Icons.person_outline,
+              label: 'Profile',
+              route: '/buyer/profile'),
+        ];
+      } else {
+        // Student nav — includes Stability
+        return const [
+          NavItem(icon: Icons.home_outlined, label: 'Home', route: '/home'),
+          NavItem(
+              icon: Icons.storefront_outlined,
+              label: 'Market',
+              route: '/marketplace'),
+          NavItem(
+              icon: Icons.account_balance_wallet_outlined,
+              label: 'Wallet',
+              route: '/wallet'),
+          NavItem(
+              icon: Icons.favorite_outline,
+              label: 'Stability',
+              route: '/stability'),
+          NavItem(
+              icon: Icons.person_outline, label: 'Profile', route: '/profile'),
+        ];
+      }
+    }
+
+    final navItems = getNavItems();
 
     return Scaffold(
       body: child,
       bottomNavigationBar: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           color: Colors.white,
-          border: Border(top: BorderSide(color: Color(0xFFEEEEEE))),
+          boxShadow: [
+            BoxShadow(
+                color: Colors.black.withOpacity(0.08),
+                blurRadius: 16,
+                offset: const Offset(0, -2)),
+          ],
         ),
         child: SafeArea(
-          child: SizedBox(
-            height: 58,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
             child: Row(
-              children: tabs.asMap().entries.map((entry) {
-                final i    = entry.key;
-                final tab  = entry.value;
-                final sel  = i == currentIndex;
-                return Expanded(child: GestureDetector(
-                  onTap: () => context.go(tab.path),
-                  behavior: HitTestBehavior.opaque,
-                  child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-                    AnimatedSwitcher(duration: const Duration(milliseconds: 200), child: Icon(
-                      sel ? tab.activeIcon : tab.icon,
-                      key: ValueKey(sel),
-                      size: 22,
-                      color: sel ? const Color(0xFFE30613) : const Color(0xFF888888),
-                    )),
-                    const SizedBox(height: 3),
-                    Text(tab.label, style: TextStyle(fontSize: 9, fontWeight: sel ? FontWeight.w700 : FontWeight.w500, color: sel ? const Color(0xFFE30613) : const Color(0xFF888888))),
-                  ]),
-                ));
-              }).toList(),
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: navItems
+                  .map((item) => _NavItem(
+                        icon: item.icon,
+                        label: item.label,
+                        route: item.route,
+                        currentRoute: GoRouterState.of(context).uri.toString(),
+                      ))
+                  .toList(),
             ),
           ),
         ),
       ),
     );
   }
-
-  int _indexForLocation(List<_TabItem> tabs, String location) {
-    for (int i = tabs.length - 1; i >= 0; i--) {
-      if (location.startsWith(tabs[i].path)) return i;
-    }
-    return 0;
-  }
 }
 
-class _TabItem {
-  final String path, label;
-  final IconData icon, activeIcon;
-  const _TabItem({required this.path, required this.icon, required this.activeIcon, required this.label});
+class NavItem {
+  final IconData icon;
+  final String label;
+  final String route;
+  const NavItem({required this.icon, required this.label, required this.route});
+}
+
+class _NavItem extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String route;
+  final String currentRoute;
+
+  const _NavItem(
+      {required this.icon,
+      required this.label,
+      required this.route,
+      required this.currentRoute});
+
+  @override
+  Widget build(BuildContext context) {
+    final active = currentRoute == route ||
+        (route != '/home' && currentRoute.startsWith(route));
+
+    return GestureDetector(
+      onTap: () => context.go(route),
+      behavior: HitTestBehavior.opaque,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: active
+              ? const Color(0xFFE30613).withOpacity(0.08)
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon,
+                color:
+                    active ? const Color(0xFFE30613) : const Color(0xFF9E9E9E),
+                size: 22),
+            const SizedBox(height: 3),
+            Text(label,
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: active ? FontWeight.w700 : FontWeight.w400,
+                  color: active
+                      ? const Color(0xFFE30613)
+                      : const Color(0xFF9E9E9E),
+                )),
+          ],
+        ),
+      ),
+    );
+  }
 }

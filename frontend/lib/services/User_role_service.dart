@@ -1,18 +1,34 @@
-// lib/core/services/user_role_service.dart
-//
-// Simple singleton — holds the logged-in user's role.
-// Set BEFORE calling context.go() at signup and login.
-
+// frontend/lib/services/user_role_service.dart
 class UserRoleService {
-  static final UserRoleService _instance = UserRoleService._();
+  static final UserRoleService _instance = UserRoleService._internal();
   factory UserRoleService() => _instance;
-  UserRoleService._();
+  UserRoleService._internal();
 
-  /// 'student' | 'buyer' | '' (not yet set)
-  String role = '';
+  String _role = 'student';
+  String _institutionId = '';
+  String _institutionName = '';
+  String _userType = 'student'; // student, institution, buyer
 
-  bool get isBuyer => role == 'buyer';
-  bool get isStudent => role == 'student';
+  String get role => _role;
+  set role(String value) => _role = value;
 
-  void clear() => role = '';
+  String get institutionId => _institutionId;
+  set institutionId(String value) => _institutionId = value;
+
+  String get institutionName => _institutionName;
+  set institutionName(String value) => _institutionName = value;
+
+  String get userType => _userType;
+  set userType(String value) => _userType = value;
+
+  bool get isInstitution => _userType == 'institution';
+  bool get isStudent => _userType == 'student';
+  bool get isBuyer => _userType == 'buyer';
+
+  void clear() {
+    _role = 'student';
+    _institutionId = '';
+    _institutionName = '';
+    _userType = 'student';
+  }
 }
