@@ -1,4 +1,5 @@
 // lib/core/router/app_router.dart
+import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 // Auth
@@ -10,8 +11,14 @@ import 'package:gude_app/features/auth/presentation/forgot_password_page.dart';
 import 'package:gude_app/features/auth/presentation/skills_selection_page.dart';
 import 'package:gude_app/features/auth/presentation/student_verification_page.dart';
 
-// Buyer onboarding
-import 'package:gude_app/features/auth/presentation/buyer_onboarding_welcome_page.dart';
+// Buyer onboarding — import each page from its own dedicated file.
+// Hide ALL onboarding pages from buyer_onboarding_welcome_page.dart so there
+// are no duplicate-symbol conflicts.
+import 'package:gude_app/features/auth/presentation/buyer_onboarding_welcome_page.dart'
+    hide BuyerTypePage,
+        BuyerInterestsPage,
+        BuyerProfileSetupPage,
+        BuyerOnboardingCompletePage;
 
 // Marketplace
 import 'package:gude_app/features/marketplace/presentation/marketplace_page.dart';
@@ -36,7 +43,7 @@ import 'package:gude_app/features/wallet/presentation/screens/send_money_screen.
 import 'package:gude_app/features/wallet/presentation/screens/withdraw_screen.dart';
 import 'package:gude_app/features/wallet/presentation/screens/received_money_screen.dart';
 
-// Other
+// Other features
 import 'package:gude_app/features/stability/presentation/stability_page.dart';
 import 'package:gude_app/features/stability/presentation/weekly_checkin_page.dart';
 import 'package:gude_app/features/support_hub/presentation/support_page.dart';
@@ -47,7 +54,6 @@ import 'package:gude_app/features/community/presentation/community_chat_page.dar
 import 'package:gude_app/features/community/presentation/notice_board_page.dart';
 
 // ── Buyer Features ─────────────────────────────────────────────────
-// hide BuyerNavShell to prevent conflict with buyer_nav_shell.dart
 import 'package:gude_app/features/buyer/presentation/buyer_messages_page.dart'
     hide BuyerNavShell;
 import 'package:gude_app/features/buyer/presentation/buyer_profile_page.dart';
@@ -58,7 +64,6 @@ import 'package:gude_app/features/institution/presentation/institution_profile_p
 
 // ── Shared Shells ──────────────────────────────────────────────────
 import 'package:gude_app/shared/widgets/bottom_nav_shell.dart';
-// hide BuyerMessagesPage to prevent conflict with buyer_messages_page.dart
 import 'package:gude_app/shared/widgets/buyer_nav_shell.dart'
     hide BuyerMessagesPage;
 
@@ -67,37 +72,18 @@ class AppRouter {
     initialLocation: '/splash',
     routes: [
       // ── Auth & onboarding ──────────────────────────────────────────
-      GoRoute(path: '/splash', builder: (c, s) => const SplashPage()),
-      GoRoute(path: '/onboarding', builder: (c, s) => const OnboardingPage()),
-      GoRoute(path: '/login', builder: (c, s) => const LoginPage()),
-      GoRoute(path: '/signup', builder: (c, s) => const SignupPage()),
-      GoRoute(
-          path: '/forgot-password',
-          builder: (c, s) => const ForgotPasswordPage()),
-      GoRoute(path: '/skills', builder: (c, s) => const SkillsSelectionPage()),
-      GoRoute(
-          path: '/verify-student',
-          builder: (c, s) => const StudentVerificationPage()),
+      GoRoute(path: '/splash',          builder: (c, s) => const SplashPage()),
+      GoRoute(path: '/onboarding',      builder: (c, s) => const OnboardingPage()),
+      GoRoute(path: '/login',           builder: (c, s) => const LoginPage()),
+      GoRoute(path: '/signup',          builder: (c, s) => const SignupPage()),
+      GoRoute(path: '/forgot-password', builder: (c, s) => const ForgotPasswordPage()),
+      GoRoute(path: '/skills',          builder: (c, s) => const SkillsSelectionPage()),
+      GoRoute(path: '/verify-student',  builder: (c, s) => const StudentVerificationPage()),
 
       // ── Buyer onboarding flow ──────────────────────────────────────
       GoRoute(
           path: '/buyer-onboarding/welcome',
           builder: (c, s) => const BuyerOnboardingWelcomePage()),
-      GoRoute(
-          path: '/buyer-onboarding/type',
-          builder: (c, s) => const BuyerTypePage()),
-      GoRoute(
-          path: '/buyer-onboarding/interests',
-          builder: (c, s) =>
-              BuyerInterestsPage(extra: s.extra as Map<String, dynamic>?)),
-      GoRoute(
-          path: '/buyer-onboarding/profile',
-          builder: (c, s) =>
-              BuyerProfileSetupPage(extra: s.extra as Map<String, dynamic>?)),
-      GoRoute(
-          path: '/buyer-onboarding/complete',
-          builder: (c, s) => const BuyerOnboardingCompletePage()),
-
       // ── Marketplace sub-screens (outside shells) ───────────────────
       GoRoute(
           path: '/marketplace/create',
@@ -115,7 +101,7 @@ class AppRouter {
                 'university': 'UCT',
                 'price': 'R150/hr',
                 'rating': '4.9',
-                'jobs': '10'
+                'jobs': '10',
               };
           return ListingDetailPage(listing: listing);
         },
@@ -130,7 +116,7 @@ class AppRouter {
                 'university': 'UCT',
                 'price': 'R150/hr',
                 'rating': '4.9',
-                'jobs': '10'
+                'jobs': '10',
               };
           return HireStudentPage(listing: listing);
         },
@@ -138,29 +124,35 @@ class AppRouter {
 
       // ── Marketplace: notifications & wishlist as full pages ────────
       GoRoute(
-          path: '/notifications', builder: (c, s) => const NotificationsPage()),
+          path: '/notifications',
+          builder: (c, s) => const NotificationsPage()),
       GoRoute(path: '/wishlist', builder: (c, s) => const WishlistPage()),
 
       // ── Notice Board ───────────────────────────────────────────────
       GoRoute(
-          path: '/notice-board', builder: (c, s) => const NoticeBoardPage()),
+          path: '/notice-board',
+          builder: (c, s) => const NoticeBoardPage()),
 
-      // ── Wallet sub-screens (outside shell) ────────────────────────
+      // ── Wallet sub-screens (outside shell) ─────────────────────────
       GoRoute(
-          path: '/wallet/budget', builder: (c, s) => const BudgetPlannerPage()),
+          path: '/wallet/budget',
+          builder: (c, s) => const BudgetPlannerPage()),
       GoRoute(
-          path: '/wallet/savings', builder: (c, s) => const SavingsGoalsPage()),
+          path: '/wallet/savings',
+          builder: (c, s) => const SavingsGoalsPage()),
       GoRoute(
-          path: '/wallet/send', builder: (_, __) => const SendMoneyScreen()),
+          path: '/wallet/send',
+          builder: (_, __) => const SendMoneyScreen()),
       GoRoute(
-          path: '/wallet/withdraw', builder: (_, __) => const WithdrawScreen()),
+          path: '/wallet/withdraw',
+          builder: (_, __) => const WithdrawScreen()),
       GoRoute(
           path: '/wallet/received',
           builder: (_, __) => const ReceivedMoneyScreen()),
       GoRoute(
         path: '/wallet/pockets',
-        builder: (_, s) =>
-            WalletPocketsPage(initialIndex: (s.extra as Map?)?['index'] ?? 0),
+        builder: (_, s) => WalletPocketsPage(
+            initialIndex: (s.extra as Map?)?['index'] ?? 0),
       ),
 
       // ── Stability (outside shell) ──────────────────────────────────
@@ -172,17 +164,14 @@ class AppRouter {
       ShellRoute(
         builder: (_, __, child) => BottomNavShell(child: child),
         routes: [
-          GoRoute(path: '/home', builder: (c, s) => const HomePage()),
-          GoRoute(
-              path: '/marketplace', builder: (c, s) => const MarketplacePage()),
-          GoRoute(path: '/wallet', builder: (c, s) => const WalletPage()),
-          GoRoute(
-              path: '/messages', builder: (c, s) => const MessagingInboxPage()),
-          GoRoute(
-              path: '/community', builder: (c, s) => const CommunityChatPage()),
-          GoRoute(path: '/support', builder: (c, s) => const SupportPage()),
-          GoRoute(path: '/stability', builder: (c, s) => const StabilityPage()),
-          GoRoute(path: '/profile', builder: (c, s) => const ProfilePage()),
+          GoRoute(path: '/home',        builder: (c, s) => const HomePage()),
+          GoRoute(path: '/marketplace', builder: (c, s) => const MarketplacePage()),
+          GoRoute(path: '/wallet',      builder: (c, s) => const WalletPage()),
+          GoRoute(path: '/messages',    builder: (c, s) => const MessagingInboxPage()),
+          GoRoute(path: '/community',   builder: (c, s) => const CommunityChatPage()),
+          GoRoute(path: '/support',     builder: (c, s) => const SupportPage()),
+          GoRoute(path: '/stability',   builder: (c, s) => const StabilityPage()),
+          GoRoute(path: '/profile',     builder: (c, s) => const ProfilePage()),
         ],
       ),
 

@@ -1,91 +1,70 @@
-// frontend/lib/shared/widgets/bottom_nav_shell.dart
+// lib/shared/widgets/bottom_nav_shell.dart
+// Student bottom nav — includes Messages tab and Community tab
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:gude_app/services/user_role_service.dart';
 
 class BottomNavShell extends StatelessWidget {
   final Widget child;
   const BottomNavShell({super.key, required this.child});
 
+  static const _tabs = [
+    _Tab('/home',        Icons.home_outlined,            Icons.home_rounded,            'Home'),
+    _Tab('/marketplace', Icons.storefront_outlined,       Icons.storefront_rounded,      'Market'),
+    _Tab('/wallet',      Icons.account_balance_wallet_outlined, Icons.account_balance_wallet_rounded, 'Wallet'),
+    _Tab('/messages',    Icons.chat_bubble_outline_rounded, Icons.chat_bubble_rounded,   'Messages'),
+    _Tab('/community',   Icons.groups_outlined,           Icons.groups_rounded,          'Community'),
+    _Tab('/stability',   Icons.favorite_outline,          Icons.favorite_rounded,        'Stability'),
+    _Tab('/profile',     Icons.person_outline_rounded,    Icons.person_rounded,          'Profile'),
+  ];
+
+  int _activeIndex(BuildContext context) {
+    final loc = GoRouterState.of(context).uri.path;
+    final idx = _tabs.indexWhere((t) => loc.startsWith(t.path));
+    return idx < 0 ? 0 : idx;
+  }
+
   @override
   Widget build(BuildContext context) {
-    final userService = UserRoleService();
-    final isInstitution = userService.isInstitution;
-    final isBuyer = userService.isBuyer;
-
-    List<NavItem> getNavItems() {
-      if (isInstitution) {
-        return const [
-          NavItem(
-              icon: Icons.work_outline,
-              label: 'Jobs',
-              route: '/institution/marketplace'),
-          NavItem(
-              icon: Icons.person_outline,
-              label: 'Profile',
-              route: '/institution/profile'),
-        ];
-      } else if (isBuyer) {
-        return const [
-          NavItem(
-              icon: Icons.storefront_outlined,
-              label: 'Marketplace',
-              route: '/buyer/marketplace'),
-          NavItem(
-              icon: Icons.person_outline,
-              label: 'Profile',
-              route: '/buyer/profile'),
-        ];
-      } else {
-        // Student nav — includes Stability
-        return const [
-          NavItem(icon: Icons.home_outlined, label: 'Home', route: '/home'),
-          NavItem(
-              icon: Icons.storefront_outlined,
-              label: 'Market',
-              route: '/marketplace'),
-          NavItem(
-              icon: Icons.account_balance_wallet_outlined,
-              label: 'Wallet',
-              route: '/wallet'),
-          NavItem(
-              icon: Icons.favorite_outline,
-              label: 'Stability',
-              route: '/stability'),
-          NavItem(
-              icon: Icons.person_outline, label: 'Profile', route: '/profile'),
-        ];
-      }
-    }
-
-    final navItems = getNavItems();
-
+    final active = _activeIndex(context);
     return Scaffold(
       body: child,
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          boxShadow: [
-            BoxShadow(
-                color: Colors.black.withOpacity(0.08),
-                blurRadius: 16,
-                offset: const Offset(0, -2)),
-          ],
-        ),
-        child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: navItems
-                  .map((item) => _NavItem(
-                        icon: item.icon,
-                        label: item.label,
-                        route: item.route,
-                        currentRoute: GoRouterState.of(context).uri.toString(),
-                      ))
-                  .toList(),
-            ),
+      bottomNavigationBar: SafeArea(
+        child: Container(
+          height: 62,
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            border: Border(top: BorderSide(color: Color(0xFFEEEEEE))),
+          ),
+          child: Row(
+            children: List.generate(_tabs.length, (i) {
+              final tab = _tabs[i];
+              final sel = i == active;
+              return Expanded(
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: () => context.go(tab.path),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        sel ? tab.activeIcon : tab.icon,
+                        size: 22,
+                        color: sel ? const Color(0xFFE30613) : const Color(0xFF888888),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        tab.label,
+                        style: TextStyle(
+                          fontSize: 9,
+                          fontWeight: sel ? FontWeight.w700 : FontWeight.w500,
+                          color: sel ? const Color(0xFFE30613) : const Color(0xFF888888),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }),
           ),
         ),
       ),
@@ -93,61 +72,8 @@ class BottomNavShell extends StatelessWidget {
   }
 }
 
-class NavItem {
-  final IconData icon;
-  final String label;
-  final String route;
-  const NavItem({required this.icon, required this.label, required this.route});
-}
-
-class _NavItem extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final String route;
-  final String currentRoute;
-
-  const _NavItem(
-      {required this.icon,
-      required this.label,
-      required this.route,
-      required this.currentRoute});
-
-  @override
-  Widget build(BuildContext context) {
-    final active = currentRoute == route ||
-        (route != '/home' && currentRoute.startsWith(route));
-
-    return GestureDetector(
-      onTap: () => context.go(route),
-      behavior: HitTestBehavior.opaque,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-        decoration: BoxDecoration(
-          color: active
-              ? const Color(0xFFE30613).withOpacity(0.08)
-              : Colors.transparent,
-          borderRadius: BorderRadius.circular(14),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon,
-                color:
-                    active ? const Color(0xFFE30613) : const Color(0xFF9E9E9E),
-                size: 22),
-            const SizedBox(height: 3),
-            Text(label,
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: active ? FontWeight.w700 : FontWeight.w400,
-                  color: active
-                      ? const Color(0xFFE30613)
-                      : const Color(0xFF9E9E9E),
-                )),
-          ],
-        ),
-      ),
-    );
-  }
+class _Tab {
+  final String path, label;
+  final IconData icon, activeIcon;
+  const _Tab(this.path, this.icon, this.activeIcon, this.label);
 }
