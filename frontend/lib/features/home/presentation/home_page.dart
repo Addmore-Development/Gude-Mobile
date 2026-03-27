@@ -91,9 +91,12 @@ class HomePage extends StatelessWidget {
                   borderRadius: BorderRadius.circular(10)),
             ),
             onPressed: () {
+              // Capture the router reference BEFORE popping the dialog
+              final nav = GoRouter.of(context);
               UserRoleService().clear();
               Navigator.pop(context);
-              context.go('/login');
+              // Defer navigation until after the dialog is fully dismissed
+              Future.microtask(() => nav.go('/login'));
             },
             child: const Text('Log Out',
                 style: TextStyle(
@@ -363,7 +366,7 @@ class HomePage extends StatelessWidget {
                 ],
               ),
             ] else ...[
-              // Student quick actions — Support removed, Stability + Check-in added
+              // Student quick actions
               Row(
                 children: [
                   _QuickAction(

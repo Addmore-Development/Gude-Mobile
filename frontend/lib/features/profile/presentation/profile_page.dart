@@ -442,8 +442,7 @@ class _ProfilePageState extends State<ProfilePage> {
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(16)),
                           title: const Text('Log out',
-                              style:
-                                  TextStyle(fontWeight: FontWeight.bold)),
+                              style: TextStyle(fontWeight: FontWeight.bold)),
                           content: const Text(
                               'Are you sure you want to log out?'),
                           actions: [
@@ -462,8 +461,11 @@ class _ProfilePageState extends State<ProfilePage> {
                                 minimumSize: const Size(80, 36),
                               ),
                               onPressed: () {
+                                // Capture router BEFORE popping the dialog
+                                final nav = GoRouter.of(context);
                                 Navigator.pop(context);
-                                context.go('/login');
+                                // Defer navigation until dialog is fully gone
+                                Future.microtask(() => nav.go('/login'));
                               },
                               child: const Text('Log out',
                                   style:

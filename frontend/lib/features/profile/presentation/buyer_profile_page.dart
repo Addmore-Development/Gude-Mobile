@@ -67,10 +67,22 @@ class _BuyerProfilePageState extends State<BuyerProfilePage> {
         title: const Text('Log Out', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18)),
         content: const Text('Are you sure you want to log out?', style: TextStyle(fontSize: 14, color: Color(0xFF555555))),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel', style: TextStyle(color: _C.grey, fontWeight: FontWeight.w600))),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel', style: TextStyle(color: _C.grey, fontWeight: FontWeight.w600)),
+          ),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: _C.red, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
-            onPressed: () { Navigator.pop(context); context.go('/login'); },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: _C.red,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            onPressed: () {
+              // Capture the router reference BEFORE popping the dialog
+              final nav = GoRouter.of(context);
+              Navigator.pop(context);
+              // Defer navigation until the dialog is fully dismissed
+              Future.microtask(() => nav.go('/login'));
+            },
             child: const Text('Log Out', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
           ),
         ],
