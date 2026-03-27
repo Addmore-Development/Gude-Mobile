@@ -1,4 +1,5 @@
 // lib/core/router/app_router.dart
+import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 // Auth
@@ -10,8 +11,15 @@ import 'package:gude_app/features/auth/presentation/forgot_password_page.dart';
 import 'package:gude_app/features/auth/presentation/skills_selection_page.dart';
 import 'package:gude_app/features/auth/presentation/student_verification_page.dart';
 
-// Buyer onboarding
-import 'package:gude_app/features/auth/presentation/buyer_onboarding_welcome_page.dart';
+// Buyer onboarding — import each page from its own dedicated file.
+// Hide ALL onboarding pages from buyer_onboarding_welcome_page.dart so there
+// are no duplicate-symbol conflicts.
+import 'package:gude_app/features/auth/presentation/buyer_onboarding_welcome_page.dart'
+    hide
+        BuyerTypePage,
+        BuyerInterestsPage,
+        BuyerProfileSetupPage,
+        BuyerOnboardingCompletePage;
 
 // Marketplace
 import 'package:gude_app/features/marketplace/presentation/marketplace_page.dart';
@@ -36,7 +44,7 @@ import 'package:gude_app/features/wallet/presentation/screens/send_money_screen.
 import 'package:gude_app/features/wallet/presentation/screens/withdraw_screen.dart';
 import 'package:gude_app/features/wallet/presentation/screens/received_money_screen.dart';
 
-// Other
+// Other features
 import 'package:gude_app/features/stability/presentation/stability_page.dart';
 import 'package:gude_app/features/stability/presentation/weekly_checkin_page.dart';
 import 'package:gude_app/features/support_hub/presentation/support_page.dart';
@@ -46,7 +54,7 @@ import 'package:gude_app/features/messaging/presentation/messaging_inbox_page.da
 import 'package:gude_app/features/community/presentation/community_chat_page.dart';
 import 'package:gude_app/features/community/presentation/notice_board_page.dart';
 
-// Buyer Features
+// ── Buyer Features ─────────────────────────────────────────────────
 import 'package:gude_app/features/buyer/presentation/buyer_messages_page.dart'
     hide BuyerNavShell;
 import 'package:gude_app/features/buyer/presentation/buyer_profile_page.dart';
@@ -82,20 +90,6 @@ class AppRouter {
       GoRoute(
           path: '/buyer-onboarding/welcome',
           builder: (c, s) => const BuyerOnboardingWelcomePage()),
-      GoRoute(
-          path: '/buyer-onboarding/type',
-          builder: (c, s) => const BuyerTypePage()),
-      GoRoute(
-          path: '/buyer-onboarding/interests',
-          builder: (c, s) =>
-              BuyerInterestsPage(extra: s.extra as Map<String, dynamic>?)),
-      GoRoute(
-          path: '/buyer-onboarding/profile',
-          builder: (c, s) =>
-              BuyerProfileSetupPage(extra: s.extra as Map<String, dynamic>?)),
-      GoRoute(
-          path: '/buyer-onboarding/complete',
-          builder: (c, s) => const BuyerOnboardingCompletePage()),
 
       // ── Marketplace sub-screens (outside shells) ───────────────────
       GoRoute(
@@ -114,7 +108,7 @@ class AppRouter {
                 'university': 'UCT',
                 'price': 'R150/hr',
                 'rating': '4.9',
-                'jobs': '10'
+                'jobs': '10',
               };
           return ListingDetailPage(listing: listing);
         },
@@ -129,7 +123,7 @@ class AppRouter {
                 'university': 'UCT',
                 'price': 'R150/hr',
                 'rating': '4.9',
-                'jobs': '10'
+                'jobs': '10',
               };
           return HireStudentPage(listing: listing);
         },
@@ -144,7 +138,7 @@ class AppRouter {
       GoRoute(
           path: '/notice-board', builder: (c, s) => const NoticeBoardPage()),
 
-      // ── Wallet sub-screens ─────────────────────────────────────────
+      // ── Wallet sub-screens (outside shell) ─────────────────────────
       GoRoute(
           path: '/wallet/budget', builder: (c, s) => const BudgetPlannerPage()),
       GoRoute(
