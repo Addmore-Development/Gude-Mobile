@@ -1,4 +1,4 @@
-// frontend/lib/features/home/presentation/home_page.dart
+// lib/features/home/presentation/home_page.dart
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:gude_app/core/theme/app_theme.dart';
@@ -145,7 +145,7 @@ class HomePage extends StatelessWidget {
           IconButton(
             icon: const Icon(Icons.notifications_outlined,
                 color: AppColors.textDark),
-            onPressed: () {},
+            onPressed: () => context.push('/notifications'),
           ),
           Padding(
             padding: const EdgeInsets.only(right: 12),
@@ -351,19 +351,19 @@ class HomePage extends StatelessWidget {
                   const SizedBox(width: 12),
                   _QuickAction(
                       icon: Icons.people_outline_rounded,
-                      label: 'Applicants',
+                      label: 'Find Students',
                       color: const Color(0xFF10B981),
-                      onTap: () => context.go('/institution/marketplace')),
+                      onTap: () => context.go('/marketplace')),
                   const SizedBox(width: 12),
                   _QuickAction(
-                      icon: Icons.person_outline_rounded,
-                      label: 'Profile',
+                      icon: Icons.forum_outlined,
+                      label: 'Notice Board',
                       color: const Color(0xFF8B5CF6),
-                      onTap: () => context.go('/institution/profile')),
+                      onTap: () => context.push('/notice-board')),
                 ],
               ),
             ] else ...[
-              // Student quick actions — Support removed, Stability + Check-in added
+              // Student quick actions — Stability removed, Notice Board added
               Row(
                 children: [
                   _QuickAction(
@@ -379,10 +379,10 @@ class HomePage extends StatelessWidget {
                       onTap: () => context.go('/community')),
                   const SizedBox(width: 12),
                   _QuickAction(
-                      icon: Icons.favorite_outline_rounded,
-                      label: 'Stability',
-                      color: const Color(0xFFE30613),
-                      onTap: () => context.go('/stability')),
+                      icon: Icons.campaign_outlined,
+                      label: 'Notice Board',
+                      color: const Color(0xFF8B5CF6),
+                      onTap: () => context.push('/notice-board')),
                   const SizedBox(width: 12),
                   _QuickAction(
                       icon: Icons.checklist_rounded,

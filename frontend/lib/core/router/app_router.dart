@@ -20,7 +20,7 @@ import 'package:gude_app/features/marketplace/presentation/create_listing_page.d
 import 'package:gude_app/features/marketplace/presentation/hire_student_page.dart';
 import 'package:gude_app/features/marketplace/presentation/job_dashboard_page.dart';
 
-// Notifications & Wishlist — hide cross-exports to avoid conflicts
+// Notifications & Wishlist
 import 'package:gude_app/features/marketplace/presentation/notifications_page.dart'
     hide WishlistPage;
 import 'package:gude_app/features/marketplace/presentation/wishlist_page.dart'
@@ -46,19 +46,18 @@ import 'package:gude_app/features/messaging/presentation/messaging_inbox_page.da
 import 'package:gude_app/features/community/presentation/community_chat_page.dart';
 import 'package:gude_app/features/community/presentation/notice_board_page.dart';
 
-// ── Buyer Features ─────────────────────────────────────────────────
-// hide BuyerNavShell to prevent conflict with buyer_nav_shell.dart
+// Buyer Features
 import 'package:gude_app/features/buyer/presentation/buyer_messages_page.dart'
     hide BuyerNavShell;
 import 'package:gude_app/features/buyer/presentation/buyer_profile_page.dart';
 
-// ── Institution ────────────────────────────────────────────────────
+// Institution
 import 'package:gude_app/features/institution/presentation/institution_marketplace_page.dart';
 import 'package:gude_app/features/institution/presentation/institution_profile_page.dart';
 
-// ── Shared Shells ──────────────────────────────────────────────────
+// Shared Shells
 import 'package:gude_app/shared/widgets/bottom_nav_shell.dart';
-// hide BuyerMessagesPage to prevent conflict with buyer_messages_page.dart
+import 'package:gude_app/shared/widgets/institution_nav_shell.dart';
 import 'package:gude_app/shared/widgets/buyer_nav_shell.dart'
     hide BuyerMessagesPage;
 
@@ -136,7 +135,7 @@ class AppRouter {
         },
       ),
 
-      // ── Marketplace: notifications & wishlist as full pages ────────
+      // ── Notifications & wishlist ───────────────────────────────────
       GoRoute(
           path: '/notifications', builder: (c, s) => const NotificationsPage()),
       GoRoute(path: '/wishlist', builder: (c, s) => const WishlistPage()),
@@ -145,7 +144,7 @@ class AppRouter {
       GoRoute(
           path: '/notice-board', builder: (c, s) => const NoticeBoardPage()),
 
-      // ── Wallet sub-screens (outside shell) ────────────────────────
+      // ── Wallet sub-screens ─────────────────────────────────────────
       GoRoute(
           path: '/wallet/budget', builder: (c, s) => const BudgetPlannerPage()),
       GoRoute(
@@ -163,7 +162,7 @@ class AppRouter {
             WalletPocketsPage(initialIndex: (s.extra as Map?)?['index'] ?? 0),
       ),
 
-      // ── Stability (outside shell) ──────────────────────────────────
+      // ── Stability ─────────────────────────────────────────────────
       GoRoute(
           path: '/stability/checkin',
           builder: (c, s) => const WeeklyCheckinPage()),
@@ -186,10 +185,13 @@ class AppRouter {
         ],
       ),
 
-      // ── Institution Shell ──────────────────────────────────────────
+      // ── Institution Shell (3 tabs: Marketplace, Jobs, Profile) ─────
       ShellRoute(
-        builder: (context, state, child) => BottomNavShell(child: child),
+        builder: (context, state, child) => InstitutionNavShell(child: child),
         routes: [
+          GoRoute(
+              path: '/institution/browse',
+              builder: (c, s) => const MarketplacePage()),
           GoRoute(
               path: '/institution/marketplace',
               builder: (c, s) => const InstitutionMarketplacePage()),
