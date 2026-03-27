@@ -12,10 +12,6 @@ import 'package:gude_app/features/auth/presentation/student_verification_page.da
 
 // Buyer onboarding
 import 'package:gude_app/features/auth/presentation/buyer_onboarding_welcome_page.dart';
-import 'package:gude_app/features/auth/presentation/buyer_type_page.dart';
-import 'package:gude_app/features/auth/presentation/buyer_interests_page.dart';
-import 'package:gude_app/features/auth/presentation/buyer_profile_setup_page.dart';
-import 'package:gude_app/features/auth/presentation/buyer_onboarding_complete_page.dart';
 
 // Marketplace
 import 'package:gude_app/features/marketplace/presentation/marketplace_page.dart';

@@ -1,218 +1,113 @@
+// lib/features/community/presentation/community_chat_page.dart
+//
+// Features:
+//  - Students auto-joined into area group chat on registration
+//  - Participant count visible in header
+//  - Private chat with any participant (long-press or tap profile)
+//  - Delete, Report, Block per message/participant (context menu)
+//  - Blocked users reflected on profile (stored in _BlockedUsers)
+// ─────────────────────────────────────────────────────────────────
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
+// ─── Colors ──────────────────────────────────────────────────────────
 class _C {
   static const primary   = Color(0xFFE30613);
   static const dark      = Color(0xFF1A1A1A);
   static const grey      = Color(0xFF888888);
   static const lightGrey = Color(0xFFF5F5F5);
   static const border    = Color(0xFFEEEEEE);
-  static const blue      = Color(0xFF3B82F6);
   static const green     = Color(0xFF10B981);
+  static const blue      = Color(0xFF3B82F6);
 }
 
-// ─────────────────────────────────────────────────────────────
-// MODELS
-// ─────────────────────────────────────────────────────────────
-class _Room {
-  final String id;
-  final String name;
-  final String emoji;
-  final String lastMsg;
-  final String time;
-  final int memberCount;
-  final int unread;
-  final Color color;
+// ─── Blocked users registry (simulates profile-linked state) ─────────
+class _BlockedUsers {
+  static final Set<String> _blocked = {};
+  static void block(String userId)    => _blocked.add(userId);
+  static void unblock(String userId)  => _blocked.remove(userId);
+  static bool isBlocked(String userId) => _blocked.contains(userId);
+  static List<String> get all => _blocked.toList();
+}
 
-  const _Room({
+// ─── Reported users registry ──────────────────────────────────────────
+class _ReportedUsers {
+  static final Set<String> _reported = {};
+  static void report(String userId) => _reported.add(userId);
+  static bool isReported(String userId) => _reported.contains(userId);
+}
+
+// ─── Models ───────────────────────────────────────────────────────────
+class _Participant {
+  final String id, name, university, area, avatarLetter;
+  final Color avatarColor;
+  final bool isOnline;
+  const _Participant({
     required this.id,
     required this.name,
-    required this.emoji,
-    required this.lastMsg,
-    required this.time,
-    required this.memberCount,
-    this.unread = 0,
-    required this.color,
+    required this.university,
+    required this.area,
+    required this.avatarLetter,
+    required this.avatarColor,
+    this.isOnline = false,
   });
 }
 
-class _ServicePost {
-  final String id;
-  final String authorName;
-  final String authorInitials;
-  final Color authorColor;
-  final String category;
-  final Color categoryColor;
-  final String title;
-  final String body;
-  final String budget;
-  final String timeAgo;
-  final int replies;
-  bool bookmarked;
-
-  _ServicePost({
-    required this.id,
-    required this.authorName,
-    required this.authorInitials,
-    required this.authorColor,
-    required this.category,
-    required this.categoryColor,
-    required this.title,
-    required this.body,
-    required this.budget,
-    required this.timeAgo,
-    this.replies = 0,
-    this.bookmarked = false,
-  });
-}
-
-class _RoomMessage {
-  final String senderId;
-  final String senderName;
-  final String senderInitials;
-  final String text;
+class _GroupMessage {
+  final String id, senderId, senderName, senderAvatar, text;
   final DateTime time;
-
-  const _RoomMessage({
+  final bool isMe;
+  _GroupMessage({
+    required this.id,
     required this.senderId,
     required this.senderName,
-    required this.senderInitials,
+    required this.senderAvatar,
     required this.text,
     required this.time,
+    required this.isMe,
   });
 }
 
-// ─────────────────────────────────────────────────────────────
-// SEED DATA
-// ─────────────────────────────────────────────────────────────
-const _rooms = [
-  _Room(
-    id: 'uct',
-    name: 'UCT Students',
-    emoji: '🎓',
-    lastMsg: 'Anyone have the econ notes from yesterday?',
-    time: '2m',
-    memberCount: 1240,
-    unread: 5,
-    color: Color(0xFF3B82F6),
-  ),
-  _Room(
-    id: 'wits',
-    name: 'Wits Students',
-    emoji: '📚',
-    lastMsg: 'Study group at library at 3pm — join?',
-    time: '15m',
-    memberCount: 980,
-    unread: 2,
-    color: Color(0xFF8B5CF6),
-  ),
-  _Room(
-    id: 'cpt',
-    name: 'Cape Town Hub',
-    emoji: '🌍',
-    lastMsg: 'Free event at the Grand Parade Saturday!',
-    time: '1h',
-    memberCount: 3200,
-    unread: 0,
-    color: Color(0xFF10B981),
-  ),
-  _Room(
-    id: 'jozi',
-    name: 'Johannesburg Hub',
-    emoji: '🏙️',
-    lastMsg: 'Anyone selling a second-hand bike?',
-    time: '3h',
-    memberCount: 4100,
-    unread: 1,
-    color: Color(0xFFF59E0B),
-  ),
-  _Room(
-    id: 'nsfas',
-    name: 'NSFAS Support',
-    emoji: '💳',
-    lastMsg: 'August allowances confirmed for most unis.',
-    time: '5h',
-    memberCount: 8700,
-    unread: 0,
-    color: Color(0xFFE30613),
-  ),
+// ─── Seed data ────────────────────────────────────────────────────────
+const _participants = [
+  _Participant(id: 'me',  name: 'You',             university: 'UJ',   area: 'Johannesburg', avatarLetter: 'Y',  avatarColor: _C.primary, isOnline: true),
+  _Participant(id: 'p1',  name: 'Thabo Nkosi',     university: 'Wits', area: 'Johannesburg', avatarLetter: 'TN', avatarColor: Color(0xFF3B82F6), isOnline: true),
+  _Participant(id: 'p2',  name: 'Lerato Dlamini',  university: 'UJ',   area: 'Johannesburg', avatarLetter: 'LD', avatarColor: Color(0xFF10B981), isOnline: false),
+  _Participant(id: 'p3',  name: 'Sipho Mahlangu',  university: 'TUT',  area: 'Johannesburg', avatarLetter: 'SM', avatarColor: Color(0xFFF59E0B), isOnline: true),
+  _Participant(id: 'p4',  name: 'Aisha Patel',     university: 'Wits', area: 'Johannesburg', avatarLetter: 'AP', avatarColor: Color(0xFF8B5CF6), isOnline: false),
+  _Participant(id: 'p5',  name: 'Keanu Naidoo',    university: 'UJ',   area: 'Johannesburg', avatarLetter: 'KN', avatarColor: Color(0xFFEC4899), isOnline: true),
+  _Participant(id: 'p6',  name: 'Nomsa Zulu',      university: 'TUT',  area: 'Johannesburg', avatarLetter: 'NZ', avatarColor: Color(0xFF059669), isOnline: false),
+  _Participant(id: 'p7',  name: 'David Mokoena',   university: 'Wits', area: 'Johannesburg', avatarLetter: 'DM', avatarColor: Color(0xFFDC2626), isOnline: true),
+  _Participant(id: 'p8',  name: 'Fatima Hassan',   university: 'UJ',   area: 'Johannesburg', avatarLetter: 'FH', avatarColor: Color(0xFF7C3AED), isOnline: false),
+  _Participant(id: 'p9',  name: 'Luca Ferreira',   university: 'TUT',  area: 'Johannesburg', avatarLetter: 'LF', avatarColor: Color(0xFF0891B2), isOnline: true),
+  _Participant(id: 'p10', name: 'Zanele Khumalo',  university: 'Wits', area: 'Johannesburg', avatarLetter: 'ZK', avatarColor: Color(0xFF65A30D), isOnline: false),
+  _Participant(id: 'p11', name: 'Reza Moosagie',   university: 'UJ',   area: 'Johannesburg', avatarLetter: 'RM', avatarColor: Color(0xFFB45309), isOnline: true),
 ];
 
-List<_ServicePost> _buildPosts() {
+List<_GroupMessage> _buildMessages() {
+  final now = DateTime.now();
   return [
-    _ServicePost(
-      id: 'p1',
-      authorName: 'Thabo Nkosi',
-      authorInitials: 'TN',
-      authorColor: const Color(0xFF3B82F6),
-      category: 'Tutoring',
-      categoryColor: const Color(0xFF8B5CF6),
-      title: 'Need a Maths 101 tutor ASAP',
-      body: 'Struggling with calculus and linear algebra. Need someone who can explain concepts clearly. Available weekends and evenings.',
-      budget: 'R80–120/hr',
-      timeAgo: '5 min ago',
-      replies: 3,
-    ),
-    _ServicePost(
-      id: 'p2',
-      authorName: 'Ama Dube',
-      authorInitials: 'AD',
-      authorColor: const Color(0xFF10B981),
-      category: 'Design',
-      categoryColor: const Color(0xFFEC4899),
-      title: 'Looking for a logo designer for my small biz',
-      body: 'I run a student catering service and need a clean, modern logo. Must include my brand colors (green + gold). Quick turnaround appreciated.',
-      budget: 'R200–350',
-      timeAgo: '22 min ago',
-      replies: 7,
-    ),
-    _ServicePost(
-      id: 'p3',
-      authorName: 'Sipho Dlamini',
-      authorInitials: 'SD',
-      authorColor: const Color(0xFF8B5CF6),
-      category: 'Coding',
-      categoryColor: const Color(0xFF3B82F6),
-      title: 'Need help debugging a Python Flask app',
-      body: 'Have a final-year project deadline on Friday. The API keeps returning 500 errors on POST requests. 1–2 hours of help needed.',
-      budget: 'R100–150',
-      timeAgo: '1h ago',
-      replies: 2,
-    ),
-    _ServicePost(
-      id: 'p4',
-      authorName: 'Lindiwe Moyo',
-      authorInitials: 'LM',
-      authorColor: const Color(0xFFF59E0B),
-      category: 'Writing',
-      categoryColor: const Color(0xFF059669),
-      title: 'Essay proofreader needed (2000 words)',
-      body: 'I need someone to proofread and lightly edit a sociology essay. Must be fluent in academic English. Needed by tomorrow morning.',
-      budget: 'R80',
-      timeAgo: '2h ago',
-      replies: 5,
-    ),
-    _ServicePost(
-      id: 'p5',
-      authorName: 'Kabelo Sithole',
-      authorInitials: 'KS',
-      authorColor: const Color(0xFFE30613),
-      category: 'Photography',
-      categoryColor: const Color(0xFF06B6D4),
-      title: 'Student photographer for graduation pics',
-      body: 'Graduating next month and want professional-style photos on campus. Looking for someone with a DSLR. Can do it on the day.',
-      budget: 'R300–500',
-      timeAgo: '3h ago',
-      replies: 11,
-    ),
+    _GroupMessage(id: 'm1', senderId: 'p1', senderName: 'Thabo N.', senderAvatar: 'TN', text: 'Hey everyone! Anyone need help with Maths? I\'m offering tutoring this weekend 📚', time: now.subtract(const Duration(hours: 3)), isMe: false),
+    _GroupMessage(id: 'm2', senderId: 'p3', senderName: 'Sipho M.', senderAvatar: 'SM', text: 'I\'m looking for a graphic designer for a small project. Budget R200. DM me 🎨', time: now.subtract(const Duration(hours: 2, minutes: 30)), isMe: false),
+    _GroupMessage(id: 'm3', senderId: 'me', senderName: 'You', senderAvatar: 'Y', text: 'Hey Sipho, I do design work! I\'ll message you.', time: now.subtract(const Duration(hours: 2, minutes: 15)), isMe: true),
+    _GroupMessage(id: 'm4', senderId: 'p2', senderName: 'Lerato D.', senderAvatar: 'LD', text: 'Anyone selling a second-hand laptop? Preferably under R3000 💻', time: now.subtract(const Duration(hours: 1, minutes: 45)), isMe: false),
+    _GroupMessage(id: 'm5', senderId: 'p5', senderName: 'Keanu N.', senderAvatar: 'KN', text: 'Study group for CS201 this Thursday at the library? 5pm? 🎓', time: now.subtract(const Duration(hours: 1)), isMe: false),
+    _GroupMessage(id: 'm6', senderId: 'p7', senderName: 'David M.', senderAvatar: 'DM', text: 'I\'m in for Thursday!', time: now.subtract(const Duration(minutes: 45)), isMe: false),
+    _GroupMessage(id: 'm7', senderId: 'me', senderName: 'You', senderAvatar: 'Y', text: 'Thursday works for me too 👍', time: now.subtract(const Duration(minutes: 30)), isMe: true),
+    _GroupMessage(id: 'm8', senderId: 'p9', senderName: 'Luca F.', senderAvatar: 'LF', text: 'Anyone know a good spot to get cheap groceries near UJ?', time: now.subtract(const Duration(minutes: 10)), isMe: false),
   ];
 }
 
-// ─────────────────────────────────────────────────────────────
-// COMMUNITY CHAT PAGE
-// ─────────────────────────────────────────────────────────────
+// ─── Private conversation model ───────────────────────────────────────
+class _PrivateMessage {
+  final String text, senderId;
+  final DateTime time;
+  _PrivateMessage(this.senderId, this.text, this.time);
+}
+
+// ─── Community Chat Page ───────────────────────────────────────────────
 class CommunityChatPage extends StatefulWidget {
   const CommunityChatPage({super.key});
-
   @override
   State<CommunityChatPage> createState() => _CommunityChatPageState();
 }
@@ -220,504 +115,718 @@ class CommunityChatPage extends StatefulWidget {
 class _CommunityChatPageState extends State<CommunityChatPage>
     with SingleTickerProviderStateMixin {
   late TabController _tabCtrl;
-  final List<_ServicePost> _posts = _buildPosts();
+  final List<_GroupMessage> _messages = _buildMessages();
+  final _msgCtrl    = TextEditingController();
+  final _scrollCtrl = ScrollController();
+  // Private chat threads: participantId -> messages
+  final Map<String, List<_PrivateMessage>> _privateChats = {};
+  // Deleted message IDs
+  final Set<String> _deletedIds = {};
 
   @override
   void initState() {
     super.initState();
     _tabCtrl = TabController(length: 2, vsync: this);
+    WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
   }
 
   @override
   void dispose() {
     _tabCtrl.dispose();
+    _msgCtrl.dispose();
+    _scrollCtrl.dispose();
     super.dispose();
+  }
+
+  void _scrollToBottom() {
+    if (_scrollCtrl.hasClients) {
+      _scrollCtrl.animateTo(
+        _scrollCtrl.position.maxScrollExtent,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOut,
+      );
+    }
+  }
+
+  void _sendMessage() {
+    final text = _msgCtrl.text.trim();
+    if (text.isEmpty) return;
+    setState(() {
+      _messages.add(_GroupMessage(
+        id: 'm${DateTime.now().millisecondsSinceEpoch}',
+        senderId: 'me',
+        senderName: 'You',
+        senderAvatar: 'Y',
+        text: text,
+        time: DateTime.now(),
+        isMe: true,
+      ));
+      _msgCtrl.clear();
+    });
+    WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
+  }
+
+  int get _onlineCount =>
+      _participants.where((p) => p.isOnline && !_BlockedUsers.isBlocked(p.id)).length;
+
+  List<_GroupMessage> get _visibleMessages =>
+      _messages.where((m) =>
+          !_deletedIds.contains(m.id) &&
+          !_BlockedUsers.isBlocked(m.senderId)).toList();
+
+  String _fmt(DateTime t) {
+    final h = t.hour.toString().padLeft(2, '0');
+    final m = t.minute.toString().padLeft(2, '0');
+    return '$h:$m';
+  }
+
+  void _showMessageOptions(_GroupMessage msg) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (_) => Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const SizedBox(height: 8),
+          Container(width: 40, height: 4, decoration: BoxDecoration(color: const Color(0xFFDDDDDD), borderRadius: BorderRadius.circular(2))),
+          const SizedBox(height: 8),
+          // Preview
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+            child: Text(
+              '"${msg.text.length > 60 ? '${msg.text.substring(0, 60)}…' : msg.text}"',
+              style: const TextStyle(fontSize: 13, color: _C.grey, fontStyle: FontStyle.italic),
+              textAlign: TextAlign.center,
+            ),
+          ),
+          const Divider(height: 1),
+          if (!msg.isMe) ...[
+            _OptionTile(
+              icon: Icons.reply_rounded,
+              label: 'Message ${msg.senderName} privately',
+              color: _C.blue,
+              onTap: () {
+                Navigator.pop(context);
+                _openPrivateChat(msg.senderId, msg.senderName, msg.senderAvatar);
+              },
+            ),
+          ],
+          _OptionTile(
+            icon: Icons.copy_rounded,
+            label: 'Copy message',
+            color: _C.dark,
+            onTap: () {
+              Clipboard.setData(ClipboardData(text: msg.text));
+              Navigator.pop(context);
+              _showSnack('Message copied');
+            },
+          ),
+          if (msg.isMe)
+            _OptionTile(
+              icon: Icons.delete_outline_rounded,
+              label: 'Delete message',
+              color: _C.primary,
+              onTap: () {
+                setState(() => _deletedIds.add(msg.id));
+                Navigator.pop(context);
+                _showSnack('Message deleted');
+              },
+            ),
+          if (!msg.isMe) ...[
+            _OptionTile(
+              icon: Icons.flag_outlined,
+              label: 'Report ${msg.senderName}',
+              color: const Color(0xFFF59E0B),
+              onTap: () {
+                _ReportedUsers.report(msg.senderId);
+                Navigator.pop(context);
+                _showSnack('${msg.senderName} reported');
+              },
+            ),
+            _OptionTile(
+              icon: _BlockedUsers.isBlocked(msg.senderId)
+                  ? Icons.do_not_disturb_off_rounded
+                  : Icons.block_rounded,
+              label: _BlockedUsers.isBlocked(msg.senderId)
+                  ? 'Unblock ${msg.senderName}'
+                  : 'Block ${msg.senderName}',
+              color: _C.primary,
+              onTap: () {
+                setState(() {
+                  if (_BlockedUsers.isBlocked(msg.senderId)) {
+                    _BlockedUsers.unblock(msg.senderId);
+                    _showSnack('${msg.senderName} unblocked');
+                  } else {
+                    _BlockedUsers.block(msg.senderId);
+                    _showSnack('${msg.senderName} blocked — reflected on your profile');
+                  }
+                });
+                Navigator.pop(context);
+              },
+            ),
+          ],
+          const SizedBox(height: 16),
+        ],
+      ),
+    );
+  }
+
+  void _openPrivateChat(String participantId, String name, String avatar) {
+    _privateChats.putIfAbsent(participantId, () => []);
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => _PrivateChatPage(
+          participantId:    participantId,
+          participantName:  name,
+          participantAvatar: avatar,
+          messages: _privateChats[participantId]!,
+          onSend: (text) {
+            setState(() {
+              _privateChats[participantId]!.add(
+                _PrivateMessage('me', text, DateTime.now()),
+              );
+            });
+          },
+        ),
+      ),
+    );
+  }
+
+  void _showSnack(String msg) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(msg), duration: const Duration(seconds: 2)),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final totalUnread = _rooms.fold<int>(0, (s, r) => s + r.unread);
+    final visibleParticipants = _participants
+        .where((p) => !_BlockedUsers.isBlocked(p.id))
+        .toList();
 
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        title: Row(children: [
-          const Text('Community',
-              style: TextStyle(
-                  color: _C.dark,
-                  fontWeight: FontWeight.w800,
-                  fontSize: 18)),
-          if (totalUnread > 0) ...[
-            const SizedBox(width: 8),
-            Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-              decoration: BoxDecoration(
-                  color: _C.primary,
-                  borderRadius: BorderRadius.circular(12)),
-              child: Text('$totalUnread',
-                  style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700)),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Community',
+                style: TextStyle(
+                    color: _C.dark, fontWeight: FontWeight.w800, fontSize: 18)),
+            Text(
+              'Johannesburg · ${visibleParticipants.length} members · $_onlineCount online',
+              style: const TextStyle(color: _C.grey, fontSize: 11),
             ),
           ],
-        ]),
+        ),
         actions: [
-          IconButton(
-              icon: const Icon(Icons.search, color: _C.dark),
-              onPressed: () {}),
+          // Participants avatar stack
+          GestureDetector(
+            onTap: () => _showParticipantsSheet(visibleParticipants),
+            child: Padding(
+              padding: const EdgeInsets.only(right: 16),
+              child: Row(
+                children: [
+                  SizedBox(
+                    width: 60, height: 36,
+                    child: Stack(
+                      children: List.generate(
+                        visibleParticipants.take(3).length,
+                        (i) {
+                          final p = visibleParticipants[i];
+                          return Positioned(
+                            left: i * 18.0,
+                            child: CircleAvatar(
+                              radius: 15,
+                              backgroundColor: p.avatarColor,
+                              child: Text(p.avatarLetter,
+                                  style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 9,
+                                      fontWeight: FontWeight.w800)),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                  Text(
+                    '+${(visibleParticipants.length - 3).clamp(0, 999)}',
+                    style: const TextStyle(
+                        color: _C.primary,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ],
         bottom: TabBar(
           controller: _tabCtrl,
           labelColor: _C.primary,
           unselectedLabelColor: _C.grey,
           indicatorColor: _C.primary,
-          labelStyle: const TextStyle(
-              fontWeight: FontWeight.w700, fontSize: 13),
-          tabs: const [
-            Tab(text: '💬 Group Rooms'),
-            Tab(text: '🛎 Service Feed'),
+          labelStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+          tabs: [
+            const Tab(text: 'Group Chat'),
+            Tab(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Text('Private'),
+                  if (_privateChats.values.any((msgs) =>
+                      msgs.isNotEmpty && msgs.last.senderId != 'me')) ...[
+                    const SizedBox(width: 4),
+                    Container(
+                      width: 8, height: 8,
+                      decoration: const BoxDecoration(
+                          color: _C.primary, shape: BoxShape.circle),
+                    ),
+                  ],
+                ],
+              ),
+            ),
           ],
         ),
       ),
       body: TabBarView(
         controller: _tabCtrl,
         children: [
-          _RoomList(rooms: _rooms, onTap: _openRoom),
-          _ServiceFeed(
-            posts: _posts,
-            onPostService: () => _showPostSheet(context),
-            onToggleBookmark: (id) => setState(() {
-              final p = _posts.firstWhere((p) => p.id == id);
-              p.bookmarked = !p.bookmarked;
-            }),
-            onReply: (post) => _openServiceThread(context, post),
+          // ── Group Chat tab ────────────────────────────────────────
+          Column(
+            children: [
+              // Info banner
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                color: _C.primary.withOpacity(0.06),
+                child: Row(children: [
+                  const Icon(Icons.people_rounded, color: _C.primary, size: 14),
+                  const SizedBox(width: 6),
+                  Text(
+                    '${visibleParticipants.length} students in your area are in this group',
+                    style: const TextStyle(
+                        color: _C.primary, fontSize: 12, fontWeight: FontWeight.w600),
+                  ),
+                ]),
+              ),
+
+              // Messages
+              Expanded(
+                child: ListView.builder(
+                  controller: _scrollCtrl,
+                  padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
+                  itemCount: _visibleMessages.length,
+                  itemBuilder: (_, i) {
+                    final msg = _visibleMessages[i];
+                    final showDate = i == 0 ||
+                        _visibleMessages[i - 1].time.day != msg.time.day;
+                    return Column(
+                      children: [
+                        if (showDate)
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 10),
+                            child: Text(_fmtDate(msg.time),
+                                style: const TextStyle(
+                                    color: _C.grey,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w500)),
+                          ),
+                        GestureDetector(
+                          onLongPress: () => _showMessageOptions(msg),
+                          child: _GroupMessageBubble(msg: msg, fmt: _fmt),
+                        ),
+                      ],
+                    );
+                  },
+                ),
+              ),
+
+              // Input
+              _ChatInput(
+                controller: _msgCtrl,
+                onSend: _sendMessage,
+              ),
+            ],
+          ),
+
+          // ── Private Chats tab ─────────────────────────────────────
+          _PrivateInbox(
+            participants: visibleParticipants,
+            privateChats: _privateChats,
+            onOpen: (p) => _openPrivateChat(p.id, p.name, p.avatarLetter),
+            onDelete: (id) => setState(() => _privateChats.remove(id)),
           ),
         ],
       ),
-      floatingActionButton: AnimatedBuilder(
-        animation: _tabCtrl,
-        builder: (_, __) {
-          final onFeed = _tabCtrl.index == 1;
-          return FloatingActionButton.extended(
-            backgroundColor: _C.primary,
-            foregroundColor: Colors.white,
-            icon: Icon(onFeed ? Icons.add_rounded : Icons.group_add_rounded,
-                size: 20),
-            label: Text(onFeed ? 'Post Request' : 'Join Room',
-                style: const TextStyle(
-                    fontWeight: FontWeight.w700, fontSize: 13)),
-            onPressed: onFeed
-                ? () => _showPostSheet(context)
-                : () => _showJoinSheet(context),
-          );
-        },
-      ),
     );
   }
 
-  void _openRoom(_Room room) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => _RoomChatPage(room: room)),
-    );
-  }
-
-  void _showPostSheet(BuildContext context) {
+  void _showParticipantsSheet(List<_Participant> participants) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
-      builder: (_) => _PostServiceSheet(
-        onSubmit: (post) {
-          setState(() => _posts.insert(0, post));
-          Navigator.pop(context);
-        },
-      ),
-    );
-  }
-
-  void _showJoinSheet(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
-      builder: (_) => Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(mainAxisSize: MainAxisSize.min, children: [
-          const Text('Discover Rooms',
-              style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w800,
-                  color: _C.dark)),
-          const SizedBox(height: 4),
-          const Text('Rooms are matched by your university and city.',
-              style: TextStyle(fontSize: 13, color: _C.grey)),
-          const SizedBox(height: 16),
-          ..._rooms.map((r) => ListTile(
-                contentPadding: EdgeInsets.zero,
-                leading: Container(
-                  width: 42, height: 42,
-                  decoration: BoxDecoration(
-                      color: r.color.withOpacity(0.12),
-                      borderRadius: BorderRadius.circular(12)),
-                  child: Center(
-                      child: Text(r.emoji,
-                          style: const TextStyle(fontSize: 20))),
-                ),
-                title: Text(r.name,
-                    style: const TextStyle(
-                        fontWeight: FontWeight.w700,
-                        fontSize: 14,
-                        color: _C.dark)),
-                subtitle: Text('${r.memberCount} members',
-                    style: const TextStyle(
-                        fontSize: 12, color: _C.grey)),
-                trailing: TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text('Join',
-                      style: TextStyle(
-                          color: _C.primary,
-                          fontWeight: FontWeight.w700)),
-                ),
-              )),
-        ]),
-      ),
-    );
-  }
-
-  void _openServiceThread(BuildContext context, _ServicePost post) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-          builder: (_) => _ServiceThreadPage(post: post)),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────
-// ROOM LIST TAB
-// ─────────────────────────────────────────────────────────────
-class _RoomList extends StatelessWidget {
-  final List<_Room> rooms;
-  final void Function(_Room) onTap;
-
-  const _RoomList({required this.rooms, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return ListView.separated(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      itemCount: rooms.length,
-      separatorBuilder: (_, __) =>
-          const Divider(height: 1, indent: 72, color: _C.border),
-      itemBuilder: (_, i) {
-        final r = rooms[i];
-        return InkWell(
-          onTap: () => onTap(r),
-          child: Padding(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            child: Row(children: [
-              Container(
-                width: 48, height: 48,
-                decoration: BoxDecoration(
-                    color: r.color.withOpacity(0.12),
-                    borderRadius: BorderRadius.circular(14)),
-                child: Center(
-                    child:
-                        Text(r.emoji, style: const TextStyle(fontSize: 22))),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(children: [
-                        Expanded(
-                          child: Text(r.name,
-                              style: const TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w700,
-                                  color: _C.dark)),
-                        ),
-                        Text(r.time,
-                            style: TextStyle(
-                                fontSize: 11,
-                                color:
-                                    r.unread > 0 ? _C.primary : _C.grey)),
-                      ]),
-                      const SizedBox(height: 3),
-                      Row(children: [
-                        Expanded(
-                          child: Text(r.lastMsg,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                  fontSize: 12,
-                                  color: r.unread > 0 ? _C.dark : _C.grey,
-                                  fontWeight: r.unread > 0
-                                      ? FontWeight.w600
-                                      : FontWeight.normal)),
-                        ),
-                        if (r.unread > 0)
-                          Container(
-                            margin: const EdgeInsets.only(left: 6),
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 7, vertical: 2),
+      builder: (_) => DraggableScrollableSheet(
+        expand: false,
+        initialChildSize: 0.6,
+        maxChildSize: 0.9,
+        builder: (_, sc) => Column(
+          children: [
+            const SizedBox(height: 12),
+            Container(width: 40, height: 4, decoration: BoxDecoration(color: const Color(0xFFDDDDDD), borderRadius: BorderRadius.circular(2))),
+            const SizedBox(height: 16),
+            Text(
+              'Group Members (${participants.length})',
+              style: const TextStyle(
+                  fontSize: 18, fontWeight: FontWeight.w800, color: _C.dark),
+            ),
+            const SizedBox(height: 4),
+            const Text('Johannesburg Area',
+                style: TextStyle(fontSize: 12, color: _C.grey)),
+            const SizedBox(height: 16),
+            Expanded(
+              child: ListView.builder(
+                controller: sc,
+                itemCount: participants.length,
+                itemBuilder: (_, i) {
+                  final p = participants[i];
+                  if (p.id == 'me') return const SizedBox.shrink();
+                  final isBlocked = _BlockedUsers.isBlocked(p.id);
+                  return ListTile(
+                    leading: Stack(children: [
+                      CircleAvatar(
+                        backgroundColor: p.avatarColor,
+                        child: Text(p.avatarLetter,
+                            style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w800,
+                                fontSize: 13)),
+                      ),
+                      if (p.isOnline)
+                        Positioned(
+                          bottom: 0, right: 0,
+                          child: Container(
+                            width: 10, height: 10,
                             decoration: BoxDecoration(
-                                color: _C.primary,
-                                borderRadius: BorderRadius.circular(10)),
-                            child: Text('${r.unread}',
-                                style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.w700)),
+                                color: _C.green,
+                                shape: BoxShape.circle,
+                                border: Border.all(color: Colors.white, width: 1.5)),
                           ),
-                      ]),
-                      const SizedBox(height: 2),
-                      Text('${r.memberCount} members',
-                          style: const TextStyle(
-                              fontSize: 10, color: _C.grey)),
+                        ),
                     ]),
+                    title: Text(p.name,
+                        style: TextStyle(
+                            fontWeight: FontWeight.w700,
+                            color: isBlocked ? _C.grey : _C.dark)),
+                    subtitle: Text('${p.university} · ${p.area}',
+                        style: const TextStyle(fontSize: 11, color: _C.grey)),
+                    trailing: isBlocked
+                        ? const Text('Blocked',
+                            style: TextStyle(
+                                fontSize: 11, color: _C.primary, fontWeight: FontWeight.w600))
+                        : Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.chat_bubble_outline_rounded,
+                                    color: _C.blue, size: 20),
+                                onPressed: () {
+                                  Navigator.pop(context);
+                                  _openPrivateChat(p.id, p.name, p.avatarLetter);
+                                },
+                              ),
+                            ],
+                          ),
+                  );
+                },
               ),
-            ]),
-          ),
-        );
-      },
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────
-// SERVICE FEED TAB
-// ─────────────────────────────────────────────────────────────
-class _ServiceFeed extends StatelessWidget {
-  final List<_ServicePost> posts;
-  final VoidCallback onPostService;
-  final void Function(String id) onToggleBookmark;
-  final void Function(_ServicePost) onReply;
-
-  const _ServiceFeed({
-    required this.posts,
-    required this.onPostService,
-    required this.onToggleBookmark,
-    required this.onReply,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return ListView.separated(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 100),
-      itemCount: posts.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 12),
-      itemBuilder: (_, i) {
-        final p = posts[i];
-        return _ServiceCard(
-          post: p,
-          onBookmark: () => onToggleBookmark(p.id),
-          onReply: () => onReply(p),
-        );
-      },
-    );
-  }
-}
-
-class _ServiceCard extends StatelessWidget {
-  final _ServicePost post;
-  final VoidCallback onBookmark;
-  final VoidCallback onReply;
-
-  const _ServiceCard({
-    required this.post,
-    required this.onBookmark,
-    required this.onReply,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFF0F0F0)),
-        boxShadow: [
-          BoxShadow(
-              color: Colors.black.withOpacity(0.04),
-              blurRadius: 8,
-              offset: const Offset(0, 2)),
-        ],
+            ),
+          ],
+        ),
       ),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        // Header row
-        Row(children: [
-          CircleAvatar(
-            radius: 16,
-            backgroundColor: post.authorColor.withOpacity(0.15),
-            child: Text(post.authorInitials,
-                style: TextStyle(
-                    color: post.authorColor,
-                    fontWeight: FontWeight.w800,
-                    fontSize: 11)),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Column(
+    );
+  }
+
+  String _fmtDate(DateTime t) {
+    final now = DateTime.now();
+    if (t.day == now.day) return 'Today';
+    if (t.day == now.day - 1) return 'Yesterday';
+    return '${t.day} ${['', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][t.month]}';
+  }
+}
+
+// ─── Group message bubble ─────────────────────────────────────────────
+class _GroupMessageBubble extends StatelessWidget {
+  final _GroupMessage msg;
+  final String Function(DateTime) fmt;
+  const _GroupMessageBubble({required this.msg, required this.fmt});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        mainAxisAlignment:
+            msg.isMe ? MainAxisAlignment.end : MainAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          if (!msg.isMe) ...[
+            CircleAvatar(
+              radius: 14,
+              backgroundColor: _C.primary.withOpacity(0.12),
+              child: Text(msg.senderAvatar,
+                  style: const TextStyle(
+                      color: _C.primary,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 9)),
+            ),
+            const SizedBox(width: 6),
+          ],
+          Flexible(
+            child: Container(
+              constraints: BoxConstraints(
+                  maxWidth: MediaQuery.of(context).size.width * 0.70),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              decoration: BoxDecoration(
+                color: msg.isMe ? _C.primary : _C.lightGrey,
+                borderRadius: BorderRadius.only(
+                  topLeft: const Radius.circular(16),
+                  topRight: const Radius.circular(16),
+                  bottomLeft: Radius.circular(msg.isMe ? 16 : 4),
+                  bottomRight: Radius.circular(msg.isMe ? 4 : 16),
+                ),
+              ),
+              child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(post.authorName,
-                      style: const TextStyle(
+                  if (!msg.isMe)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 3),
+                      child: Text(msg.senderName,
+                          style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              color: _C.primary.withOpacity(0.8))),
+                    ),
+                  Text(msg.text,
+                      style: TextStyle(
                           fontSize: 13,
-                          fontWeight: FontWeight.w700,
-                          color: _C.dark)),
-                  Text(post.timeAgo,
-                      style: const TextStyle(
-                          fontSize: 11, color: _C.grey)),
-                ]),
-          ),
-          // Category badge
-          Container(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-                color: post.categoryColor.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8)),
-            child: Text(post.category,
-                style: TextStyle(
-                    fontSize: 10,
-                    color: post.categoryColor,
-                    fontWeight: FontWeight.w700)),
-          ),
-          const SizedBox(width: 6),
-          GestureDetector(
-            onTap: onBookmark,
-            child: Icon(
-              post.bookmarked
-                  ? Icons.bookmark_rounded
-                  : Icons.bookmark_border_rounded,
-              color: post.bookmarked ? _C.primary : _C.grey,
-              size: 20,
-            ),
-          ),
-        ]),
-        const SizedBox(height: 10),
-
-        // Title
-        Text(post.title,
-            style: const TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w800,
-                color: _C.dark,
-                height: 1.3)),
-        const SizedBox(height: 6),
-
-        // Body
-        Text(post.body,
-            style: const TextStyle(
-                fontSize: 13, color: _C.grey, height: 1.5),
-            maxLines: 3,
-            overflow: TextOverflow.ellipsis),
-        const SizedBox(height: 12),
-
-        // Footer
-        Row(children: [
-          Container(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-            decoration: BoxDecoration(
-              color: const Color(0xFFE8F5E9),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Row(children: [
-              const Icon(Icons.payments_outlined,
-                  color: _C.green, size: 14),
-              const SizedBox(width: 4),
-              Text(post.budget,
-                  style: const TextStyle(
-                      fontSize: 12,
-                      color: _C.green,
-                      fontWeight: FontWeight.w700)),
-            ]),
-          ),
-          const Spacer(),
-          // Reply count
-          GestureDetector(
-            onTap: onReply,
-            child: Row(children: [
-              const Icon(Icons.chat_bubble_outline_rounded,
-                  color: _C.grey, size: 16),
-              const SizedBox(width: 4),
-              Text('${post.replies} replies',
-                  style: const TextStyle(
-                      fontSize: 12, color: _C.grey)),
-            ]),
-          ),
-          const SizedBox(width: 12),
-          // Offer button
-          GestureDetector(
-            onTap: onReply,
-            child: Container(
-              padding: const EdgeInsets.symmetric(
-                  horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: _C.primary,
-                borderRadius: BorderRadius.circular(8),
+                          color: msg.isMe ? Colors.white : _C.dark,
+                          height: 1.4)),
+                  const SizedBox(height: 3),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(fmt(msg.time),
+                          style: TextStyle(
+                              fontSize: 10,
+                              color: msg.isMe
+                                  ? Colors.white60
+                                  : _C.grey)),
+                      if (msg.isMe) ...[
+                        const SizedBox(width: 3),
+                        const Icon(Icons.done_all_rounded,
+                            size: 12, color: Colors.white70),
+                      ],
+                    ],
+                  ),
+                ],
               ),
-              child: const Text('Offer Help',
-                  style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700)),
             ),
           ),
-        ]),
-      ]),
+        ],
+      ),
     );
   }
 }
 
-// ─────────────────────────────────────────────────────────────
-// GROUP ROOM CHAT PAGE
-// ─────────────────────────────────────────────────────────────
-class _RoomChatPage extends StatefulWidget {
-  final _Room room;
-  const _RoomChatPage({super.key, required this.room});
+// ─── Private inbox (tab 2) ────────────────────────────────────────────
+class _PrivateInbox extends StatelessWidget {
+  final List<_Participant> participants;
+  final Map<String, List<_PrivateMessage>> privateChats;
+  final void Function(_Participant) onOpen;
+  final void Function(String) onDelete;
+
+  const _PrivateInbox({
+    required this.participants,
+    required this.privateChats,
+    required this.onOpen,
+    required this.onDelete,
+  });
 
   @override
-  State<_RoomChatPage> createState() => _RoomChatPageState();
+  Widget build(BuildContext context) {
+    final active = participants
+        .where((p) => p.id != 'me' && privateChats.containsKey(p.id))
+        .toList();
+
+    return Column(
+      children: [
+        // "Start new private chat" row
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+          child: Row(
+            children: [
+              const Text('Start a private chat:',
+                  style: TextStyle(
+                      fontSize: 13, fontWeight: FontWeight.w600, color: _C.grey)),
+              const SizedBox(width: 10),
+              Expanded(
+                child: SizedBox(
+                  height: 38,
+                  child: ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: participants.where((p) => p.id != 'me').length,
+                    itemBuilder: (_, i) {
+                      final p = participants
+                          .where((p) => p.id != 'me')
+                          .toList()[i];
+                      return GestureDetector(
+                        onTap: () => onOpen(p),
+                        child: Container(
+                          margin: const EdgeInsets.only(right: 8),
+                          child: Stack(children: [
+                            CircleAvatar(
+                              radius: 18,
+                              backgroundColor: p.avatarColor,
+                              child: Text(p.avatarLetter,
+                                  style: const TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w800,
+                                      fontSize: 10)),
+                            ),
+                            if (p.isOnline)
+                              Positioned(
+                                bottom: 0, right: 0,
+                                child: Container(
+                                  width: 9, height: 9,
+                                  decoration: BoxDecoration(
+                                      color: _C.green,
+                                      shape: BoxShape.circle,
+                                      border: Border.all(
+                                          color: Colors.white, width: 1.5)),
+                                ),
+                              ),
+                          ]),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const Divider(height: 20),
+
+        if (active.isEmpty)
+          const Expanded(
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.chat_outlined, size: 48, color: _C.grey),
+                  SizedBox(height: 12),
+                  Text('No private chats yet',
+                      style: TextStyle(color: _C.grey, fontSize: 14)),
+                  SizedBox(height: 4),
+                  Text('Tap a member\'s avatar above to start',
+                      style: TextStyle(color: _C.grey, fontSize: 12)),
+                ],
+              ),
+            ),
+          )
+        else
+          Expanded(
+            child: ListView.separated(
+              itemCount: active.length,
+              separatorBuilder: (_, __) =>
+                  const Divider(height: 1, indent: 72, color: _C.border),
+              itemBuilder: (_, i) {
+                final p = active[i];
+                final msgs = privateChats[p.id]!;
+                final last = msgs.isNotEmpty ? msgs.last : null;
+                return Dismissible(
+                  key: Key(p.id),
+                  direction: DismissDirection.endToStart,
+                  background: Container(
+                    alignment: Alignment.centerRight,
+                    padding: const EdgeInsets.only(right: 20),
+                    color: _C.primary,
+                    child: const Icon(Icons.delete_outline_rounded,
+                        color: Colors.white),
+                  ),
+                  onDismissed: (_) => onDelete(p.id),
+                  child: ListTile(
+                    onTap: () => onOpen(p),
+                    leading: CircleAvatar(
+                      backgroundColor: p.avatarColor,
+                      child: Text(p.avatarLetter,
+                          style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w800,
+                              fontSize: 13)),
+                    ),
+                    title: Text(p.name,
+                        style: const TextStyle(
+                            fontWeight: FontWeight.w700, color: _C.dark)),
+                    subtitle: Text(
+                      last != null
+                          ? (last.senderId == 'me' ? 'You: ${last.text}' : last.text)
+                          : 'No messages yet',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontSize: 12, color: _C.grey),
+                    ),
+                    trailing: const Icon(Icons.chevron_right_rounded,
+                        color: _C.grey, size: 18),
+                  ),
+                );
+              },
+            ),
+          ),
+      ],
+    );
+  }
 }
 
-class _RoomChatPageState extends State<_RoomChatPage> {
-  final _msgCtrl    = TextEditingController();
+// ─── Private chat page ────────────────────────────────────────────────
+class _PrivateChatPage extends StatefulWidget {
+  final String participantId, participantName, participantAvatar;
+  final List<_PrivateMessage> messages;
+  final void Function(String) onSend;
+
+  const _PrivateChatPage({
+    required this.participantId,
+    required this.participantName,
+    required this.participantAvatar,
+    required this.messages,
+    required this.onSend,
+  });
+
+  @override
+  State<_PrivateChatPage> createState() => _PrivateChatPageState();
+}
+
+class _PrivateChatPageState extends State<_PrivateChatPage> {
+  final _ctrl      = TextEditingController();
   final _scrollCtrl = ScrollController();
-  late List<_RoomMessage> _messages;
-
-  // NOTE: NOT const — _ts() calls DateTime.now() at runtime
-  static List<_RoomMessage> _buildSeedMessages() => [
-    _RoomMessage(senderId: 'u1', senderName: 'Thabo N.', senderInitials: 'TN', text: 'Hey everyone! Anyone have lecture notes from yesterday?', time: _ts(30)),
-    _RoomMessage(senderId: 'u2', senderName: 'Ama D.', senderInitials: 'AD', text: 'I missed that one too 😅 will share when I get them.', time: _ts(25)),
-    _RoomMessage(senderId: 'u3', senderName: 'Sipho K.', senderInitials: 'SK', text: 'I have them! Will upload to the group drive shortly.', time: _ts(20)),
-    _RoomMessage(senderId: 'u1', senderName: 'Thabo N.', senderInitials: 'TN', text: 'You\'re a lifesaver 🙏', time: _ts(18)),
-    _RoomMessage(senderId: 'u4', senderName: 'Lindiwe M.', senderInitials: 'LM', text: 'Study group at the library at 3pm today? 5th floor.', time: _ts(10)),
-    _RoomMessage(senderId: 'u2', senderName: 'Ama D.', senderInitials: 'AD', text: 'I\'m in! 👍', time: _ts(8)),
-  ];
-
-  static DateTime _ts(int minutesAgo) =>
-      DateTime.now().subtract(Duration(minutes: minutesAgo));
+  late List<_PrivateMessage> _msgs;
 
   @override
   void initState() {
     super.initState();
-    _messages = _buildSeedMessages();
-    WidgetsBinding.instance
-        .addPostFrameCallback((_) => _scrollToBottom());
+    _msgs = widget.messages;
+    WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
   }
 
   void _scrollToBottom() {
@@ -731,20 +840,31 @@ class _RoomChatPageState extends State<_RoomChatPage> {
   }
 
   void _send() {
-    final text = _msgCtrl.text.trim();
+    final text = _ctrl.text.trim();
     if (text.isEmpty) return;
+    widget.onSend(text);
     setState(() {
-      _messages.add(_RoomMessage(
-        senderId: 'me',
-        senderName: 'You',
-        senderInitials: 'ME',
-        text: text,
-        time: DateTime.now(),
-      ));
-      _msgCtrl.clear();
+      _msgs = [...widget.messages];
+      _ctrl.clear();
     });
-    WidgetsBinding.instance
-        .addPostFrameCallback((_) => _scrollToBottom());
+    WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
+
+    // Simulated reply
+    Future.delayed(const Duration(milliseconds: 1500), () {
+      if (!mounted) return;
+      final replies = ['Got it!', 'Sure!', 'Let me check.', 'Sounds good!', '👍'];
+      setState(() {
+        widget.messages.add(
+          _PrivateMessage(
+            widget.participantId,
+            replies[DateTime.now().millisecond % replies.length],
+            DateTime.now(),
+          ),
+        );
+        _msgs = [...widget.messages];
+      });
+      WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
+    });
   }
 
   String _fmt(DateTime t) {
@@ -753,22 +873,9 @@ class _RoomChatPageState extends State<_RoomChatPage> {
     return '$h:$m';
   }
 
-  // Color per sender id for variety
-  Color _senderColor(String id) {
-    final colors = [
-      const Color(0xFF3B82F6),
-      const Color(0xFF8B5CF6),
-      const Color(0xFF10B981),
-      const Color(0xFFF59E0B),
-      const Color(0xFFEC4899),
-      const Color(0xFF06B6D4),
-    ];
-    return colors[id.hashCode.abs() % colors.length];
-  }
-
   @override
   void dispose() {
-    _msgCtrl.dispose();
+    _ctrl.dispose();
     _scrollCtrl.dispose();
     super.dispose();
   }
@@ -785,157 +892,109 @@ class _RoomChatPageState extends State<_RoomChatPage> {
           onPressed: () => Navigator.pop(context),
         ),
         title: Row(children: [
-          Container(
-            width: 36, height: 36,
-            decoration: BoxDecoration(
-                color: widget.room.color.withOpacity(0.12),
-                borderRadius: BorderRadius.circular(10)),
-            child: Center(
-                child: Text(widget.room.emoji,
-                    style: const TextStyle(fontSize: 18))),
+          CircleAvatar(
+            radius: 17,
+            backgroundColor: _C.primary.withOpacity(0.12),
+            child: Text(widget.participantAvatar,
+                style: const TextStyle(
+                    color: _C.primary,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 11)),
           ),
           const SizedBox(width: 10),
           Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(widget.room.name,
+            Text(widget.participantName,
                 style: const TextStyle(
-                    color: _C.dark,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 14)),
-            Text('${widget.room.memberCount} members',
-                style: const TextStyle(
-                    color: _C.grey, fontSize: 11)),
+                    color: _C.dark, fontWeight: FontWeight.w700, fontSize: 14)),
+            const Text('Private · Community member',
+                style: TextStyle(color: _C.grey, fontSize: 10)),
           ]),
         ]),
         actions: [
-          IconButton(
-              icon: const Icon(Icons.people_outline_rounded,
-                  color: _C.dark, size: 22),
-              onPressed: () {}),
-          IconButton(
-              icon: const Icon(Icons.more_vert_rounded,
-                  color: _C.dark, size: 22),
-              onPressed: () {}),
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.more_vert, color: _C.dark),
+            onSelected: (val) {
+              if (val == 'report') {
+                _ReportedUsers.report(widget.participantId);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('${widget.participantName} reported')),
+                );
+              } else if (val == 'block') {
+                _BlockedUsers.block(widget.participantId);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('${widget.participantName} blocked')),
+                );
+                Navigator.pop(context);
+              }
+            },
+            itemBuilder: (_) => [
+              const PopupMenuItem(value: 'report', child: Text('Report user')),
+              const PopupMenuItem(
+                  value: 'block',
+                  child: Text('Block user', style: TextStyle(color: _C.primary))),
+            ],
+          ),
         ],
       ),
       body: Column(
         children: [
-          // Room banner
           Container(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            color: widget.room.color.withOpacity(0.06),
+            color: _C.primary.withOpacity(0.06),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
             child: Row(children: [
-              Icon(Icons.info_outline_rounded,
-                  color: widget.room.color, size: 14),
+              const Icon(Icons.lock_outline_rounded, color: _C.primary, size: 13),
               const SizedBox(width: 6),
-              Expanded(
-                child: Text(
-                  'Group chat — be respectful & helpful 🤝',
-                  style: TextStyle(
-                      color: widget.room.color,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600),
-                ),
-              ),
+              Text('Private chat with ${widget.participantName}',
+                  style: const TextStyle(
+                      color: _C.primary, fontSize: 12, fontWeight: FontWeight.w600)),
             ]),
           ),
-
-          // Messages
           Expanded(
             child: ListView.builder(
               controller: _scrollCtrl,
-              padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
-              itemCount: _messages.length,
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+              itemCount: _msgs.length,
               itemBuilder: (_, i) {
-                final msg = _messages[i];
+                final msg = _msgs[i];
                 final isMe = msg.senderId == 'me';
-                final color = _senderColor(msg.senderId);
-                final showSender = !isMe &&
-                    (i == 0 ||
-                        _messages[i - 1].senderId != msg.senderId);
-
                 return Padding(
-                  padding: const EdgeInsets.only(bottom: 6),
+                  padding: const EdgeInsets.only(bottom: 8),
                   child: Row(
-                    mainAxisAlignment: isMe
-                        ? MainAxisAlignment.end
-                        : MainAxisAlignment.start,
-                    crossAxisAlignment: CrossAxisAlignment.end,
+                    mainAxisAlignment:
+                        isMe ? MainAxisAlignment.end : MainAxisAlignment.start,
                     children: [
-                      if (!isMe) ...[
-                        CircleAvatar(
-                          radius: 13,
-                          backgroundColor: color.withOpacity(0.15),
-                          child: Text(msg.senderInitials,
-                              style: TextStyle(
-                                  color: color,
-                                  fontWeight: FontWeight.w800,
-                                  fontSize: 8)),
-                        ),
-                        const SizedBox(width: 6),
-                      ],
                       Flexible(
-                        child: Column(
-                          crossAxisAlignment: isMe
-                              ? CrossAxisAlignment.end
-                              : CrossAxisAlignment.start,
-                          children: [
-                            if (showSender)
-                              Padding(
-                                padding:
-                                    const EdgeInsets.only(bottom: 3, left: 4),
-                                child: Text(msg.senderName,
-                                    style: TextStyle(
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.w700,
-                                        color: color)),
-                              ),
-                            Container(
-                              constraints: BoxConstraints(
-                                  maxWidth: MediaQuery.of(context)
-                                          .size
-                                          .width *
-                                      0.70),
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 12, vertical: 9),
-                              decoration: BoxDecoration(
-                                color: isMe
-                                    ? _C.primary
-                                    : const Color(0xFFF5F5F5),
-                                borderRadius: BorderRadius.only(
-                                  topLeft: const Radius.circular(14),
-                                  topRight: const Radius.circular(14),
-                                  bottomLeft:
-                                      Radius.circular(isMe ? 14 : 4),
-                                  bottomRight:
-                                      Radius.circular(isMe ? 4 : 14),
-                                ),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                crossAxisAlignment:
-                                    CrossAxisAlignment.end,
-                                children: [
-                                  Flexible(
-                                    child: Text(msg.text,
-                                        style: TextStyle(
-                                            fontSize: 13,
-                                            color: isMe
-                                                ? Colors.white
-                                                : _C.dark,
-                                            height: 1.4)),
-                                  ),
-                                  const SizedBox(width: 6),
-                                  Text(_fmt(msg.time),
-                                      style: TextStyle(
-                                          fontSize: 9,
-                                          color: isMe
-                                              ? Colors.white60
-                                              : _C.grey)),
-                                ],
-                              ),
+                        child: Container(
+                          constraints: BoxConstraints(
+                              maxWidth:
+                                  MediaQuery.of(context).size.width * 0.70),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 14, vertical: 10),
+                          decoration: BoxDecoration(
+                            color: isMe ? _C.primary : _C.lightGrey,
+                            borderRadius: BorderRadius.only(
+                              topLeft: const Radius.circular(16),
+                              topRight: const Radius.circular(16),
+                              bottomLeft: Radius.circular(isMe ? 16 : 4),
+                              bottomRight: Radius.circular(isMe ? 4 : 16),
                             ),
-                          ],
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Text(msg.text,
+                                  style: TextStyle(
+                                      fontSize: 13,
+                                      color: isMe ? Colors.white : _C.dark,
+                                      height: 1.4)),
+                              const SizedBox(height: 3),
+                              Text(_fmt(msg.time),
+                                  style: TextStyle(
+                                      fontSize: 10,
+                                      color:
+                                          isMe ? Colors.white60 : _C.grey)),
+                            ],
+                          ),
                         ),
                       ),
                     ],
@@ -944,535 +1003,84 @@ class _RoomChatPageState extends State<_RoomChatPage> {
               },
             ),
           ),
-
-          // Input
-          Container(
-            padding: const EdgeInsets.fromLTRB(12, 8, 12, 24),
-            decoration: const BoxDecoration(
-                color: Colors.white,
-                border: Border(top: BorderSide(color: _C.border))),
-            child: Row(children: [
-              IconButton(
-                  icon: const Icon(Icons.attach_file_rounded,
-                      color: _C.grey, size: 20),
-                  onPressed: () {}),
-              Expanded(
-                child: Container(
-                  decoration: BoxDecoration(
-                      color: const Color(0xFFF5F5F5),
-                      borderRadius: BorderRadius.circular(24),
-                      border: Border.all(color: _C.border)),
-                  child: TextField(
-                    controller: _msgCtrl,
-                    onSubmitted: (_) => _send(),
-                    style: const TextStyle(fontSize: 13),
-                    decoration: const InputDecoration(
-                      hintText: 'Message the group…',
-                      hintStyle: TextStyle(
-                          color: Color(0xFFAAAAAA), fontSize: 13),
-                      border: InputBorder.none,
-                      contentPadding: EdgeInsets.symmetric(
-                          horizontal: 14, vertical: 10),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 6),
-              GestureDetector(
-                onTap: _send,
-                child: Container(
-                  width: 40, height: 40,
-                  decoration: const BoxDecoration(
-                      color: _C.primary, shape: BoxShape.circle),
-                  child: const Icon(Icons.send_rounded,
-                      color: Colors.white, size: 18),
-                ),
-              ),
-            ]),
-          ),
+          _ChatInput(controller: _ctrl, onSend: _send),
         ],
       ),
     );
   }
 }
 
-// ─────────────────────────────────────────────────────────────
-// SERVICE THREAD PAGE (replies to a service request post)
-// ─────────────────────────────────────────────────────────────
-class _ServiceThreadPage extends StatefulWidget {
-  final _ServicePost post;
-  const _ServiceThreadPage({super.key, required this.post});
-
-  @override
-  State<_ServiceThreadPage> createState() => _ServiceThreadPageState();
-}
-
-class _ServiceThreadPageState extends State<_ServiceThreadPage> {
-  final _replyCtrl = TextEditingController();
-  final List<Map<String, String>> _replies = const [
-    {'name': 'Zanele K.', 'initials': 'ZK', 'text': 'I can help with this! DM me for details.', 'time': '5m ago'},
-    {'name': 'Bongani S.', 'initials': 'BS', 'text': 'Available this weekend — sending you a message now.', 'time': '12m ago'},
-  ];
-
-  @override
-  void dispose() {
-    _replyCtrl.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final p = widget.post;
-    return Scaffold(
-      backgroundColor: const Color(0xFFF8F8F8),
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: _C.dark),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: const Text('Service Request',
-            style: TextStyle(
-                color: _C.dark,
-                fontWeight: FontWeight.w800,
-                fontSize: 16)),
-        centerTitle: true,
-      ),
-      body: Column(
-        children: [
-          Expanded(
-            child: ListView(
-              padding: const EdgeInsets.all(16),
-              children: [
-                // Original post
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: _C.border),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(children: [
-                        CircleAvatar(
-                          radius: 16,
-                          backgroundColor:
-                              p.authorColor.withOpacity(0.15),
-                          child: Text(p.authorInitials,
-                              style: TextStyle(
-                                  color: p.authorColor,
-                                  fontWeight: FontWeight.w800,
-                                  fontSize: 11)),
-                        ),
-                        const SizedBox(width: 8),
-                        Column(
-                            crossAxisAlignment:
-                                CrossAxisAlignment.start,
-                            children: [
-                              Text(p.authorName,
-                                  style: const TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w700,
-                                      color: _C.dark)),
-                              Text(p.timeAgo,
-                                  style: const TextStyle(
-                                      fontSize: 11, color: _C.grey)),
-                            ]),
-                        const Spacer(),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                              color: p.categoryColor.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(8)),
-                          child: Text(p.category,
-                              style: TextStyle(
-                                  fontSize: 10,
-                                  color: p.categoryColor,
-                                  fontWeight: FontWeight.w700)),
-                        ),
-                      ]),
-                      const SizedBox(height: 12),
-                      Text(p.title,
-                          style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w800,
-                              color: _C.dark)),
-                      const SizedBox(height: 8),
-                      Text(p.body,
-                          style: const TextStyle(
-                              fontSize: 13, color: _C.grey, height: 1.5)),
-                      const SizedBox(height: 12),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFE8F5E9),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Row(mainAxisSize: MainAxisSize.min, children: [
-                          const Icon(Icons.payments_outlined,
-                              color: _C.green, size: 14),
-                          const SizedBox(width: 4),
-                          Text(p.budget,
-                              style: const TextStyle(
-                                  fontSize: 12,
-                                  color: _C.green,
-                                  fontWeight: FontWeight.w700)),
-                        ]),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 16),
-
-                const Text('Replies',
-                    style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                        color: _C.dark)),
-                const SizedBox(height: 10),
-
-                ..._replies.map((r) => Container(
-                      margin: const EdgeInsets.only(bottom: 10),
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: _C.border),
-                      ),
-                      child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            CircleAvatar(
-                              radius: 14,
-                              backgroundColor:
-                                  _C.primary.withOpacity(0.12),
-                              child: Text(r['initials']!,
-                                  style: const TextStyle(
-                                      color: _C.primary,
-                                      fontWeight: FontWeight.w800,
-                                      fontSize: 10)),
-                            ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: Column(
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.start,
-                                  children: [
-                                    Row(children: [
-                                      Text(r['name']!,
-                                          style: const TextStyle(
-                                              fontSize: 13,
-                                              fontWeight: FontWeight.w700,
-                                              color: _C.dark)),
-                                      const Spacer(),
-                                      Text(r['time']!,
-                                          style: const TextStyle(
-                                              fontSize: 11, color: _C.grey)),
-                                    ]),
-                                    const SizedBox(height: 4),
-                                    Text(r['text']!,
-                                        style: const TextStyle(
-                                            fontSize: 13,
-                                            color: _C.grey,
-                                            height: 1.4)),
-                                  ]),
-                            ),
-                          ]),
-                    )),
-              ],
-            ),
-          ),
-
-          // Reply input
-          Container(
-            padding: const EdgeInsets.fromLTRB(12, 8, 12, 24),
-            decoration: const BoxDecoration(
-                color: Colors.white,
-                border: Border(top: BorderSide(color: _C.border))),
-            child: Row(children: [
-              Expanded(
-                child: Container(
-                  decoration: BoxDecoration(
-                      color: const Color(0xFFF5F5F5),
-                      borderRadius: BorderRadius.circular(24),
-                      border: Border.all(color: _C.border)),
-                  child: TextField(
-                    controller: _replyCtrl,
-                    style: const TextStyle(fontSize: 13),
-                    decoration: const InputDecoration(
-                      hintText: 'Write a reply or offer…',
-                      hintStyle: TextStyle(
-                          color: Color(0xFFAAAAAA), fontSize: 13),
-                      border: InputBorder.none,
-                      contentPadding: EdgeInsets.symmetric(
-                          horizontal: 14, vertical: 10),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 6),
-              GestureDetector(
-                onTap: () {
-                  if (_replyCtrl.text.trim().isEmpty) return;
-                  setState(() => _replyCtrl.clear());
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Reply sent!'),
-                      backgroundColor: _C.green,
-                      behavior: SnackBarBehavior.floating,
-                    ),
-                  );
-                },
-                child: Container(
-                  width: 40, height: 40,
-                  decoration: const BoxDecoration(
-                      color: _C.primary, shape: BoxShape.circle),
-                  child: const Icon(Icons.send_rounded,
-                      color: Colors.white, size: 18),
-                ),
-              ),
-            ]),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────
-// POST SERVICE SHEET
-// ─────────────────────────────────────────────────────────────
-class _PostServiceSheet extends StatefulWidget {
-  final void Function(_ServicePost post) onSubmit;
-  const _PostServiceSheet({required this.onSubmit});
-
-  @override
-  State<_PostServiceSheet> createState() => _PostServiceSheetState();
-}
-
-class _PostServiceSheetState extends State<_PostServiceSheet> {
-  final _titleCtrl  = TextEditingController();
-  final _bodyCtrl   = TextEditingController();
-  final _budgetCtrl = TextEditingController();
-  String _category = 'Tutoring';
-
-  static const _categories = [
-    'Tutoring', 'Design', 'Coding', 'Writing',
-    'Photography', 'Marketing', 'Admin', 'Other',
-  ];
-
-  static const _catColors = {
-    'Tutoring':     Color(0xFF8B5CF6),
-    'Design':       Color(0xFFEC4899),
-    'Coding':       Color(0xFF3B82F6),
-    'Writing':      Color(0xFF059669),
-    'Photography':  Color(0xFF06B6D4),
-    'Marketing':    Color(0xFFF59E0B),
-    'Admin':        Color(0xFF6B7280),
-    'Other':        Color(0xFF9CA3AF),
-  };
-
-  @override
-  void dispose() {
-    _titleCtrl.dispose();
-    _bodyCtrl.dispose();
-    _budgetCtrl.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).viewInsets.bottom),
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Handle
-            Center(
-              child: Container(
-                width: 40, height: 4,
-                decoration: BoxDecoration(
-                    color: const Color(0xFFDDDDDD),
-                    borderRadius: BorderRadius.circular(2)),
-              ),
-            ),
-            const SizedBox(height: 16),
-            const Text('Post a Service Request',
-                style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w800,
-                    color: _C.dark)),
-            const SizedBox(height: 4),
-            const Text('Other students will see this and offer to help.',
-                style: TextStyle(fontSize: 13, color: _C.grey)),
-            const SizedBox(height: 18),
-
-            // Category chips
-            const Text('Category',
-                style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: _C.grey)),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 8, runSpacing: 8,
-              children: _categories.map((c) {
-                final sel = _category == c;
-                final col = _catColors[c] ?? _C.grey;
-                return GestureDetector(
-                  onTap: () => setState(() => _category = c),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 180),
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 7),
-                    decoration: BoxDecoration(
-                      color: sel ? col.withOpacity(0.12) : Colors.white,
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                          color: sel ? col : const Color(0xFFEEEEEE),
-                          width: sel ? 1.5 : 1),
-                    ),
-                    child: Text(c,
-                        style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: sel
-                                ? FontWeight.w700
-                                : FontWeight.w500,
-                            color: sel ? col : _C.grey)),
-                  ),
-                );
-              }).toList(),
-            ),
-            const SizedBox(height: 16),
-
-            const Text('Title',
-                style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: _C.grey)),
-            const SizedBox(height: 6),
-            _Field(
-                controller: _titleCtrl,
-                hint: 'e.g. Need a Maths tutor for exam prep'),
-
-            const SizedBox(height: 12),
-            const Text('Description',
-                style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: _C.grey)),
-            const SizedBox(height: 6),
-            _Field(
-              controller: _bodyCtrl,
-              hint: 'Describe what you need in detail…',
-              maxLines: 3,
-            ),
-
-            const SizedBox(height: 12),
-            const Text('Budget (optional)',
-                style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: _C.grey)),
-            const SizedBox(height: 6),
-            _Field(
-              controller: _budgetCtrl,
-              hint: 'e.g. R80–120/hr',
-              keyboardType: TextInputType.text,
-            ),
-
-            const SizedBox(height: 24),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: _C.primary,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12)),
-                ),
-                onPressed: () {
-                  if (_titleCtrl.text.trim().isEmpty) return;
-                  widget.onSubmit(_ServicePost(
-                    id: 'new_${DateTime.now().millisecondsSinceEpoch}',
-                    authorName: 'You',
-                    authorInitials: 'ME',
-                    authorColor: _C.primary,
-                    category: _category,
-                    categoryColor: _catColors[_category] ?? _C.grey,
-                    title: _titleCtrl.text.trim(),
-                    body: _bodyCtrl.text.trim(),
-                    budget: _budgetCtrl.text.trim().isEmpty
-                        ? 'Negotiable'
-                        : _budgetCtrl.text.trim(),
-                    timeAgo: 'Just now',
-                    replies: 0,
-                  ));
-                },
-                child: const Text('Post Request',
-                    style: TextStyle(
-                        fontSize: 15, fontWeight: FontWeight.w700)),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _Field extends StatelessWidget {
+// ─── Shared chat input ────────────────────────────────────────────────
+class _ChatInput extends StatelessWidget {
   final TextEditingController controller;
-  final String hint;
-  final int maxLines;
-  final TextInputType keyboardType;
-
-  const _Field({
-    required this.controller,
-    required this.hint,
-    this.maxLines = 1,
-    this.keyboardType = TextInputType.text,
-  });
+  final VoidCallback onSend;
+  const _ChatInput({required this.controller, required this.onSend});
 
   @override
   Widget build(BuildContext context) {
-    return TextField(
-      controller: controller,
-      keyboardType: keyboardType,
-      maxLines: maxLines,
-      style:
-          const TextStyle(fontSize: 14, color: _C.dark),
-      decoration: InputDecoration(
-        hintText: hint,
-        hintStyle:
-            const TextStyle(color: Color(0xFFBBBBBB), fontSize: 13),
-        filled: true,
-        fillColor: const Color(0xFFFAFAFA),
-        contentPadding:
-            const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: _C.border),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: _C.border),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide:
-              const BorderSide(color: _C.primary, width: 1.5),
-        ),
+    return Container(
+      padding: const EdgeInsets.fromLTRB(12, 8, 12, 24),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        border: Border(top: BorderSide(color: _C.border)),
       ),
+      child: Row(children: [
+        IconButton(
+          icon: const Icon(Icons.attach_file_rounded, color: _C.grey, size: 20),
+          onPressed: () {},
+        ),
+        Expanded(
+          child: Container(
+            decoration: BoxDecoration(
+              color: _C.lightGrey,
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: _C.border),
+            ),
+            child: TextField(
+              controller: controller,
+              onSubmitted: (_) => onSend(),
+              style: const TextStyle(fontSize: 13),
+              decoration: const InputDecoration(
+                hintText: 'Type a message…',
+                hintStyle: TextStyle(color: Color(0xFFAAAAAA), fontSize: 13),
+                border: InputBorder.none,
+                contentPadding:
+                    EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 6),
+        GestureDetector(
+          onTap: onSend,
+          child: Container(
+            width: 40, height: 40,
+            decoration: const BoxDecoration(
+                color: _C.primary, shape: BoxShape.circle),
+            child: const Icon(Icons.send_rounded, color: Colors.white, size: 18),
+          ),
+        ),
+      ]),
+    );
+  }
+}
+
+// ─── Option tile for bottom sheet ─────────────────────────────────────
+class _OptionTile extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+  final VoidCallback onTap;
+  const _OptionTile(
+      {required this.icon, required this.label, required this.color, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      leading: Icon(icon, color: color, size: 22),
+      title: Text(label,
+          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: color)),
+      onTap: onTap,
     );
   }
 }
