@@ -480,8 +480,8 @@ class _FormPage extends StatelessWidget {
     final domain = getDomain();
     final emailHint = isStudent
         ? (domain != null && domain.isNotEmpty
-            ? 'e.g. s1234@$domain'
-            : 'your.name@university.ac.za')
+            ? 'studentnumber@$domain'
+            : 'studentnumber@university.ac.za')
         : isInstitution
             ? 'institution@domain.ac.za'
             : 'your@email.com';

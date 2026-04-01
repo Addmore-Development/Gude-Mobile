@@ -31,7 +31,7 @@ class GudeLogoMark extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────
 class GudeLockup extends StatelessWidget {
   final double logoSize;
-  final Color  textColor;
+  final Color textColor;
 
   const GudeLockup({
     super.key,

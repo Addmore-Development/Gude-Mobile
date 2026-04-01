@@ -139,7 +139,7 @@ class _LoginPageState extends State<LoginPage> {
                     _InputField(
                       controller: _email,
                       hint: _userType == 'student'
-                          ? 'your.name@university.ac.za'
+                          ? 'studentnumber@university.ac.za'
                           : _userType == 'institution'
                               ? 'institution@domain.ac.za'
                               : 'Enter your email',

@@ -1,7 +1,9 @@
 // lib/features/profile/presentation/profile_page.dart
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:gude_app/core/theme/app_theme.dart';
+import 'package:image_picker/image_picker.dart';
 
 // ─────────────────────────────────────────────
 // AVAILABLE SKILLS
@@ -46,33 +48,291 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
+  // ── Image picker ────────────────────────────
+  final ImagePicker _picker = ImagePicker();
+
   // ── Verification state ──────────────────────
   final bool _emailVerified = true;
   bool _studentIdUploaded = false;
   bool _universityVerified = false;
   bool _isUploadingId = false;
 
+  // ── Profile picture ─────────────────────────
+  File? _profilePicFile;
+
+  // ── Student ID file ─────────────────────────
+  File? _studentIdFile;
+
+  // ── Bio ─────────────────────────────────────
+  String _bio = '';
+
   // ── Skills ──────────────────────────────────
   List<String> _skills = ['Mathematics', 'Tutoring', 'Python'];
 
-  // ── Simulate ID upload & auto-verify ────────
-  Future<void> _handleUploadStudentId() async {
-    final confirmed = await _showUploadSheet();
-    if (!confirmed) return;
+  // ─────────────────────────────────────────────
+  // PICK IMAGE HELPER
+  // Returns null if user cancels.
+  // ─────────────────────────────────────────────
+  Future<File?> _pickImage(ImageSource source) async {
+    try {
+      final XFile? picked = await _picker.pickImage(
+        source: source,
+        imageQuality: 85,
+        maxWidth: 1080,
+      );
+      if (picked == null) return null;
+      return File(picked.path);
+    } catch (e) {
+      if (mounted) {
+        _showSnackbar('Could not open picker: $e', const Color(0xFFEF4444));
+      }
+      return null;
+    }
+  }
 
-    setState(() => _isUploadingId = true);
+  // ─────────────────────────────────────────────
+  // PROFILE PICTURE
+  // ─────────────────────────────────────────────
+  void _showProfilePicOptions() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (_) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 36,
+                  height: 4,
+                  decoration: BoxDecoration(
+                      color: const Color(0xFFDDDDDD),
+                      borderRadius: BorderRadius.circular(2)),
+                ),
+              ),
+              const SizedBox(height: 18),
+              Row(children: [
+                Container(
+                  width: 42,
+                  height: 42,
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(Icons.account_circle_outlined,
+                      color: AppColors.primary, size: 22),
+                ),
+                const SizedBox(width: 12),
+                const Expanded(
+                    child: Text('Profile Picture',
+                        style: TextStyle(
+                            fontSize: 17,
+                            fontWeight: FontWeight.w800,
+                            color: Color(0xFF1A1A1A)))),
+              ]),
+              const SizedBox(height: 10),
+              const Text(
+                "Choose how you'd like to update your profile picture.",
+                style: TextStyle(
+                    fontSize: 13, color: Color(0xFF666666), height: 1.5),
+              ),
+              const SizedBox(height: 20),
+              _UploadOption(
+                icon: Icons.camera_alt_outlined,
+                label: 'Take a photo',
+                onTap: () async {
+                  Navigator.pop(context);
+                  final file = await _pickImage(ImageSource.camera);
+                  if (file != null) {
+                    setState(() => _profilePicFile = file);
+                    _showSnackbar(
+                        'Profile picture updated!', const Color(0xFF10B981));
+                  }
+                },
+              ),
+              const SizedBox(height: 10),
+              _UploadOption(
+                icon: Icons.photo_library_outlined,
+                label: 'Choose from gallery',
+                onTap: () async {
+                  Navigator.pop(context);
+                  final file = await _pickImage(ImageSource.gallery);
+                  if (file != null) {
+                    setState(() => _profilePicFile = file);
+                    _showSnackbar(
+                        'Profile picture updated!', const Color(0xFF10B981));
+                  }
+                },
+              ),
+              if (_profilePicFile != null) ...[
+                const SizedBox(height: 10),
+                _UploadOption(
+                  icon: Icons.delete_outline_rounded,
+                  label: 'Remove photo',
+                  onTap: () {
+                    Navigator.pop(context);
+                    setState(() => _profilePicFile = null);
+                    _showSnackbar(
+                        'Profile picture removed.', const Color(0xFF888888));
+                  },
+                ),
+              ],
+              const SizedBox(height: 4),
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Center(
+                    child: Text('Cancel',
+                        style: TextStyle(color: Color(0xFF888888)))),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ─────────────────────────────────────────────
+  // BIO
+  // ─────────────────────────────────────────────
+  void _showEditBioSheet() {
+    final ctrl = TextEditingController(text: _bio);
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (ctx) => Padding(
+        padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 36,
+                    height: 4,
+                    decoration: BoxDecoration(
+                        color: const Color(0xFFDDDDDD),
+                        borderRadius: BorderRadius.circular(2)),
+                  ),
+                ),
+                const SizedBox(height: 18),
+                Row(children: [
+                  Container(
+                    width: 42,
+                    height: 42,
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(Icons.edit_note_outlined,
+                        color: AppColors.primary, size: 22),
+                  ),
+                  const SizedBox(width: 12),
+                  const Expanded(
+                      child: Text('Edit Bio',
+                          style: TextStyle(
+                              fontSize: 17,
+                              fontWeight: FontWeight.w800,
+                              color: Color(0xFF1A1A1A)))),
+                ]),
+                const SizedBox(height: 10),
+                const Text(
+                  'Tell others a little about yourself — your degree, interests, or what services you offer.',
+                  style: TextStyle(
+                      fontSize: 13, color: Color(0xFF666666), height: 1.5),
+                ),
+                const SizedBox(height: 16),
+                Container(
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF5F5F5),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xFFEEEEEE)),
+                  ),
+                  child: TextField(
+                    controller: ctrl,
+                    maxLines: 5,
+                    maxLength: 200,
+                    style:
+                        const TextStyle(fontSize: 14, color: Color(0xFF1A1A1A)),
+                    decoration: const InputDecoration(
+                      hintText:
+                          '3rd-year Computer Science student at NMU. I tutor maths and build websites.',
+                      hintStyle:
+                          TextStyle(color: Color(0xFFAAAAAA), fontSize: 13),
+                      border: InputBorder.none,
+                      contentPadding: EdgeInsets.all(14),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      setState(() => _bio = ctrl.text.trim());
+                      Navigator.pop(ctx);
+                      _showSnackbar('Bio saved!', const Color(0xFF10B981));
+                    },
+                    style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12))),
+                    child: const Text('Save Bio',
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700)),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ─────────────────────────────────────────────
+  // STUDENT ID UPLOAD
+  // ─────────────────────────────────────────────
+  Future<void> _handleUploadStudentId() async {
+    final file = await _showStudentIdSheet();
+    if (file == null) return;
+
+    setState(() {
+      _isUploadingId = true;
+      _studentIdFile = file;
+    });
+
+    // Simulate a network upload delay
     await Future.delayed(const Duration(seconds: 2));
     if (!mounted) return;
+
     setState(() {
       _isUploadingId = false;
       _studentIdUploaded = true;
       _universityVerified = true;
     });
-    _showVerifiedSnackbar();
+    _showSnackbar(
+        'Student ID uploaded — university verified!', const Color(0xFF10B981));
   }
 
-  Future<bool> _showUploadSheet() async {
-    final result = await showModalBottomSheet<bool>(
+  /// Shows the student ID source picker and returns the chosen File,
+  /// or null if the user cancelled.
+  Future<File?> _showStudentIdSheet() async {
+    return showModalBottomSheet<File?>(
       context: context,
       backgroundColor: Colors.white,
       isScrollControlled: true,
@@ -125,23 +385,32 @@ class _ProfilePageState extends State<ProfilePage> {
                       fontSize: 13, color: Color(0xFF666666), height: 1.5),
                 ),
                 const SizedBox(height: 20),
+                // Take a photo
                 _UploadOption(
-                    icon: Icons.camera_alt_outlined,
-                    label: 'Take a photo',
-                    onTap: () => Navigator.pop(context, true)),
+                  icon: Icons.camera_alt_outlined,
+                  label: 'Take a photo',
+                  onTap: () async {
+                    Navigator.pop(context);
+                    final file = await _pickImage(ImageSource.camera);
+                    // Return result via a second pop is not possible here since
+                    // we already popped; instead we call the handler directly.
+                    if (file != null && mounted) _applyStudentId(file);
+                  },
+                ),
                 const SizedBox(height: 10),
+                // Choose from gallery
                 _UploadOption(
-                    icon: Icons.photo_library_outlined,
-                    label: 'Choose from gallery',
-                    onTap: () => Navigator.pop(context, true)),
-                const SizedBox(height: 10),
-                _UploadOption(
-                    icon: Icons.upload_file_outlined,
-                    label: 'Upload from files',
-                    onTap: () => Navigator.pop(context, true)),
+                  icon: Icons.photo_library_outlined,
+                  label: 'Choose from gallery',
+                  onTap: () async {
+                    Navigator.pop(context);
+                    final file = await _pickImage(ImageSource.gallery);
+                    if (file != null && mounted) _applyStudentId(file);
+                  },
+                ),
                 const SizedBox(height: 4),
                 TextButton(
-                  onPressed: () => Navigator.pop(context, false),
+                  onPressed: () => Navigator.pop(context, null),
                   child: const Center(
                       child: Text('Cancel',
                           style: TextStyle(color: Color(0xFF888888)))),
@@ -152,102 +421,44 @@ class _ProfilePageState extends State<ProfilePage> {
         ),
       ),
     );
-    return result ?? false;
   }
 
-  void _showVerifiedSnackbar() {
+  /// Called after the student ID sheet picks a file outside the future chain.
+  Future<void> _applyStudentId(File file) async {
+    setState(() {
+      _isUploadingId = true;
+      _studentIdFile = file;
+    });
+    await Future.delayed(const Duration(seconds: 2));
+    if (!mounted) return;
+    setState(() {
+      _isUploadingId = false;
+      _studentIdUploaded = true;
+      _universityVerified = true;
+    });
+    _showSnackbar(
+        'Student ID uploaded — university verified!', const Color(0xFF10B981));
+  }
+
+  // ─────────────────────────────────────────────
+  // HELPERS
+  // ─────────────────────────────────────────────
+  void _showSnackbar(String message, Color color) {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: const Row(children: [
-        Icon(Icons.check_circle_rounded, color: Colors.white, size: 18),
-        SizedBox(width: 8),
-        Text('Student ID uploaded — university verified! ✅'),
+      content: Row(children: [
+        const Icon(Icons.check_circle_rounded, color: Colors.white, size: 18),
+        const SizedBox(width: 8),
+        Expanded(child: Text(message)),
       ]),
-      backgroundColor: const Color(0xFF10B981),
+      backgroundColor: color,
       behavior: SnackBarBehavior.floating,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
     ));
   }
 
-  // ── Profile picture options sheet ───────────
-  void _showProfilePicOptions() {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.white,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
-      builder: (_) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 36,
-                  height: 4,
-                  decoration: BoxDecoration(
-                      color: const Color(0xFFDDDDDD),
-                      borderRadius: BorderRadius.circular(2)),
-                ),
-              ),
-              const SizedBox(height: 18),
-              Row(children: [
-                Container(
-                  width: 42,
-                  height: 42,
-                  decoration: BoxDecoration(
-                    color: AppColors.primary.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Icon(Icons.account_circle_outlined,
-                      color: AppColors.primary, size: 22),
-                ),
-                const SizedBox(width: 12),
-                const Expanded(
-                    child: Text('Profile Picture',
-                        style: TextStyle(
-                            fontSize: 17,
-                            fontWeight: FontWeight.w800,
-                            color: Color(0xFF1A1A1A)))),
-              ]),
-              const SizedBox(height: 10),
-              const Text(
-                "Choose how you'd like to update your profile picture.",
-                style: TextStyle(
-                    fontSize: 13, color: Color(0xFF666666), height: 1.5),
-              ),
-              const SizedBox(height: 20),
-              _UploadOption(
-                  icon: Icons.camera_alt_outlined,
-                  label: 'Take a photo',
-                  onTap: () => Navigator.pop(context)),
-              const SizedBox(height: 10),
-              _UploadOption(
-                  icon: Icons.photo_library_outlined,
-                  label: 'Choose from gallery',
-                  onTap: () => Navigator.pop(context)),
-              const SizedBox(height: 10),
-              _UploadOption(
-                  icon: Icons.delete_outline_rounded,
-                  label: 'Remove photo',
-                  onTap: () => Navigator.pop(context)),
-              const SizedBox(height: 4),
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Center(
-                    child: Text('Cancel',
-                        style: TextStyle(color: Color(0xFF888888)))),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  // ── Add Skill sheet ──────────────────────────
+  // ─────────────────────────────────────────────
+  // SKILLS
+  // ─────────────────────────────────────────────
   void _showAddSkillSheet() {
     showModalBottomSheet(
       context: context,
@@ -264,6 +475,9 @@ class _ProfilePageState extends State<ProfilePage> {
 
   void _removeSkill(String skill) => setState(() => _skills.remove(skill));
 
+  // ─────────────────────────────────────────────
+  // BUILD
+  // ─────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -297,17 +511,21 @@ class _ProfilePageState extends State<ProfilePage> {
               padding: const EdgeInsets.all(20),
               child: Column(
                 children: [
-                  // Profile picture with camera overlay
                   Stack(
                     children: [
                       CircleAvatar(
                         radius: 44,
                         backgroundColor: AppColors.primary.withOpacity(0.1),
-                        child: const Text('S',
-                            style: TextStyle(
-                                color: AppColors.primary,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 40)),
+                        backgroundImage: _profilePicFile != null
+                            ? FileImage(_profilePicFile!)
+                            : null,
+                        child: _profilePicFile == null
+                            ? const Text('S',
+                                style: TextStyle(
+                                    color: AppColors.primary,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 40))
+                            : null,
                       ),
                       Positioned(
                         bottom: 0,
@@ -337,7 +555,6 @@ class _ProfilePageState extends State<ProfilePage> {
                       style:
                           TextStyle(fontSize: 13, color: AppColors.textGrey)),
                   const SizedBox(height: 8),
-                  // University chip (editable)
                   Container(
                     padding:
                         const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
@@ -351,7 +568,6 @@ class _ProfilePageState extends State<ProfilePage> {
                             fontWeight: FontWeight.w600)),
                   ),
                   const SizedBox(height: 16),
-                  // Stats
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
@@ -364,6 +580,82 @@ class _ProfilePageState extends State<ProfilePage> {
                       _ProfileStat(label: 'Earned', value: 'R0'),
                     ],
                   ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 8),
+
+            // ── Bio ────────────────────────────
+            Container(
+              color: Colors.white,
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text('Bio',
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                              color: AppColors.textDark)),
+                      GestureDetector(
+                        onTap: _showEditBioSheet,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: AppColors.primary.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                                color: AppColors.primary.withOpacity(0.3)),
+                          ),
+                          child: Row(mainAxisSize: MainAxisSize.min, children: [
+                            const Icon(Icons.edit_outlined,
+                                color: AppColors.primary, size: 13),
+                            const SizedBox(width: 4),
+                            Text(
+                              _bio.isEmpty ? 'Add Bio' : 'Edit Bio',
+                              style: const TextStyle(
+                                  color: AppColors.primary,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700),
+                            ),
+                          ]),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  if (_bio.isEmpty)
+                    GestureDetector(
+                      onTap: _showEditBioSheet,
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(vertical: 18),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF8F8F8),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: const Color(0xFFEEEEEE)),
+                        ),
+                        child: const Column(children: [
+                          Icon(Icons.person_outline_rounded,
+                              color: AppColors.textGrey, size: 28),
+                          SizedBox(height: 6),
+                          Text('Tap to add a bio',
+                              style: TextStyle(
+                                  color: AppColors.textGrey, fontSize: 13)),
+                        ]),
+                      ),
+                    )
+                  else
+                    Text(_bio,
+                        style: const TextStyle(
+                            fontSize: 13,
+                            color: Color(0xFF444444),
+                            height: 1.55)),
                 ],
               ),
             ),
@@ -534,10 +826,8 @@ class _ProfilePageState extends State<ProfilePage> {
                                 minimumSize: const Size(80, 36),
                               ),
                               onPressed: () {
-                                // Capture router BEFORE popping the dialog
                                 final nav = GoRouter.of(context);
                                 Navigator.pop(context);
-                                // Defer navigation until dialog is fully gone
                                 Future.microtask(() => nav.go('/login'));
                               },
                               child: const Text('Log out',
@@ -679,7 +969,7 @@ class _AddSkillSheetState extends State<_AddSkillSheet> {
                       style: const TextStyle(
                           fontSize: 13, color: Color(0xFF1A1A1A)),
                       decoration: const InputDecoration(
-                        hintText: 'Search or type a custom skill…',
+                        hintText: 'Search or type a custom skill...',
                         hintStyle:
                             TextStyle(color: Color(0xFFAAAAAA), fontSize: 13),
                         prefixIcon: Icon(Icons.search,
@@ -930,7 +1220,7 @@ class _VerificationRow extends StatelessWidget {
                   ),
                 ),
               if (isLoading)
-                const Text('Processing…',
+                const Text('Processing...',
                     style: TextStyle(fontSize: 12, color: AppColors.textGrey)),
             ],
           ),
@@ -952,7 +1242,7 @@ class _VerificationRow extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────
-// SKILL CHIP — with remove ×
+// SKILL CHIP
 // ─────────────────────────────────────────────
 
 class _SkillChip extends StatelessWidget {

@@ -5,12 +5,12 @@ import 'package:go_router/go_router.dart';
 // SHARED THEME COLORS
 // ─────────────────────────────────────────────
 class _C {
-  static const primary    = Color(0xFFE30613);
-  static const primaryDark= Color(0xFFB0000E);
-  static const dark       = Color(0xFF1A1A1A);
-  static const grey       = Color(0xFF888888);
-  static const lightGrey  = Color(0xFFF5F5F5);
-  static const border     = Color(0xFFE8E8E8);
+  static const primary = Color(0xFFE30613);
+  static const primaryDark = Color(0xFFB0000E);
+  static const dark = Color(0xFF1A1A1A);
+  static const grey = Color(0xFF888888);
+  static const lightGrey = Color(0xFFF5F5F5);
+  static const border = Color(0xFFE8E8E8);
 }
 
 // ─────────────────────────────────────────────
@@ -25,8 +25,7 @@ class BuyerOnboardingWelcomePage extends StatefulWidget {
       _BuyerOnboardingWelcomePageState();
 }
 
-class _BuyerOnboardingWelcomePageState
-    extends State<BuyerOnboardingWelcomePage>
+class _BuyerOnboardingWelcomePageState extends State<BuyerOnboardingWelcomePage>
     with SingleTickerProviderStateMixin {
   late AnimationController _ctrl;
   late Animation<double> _fade;
@@ -124,16 +123,14 @@ class _BuyerOnboardingWelcomePageState
                           style: ElevatedButton.styleFrom(
                             backgroundColor: _C.primary,
                             foregroundColor: Colors.white,
-                            padding:
-                                const EdgeInsets.symmetric(vertical: 16),
+                            padding: const EdgeInsets.symmetric(vertical: 16),
                             elevation: 4,
                             shadowColor: _C.primary.withOpacity(0.4),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(14),
                             ),
                           ),
-                          onPressed: () =>
-                              context.go('/buyer-onboarding/type'),
+                          onPressed: () => context.go('/buyer-onboarding/type'),
                           child: const Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
@@ -242,7 +239,8 @@ class _BuyerTypePageState extends State<BuyerTypePage>
         children: [
           _RedHero(
             title: 'Who are you?',
-            subtitle: 'Tell us how you\'ll be using\nGude so we can personalise\nyour experience.',
+            subtitle:
+                'Tell us how you\'ll be using\nGude so we can personalise\nyour experience.',
             showBack: true,
             onBack: () => context.go('/buyer-onboarding/welcome'),
             step: 1,
@@ -277,8 +275,7 @@ class _BuyerTypePageState extends State<BuyerTypePage>
                             label: t['label']!,
                             sub: t['sub']!,
                             selected: _selected == t['key'],
-                            onTap: () =>
-                                setState(() => _selected = t['key']),
+                            onTap: () => setState(() => _selected = t['key']),
                           ),
                         ))),
                     const SizedBox(height: 28),
@@ -290,8 +287,7 @@ class _BuyerTypePageState extends State<BuyerTypePage>
                               ? const Color(0xFFDDDDDD)
                               : _C.primary,
                           foregroundColor: Colors.white,
-                          padding:
-                              const EdgeInsets.symmetric(vertical: 16),
+                          padding: const EdgeInsets.symmetric(vertical: 16),
                           elevation: _selected == null ? 0 : 4,
                           shadowColor: _C.primary.withOpacity(0.4),
                           shape: RoundedRectangleBorder(
@@ -300,8 +296,7 @@ class _BuyerTypePageState extends State<BuyerTypePage>
                         ),
                         onPressed: _selected == null
                             ? null
-                            : () => context.go(
-                                '/buyer-onboarding/interests',
+                            : () => context.go('/buyer-onboarding/interests',
                                 extra: {'buyerType': _selected}),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -317,8 +312,7 @@ class _BuyerTypePageState extends State<BuyerTypePage>
                             ),
                             if (_selected != null) ...[
                               const SizedBox(width: 8),
-                              const Icon(Icons.arrow_forward_rounded,
-                                  size: 18),
+                              const Icon(Icons.arrow_forward_rounded, size: 18),
                             ],
                           ],
                         ),
@@ -354,18 +348,18 @@ class _BuyerInterestsPageState extends State<BuyerInterestsPage>
   late Animation<double> _fade;
 
   static const _categories = [
-    {'key': 'tutoring',    'emoji': '📚', 'label': 'Tutoring'},
-    {'key': 'design',      'emoji': '🎨', 'label': 'Graphic Design'},
-    {'key': 'coding',      'emoji': '💻', 'label': 'Coding & Dev'},
-    {'key': 'writing',     'emoji': '✍️',  'label': 'Writing & Editing'},
+    {'key': 'tutoring', 'emoji': '📚', 'label': 'Tutoring'},
+    {'key': 'design', 'emoji': '🎨', 'label': 'Graphic Design'},
+    {'key': 'coding', 'emoji': '💻', 'label': 'Coding & Dev'},
+    {'key': 'writing', 'emoji': '✍️', 'label': 'Writing & Editing'},
     {'key': 'photography', 'emoji': '📷', 'label': 'Photography'},
-    {'key': 'marketing',   'emoji': '📣', 'label': 'Marketing'},
+    {'key': 'marketing', 'emoji': '📣', 'label': 'Marketing'},
     {'key': 'translation', 'emoji': '🌐', 'label': 'Translation'},
-    {'key': 'admin',       'emoji': '📋', 'label': 'Admin & Office'},
-    {'key': 'delivery',    'emoji': '🚚', 'label': 'Delivery & Errands'},
-    {'key': 'events',      'emoji': '🎉', 'label': 'Events & Catering'},
-    {'key': 'accounting',  'emoji': '📊', 'label': 'Accounting'},
-    {'key': 'internship',  'emoji': '🏆', 'label': 'Micro Internships'},
+    {'key': 'admin', 'emoji': '📋', 'label': 'Admin & Office'},
+    {'key': 'delivery', 'emoji': '🚚', 'label': 'Delivery & Errands'},
+    {'key': 'events', 'emoji': '🎉', 'label': 'Events & Catering'},
+    {'key': 'accounting', 'emoji': '📊', 'label': 'Accounting'},
+    {'key': 'internship', 'emoji': '🏆', 'label': 'Micro Internships'},
   ];
 
   @override
@@ -452,11 +446,11 @@ class _BuyerInterestsPageState extends State<BuyerInterestsPage>
                       width: double.infinity,
                       child: ElevatedButton(
                         style: ElevatedButton.styleFrom(
-                          backgroundColor:
-                              canContinue ? _C.primary : const Color(0xFFDDDDDD),
+                          backgroundColor: canContinue
+                              ? _C.primary
+                              : const Color(0xFFDDDDDD),
                           foregroundColor: Colors.white,
-                          padding:
-                              const EdgeInsets.symmetric(vertical: 16),
+                          padding: const EdgeInsets.symmetric(vertical: 16),
                           elevation: canContinue ? 4 : 0,
                           shadowColor: _C.primary.withOpacity(0.4),
                           shape: RoundedRectangleBorder(
@@ -464,21 +458,17 @@ class _BuyerInterestsPageState extends State<BuyerInterestsPage>
                           ),
                         ),
                         onPressed: canContinue
-                            ? () => context.go(
-                                '/buyer-onboarding/profile',
-                                extra: {
+                            ? () =>
+                                context.go('/buyer-onboarding/profile', extra: {
                                   ...?widget.extra,
-                                  'interests':
-                                      _selected.toList(),
+                                  'interests': _selected.toList(),
                                 })
                             : null,
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Text(
-                              canContinue
-                                  ? 'Continue'
-                                  : 'Select at least one',
+                              canContinue ? 'Continue' : 'Select at least one',
                               style: const TextStyle(
                                   fontSize: 15,
                                   fontWeight: FontWeight.w700,
@@ -486,8 +476,7 @@ class _BuyerInterestsPageState extends State<BuyerInterestsPage>
                             ),
                             if (canContinue) ...[
                               const SizedBox(width: 8),
-                              const Icon(Icons.arrow_forward_rounded,
-                                  size: 18),
+                              const Icon(Icons.arrow_forward_rounded, size: 18),
                             ],
                           ],
                         ),
@@ -519,10 +508,10 @@ class BuyerProfileSetupPage extends StatefulWidget {
 class _BuyerProfileSetupPageState extends State<BuyerProfileSetupPage>
     with SingleTickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
-  final _displayName  = TextEditingController();
-  final _companyName  = TextEditingController();
-  final _phone        = TextEditingController();
-  final _location     = TextEditingController();
+  final _displayName = TextEditingController();
+  final _companyName = TextEditingController();
+  final _phone = TextEditingController();
+  final _location = TextEditingController();
   bool _loading = false;
 
   late AnimationController _ctrl;
@@ -617,8 +606,7 @@ class _BuyerProfileSetupPageState extends State<BuyerProfileSetupPage>
                               ),
                               child: const Center(
                                 child: Icon(Icons.person_rounded,
-                                    size: 40,
-                                    color: _C.primary),
+                                    size: 40, color: _C.primary),
                               ),
                             ),
                             Positioned(
@@ -630,8 +618,8 @@ class _BuyerProfileSetupPageState extends State<BuyerProfileSetupPage>
                                 decoration: BoxDecoration(
                                   color: _C.primary,
                                   shape: BoxShape.circle,
-                                  border: Border.all(
-                                      color: Colors.white, width: 2),
+                                  border:
+                                      Border.all(color: Colors.white, width: 2),
                                 ),
                                 child: const Icon(Icons.camera_alt_rounded,
                                     size: 13, color: Colors.white),
@@ -662,10 +650,9 @@ class _BuyerProfileSetupPageState extends State<BuyerProfileSetupPage>
                           controller: _companyName,
                           hint: 'e.g. Acme Corp',
                           icon: Icons.business_outlined,
-                          validator: (v) =>
-                              (v == null || v.trim().isEmpty)
-                                  ? 'Company name is required'
-                                  : null,
+                          validator: (v) => (v == null || v.trim().isEmpty)
+                              ? 'Company name is required'
+                              : null,
                           capitalization: TextCapitalization.words,
                         ),
                         const SizedBox(height: 14),
@@ -700,8 +687,7 @@ class _BuyerProfileSetupPageState extends State<BuyerProfileSetupPage>
                           style: ElevatedButton.styleFrom(
                             backgroundColor: _C.primary,
                             foregroundColor: Colors.white,
-                            padding:
-                                const EdgeInsets.symmetric(vertical: 16),
+                            padding: const EdgeInsets.symmetric(vertical: 16),
                             elevation: 4,
                             shadowColor: _C.primary.withOpacity(0.4),
                             shape: RoundedRectangleBorder(
@@ -719,8 +705,7 @@ class _BuyerProfileSetupPageState extends State<BuyerProfileSetupPage>
                                   ),
                                 )
                               : const Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.center,
+                                  mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
                                     Text(
                                       'Complete Setup',
@@ -769,19 +754,15 @@ class _BuyerProfileSetupPageState extends State<BuyerProfileSetupPage>
         keyboardType: keyboardType,
         textCapitalization: capitalization,
         style: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-            color: _C.dark),
+            fontSize: 14, fontWeight: FontWeight.w500, color: _C.dark),
         decoration: InputDecoration(
           hintText: hint,
-          hintStyle:
-              const TextStyle(color: Color(0xFFBBBBBB), fontSize: 13),
-          prefixIcon:
-              Icon(icon, color: const Color(0xFFBBBBBB), size: 20),
+          hintStyle: const TextStyle(color: Color(0xFFBBBBBB), fontSize: 13),
+          prefixIcon: Icon(icon, color: const Color(0xFFBBBBBB), size: 20),
           filled: true,
           fillColor: const Color(0xFFFAFAFA),
-          contentPadding: const EdgeInsets.symmetric(
-              vertical: 14, horizontal: 16),
+          contentPadding:
+              const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
             borderSide: const BorderSide(color: _C.border),
@@ -792,18 +773,15 @@ class _BuyerProfileSetupPageState extends State<BuyerProfileSetupPage>
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide:
-                const BorderSide(color: _C.primary, width: 1.5),
+            borderSide: const BorderSide(color: _C.primary, width: 1.5),
           ),
           errorBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide:
-                const BorderSide(color: Color(0xFFEF4444)),
+            borderSide: const BorderSide(color: Color(0xFFEF4444)),
           ),
           focusedErrorBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(
-                color: Color(0xFFEF4444), width: 1.5),
+            borderSide: const BorderSide(color: Color(0xFFEF4444), width: 1.5),
           ),
         ),
       );
@@ -893,10 +871,8 @@ class _BuyerOnboardingCompletePageState
                     const SizedBox(height: 12),
                     const Text(
                       'Your buyer profile is ready.\nStart discovering student talent on the Gude Marketplace.',
-                      style: TextStyle(
-                          fontSize: 15,
-                          color: _C.grey,
-                          height: 1.6),
+                      style:
+                          TextStyle(fontSize: 15, color: _C.grey, height: 1.6),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 32),
@@ -935,8 +911,7 @@ class _BuyerOnboardingCompletePageState
                         style: ElevatedButton.styleFrom(
                           backgroundColor: _C.primary,
                           foregroundColor: Colors.white,
-                          padding:
-                              const EdgeInsets.symmetric(vertical: 16),
+                          padding: const EdgeInsets.symmetric(vertical: 16),
                           elevation: 4,
                           shadowColor: _C.primary.withOpacity(0.4),
                           shape: RoundedRectangleBorder(
@@ -959,8 +934,7 @@ class _BuyerOnboardingCompletePageState
                       child: OutlinedButton(
                         style: OutlinedButton.styleFrom(
                           foregroundColor: _C.dark,
-                          padding:
-                              const EdgeInsets.symmetric(vertical: 15),
+                          padding: const EdgeInsets.symmetric(vertical: 15),
                           side: const BorderSide(color: _C.border, width: 1.5),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(14),
@@ -970,8 +944,7 @@ class _BuyerOnboardingCompletePageState
                         child: const Text(
                           'Go to Home',
                           style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w600),
+                              fontSize: 15, fontWeight: FontWeight.w600),
                         ),
                       ),
                     ),
@@ -1028,27 +1001,32 @@ class _RedHero extends StatelessWidget {
           ),
           // Decorative circles
           Positioned(
-            top: -30, right: -20,
+            top: -30,
+            right: -20,
             child: Container(
-              width: 130, height: 130,
+              width: 130,
+              height: 130,
               decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: Colors.white.withOpacity(0.07)),
             ),
           ),
           Positioned(
-            top: 50, right: 40,
+            top: 50,
+            right: 40,
             child: Container(
-              width: 50, height: 50,
+              width: 50,
+              height: 50,
               decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Colors.white.withOpacity(0.1)),
+                  shape: BoxShape.circle, color: Colors.white.withOpacity(0.1)),
             ),
           ),
           Positioned(
-            bottom: 50, left: -15,
+            bottom: 50,
+            left: -15,
             child: Container(
-              width: 80, height: 80,
+              width: 80,
+              height: 80,
               decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: Colors.white.withOpacity(0.06)),
@@ -1056,7 +1034,9 @@ class _RedHero extends StatelessWidget {
           ),
           // Wave
           Positioned(
-            bottom: 0, left: 0, right: 0,
+            bottom: 0,
+            left: 0,
+            right: 0,
             child: CustomPaint(
               size: const Size(double.infinity, 60),
               painter: _WavePainter(),
@@ -1076,20 +1056,21 @@ class _RedHero extends StatelessWidget {
                         GestureDetector(
                           onTap: onBack,
                           child: Container(
-                            width: 36, height: 36,
+                            width: 36,
+                            height: 36,
                             decoration: BoxDecoration(
                               color: Colors.white.withOpacity(0.18),
                               borderRadius: BorderRadius.circular(10),
                             ),
-                            child: const Icon(
-                                Icons.arrow_back_ios_rounded,
+                            child: const Icon(Icons.arrow_back_ios_rounded,
                                 color: Colors.white, size: 15),
                           ),
                         )
                       else
                         // G logo
                         Container(
-                          width: 36, height: 36,
+                          width: 36,
+                          height: 36,
                           decoration: BoxDecoration(
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(10),
@@ -1128,9 +1109,7 @@ class _RedHero extends StatelessWidget {
                   Text(
                     subtitle,
                     style: const TextStyle(
-                        color: Colors.white70,
-                        fontSize: 14,
-                        height: 1.5),
+                        color: Colors.white70, fontSize: 14, height: 1.5),
                   ),
                 ],
               ),
@@ -1159,9 +1138,7 @@ class _StepIndicator extends StatelessWidget {
       child: Text(
         '$step of $total',
         style: const TextStyle(
-            color: Colors.white,
-            fontSize: 11,
-            fontWeight: FontWeight.w600),
+            color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600),
       ),
     );
   }
@@ -1212,9 +1189,7 @@ class _FeatureTile extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(subtitle,
                     style: const TextStyle(
-                        fontSize: 12,
-                        color: _C.grey,
-                        height: 1.4)),
+                        fontSize: 12, color: _C.grey, height: 1.4)),
               ],
             ),
           ),
@@ -1261,8 +1236,7 @@ class _TypeCard extends StatelessWidget {
                 ]
               : [
                   BoxShadow(
-                      color: Colors.black.withOpacity(0.04),
-                      blurRadius: 6)
+                      color: Colors.black.withOpacity(0.04), blurRadius: 6)
                 ],
         ),
         child: Row(
@@ -1277,8 +1251,7 @@ class _TypeCard extends StatelessWidget {
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Center(
-                  child:
-                      Text(emoji, style: const TextStyle(fontSize: 22))),
+                  child: Text(emoji, style: const TextStyle(fontSize: 22))),
             ),
             const SizedBox(width: 14),
             Expanded(
@@ -1293,9 +1266,7 @@ class _TypeCard extends StatelessWidget {
                   const SizedBox(height: 3),
                   Text(sub,
                       style: const TextStyle(
-                          fontSize: 12,
-                          color: _C.grey,
-                          height: 1.4)),
+                          fontSize: 12, color: _C.grey, height: 1.4)),
                 ],
               ),
             ),
@@ -1304,8 +1275,7 @@ class _TypeCard extends StatelessWidget {
               width: 22,
               height: 22,
               decoration: BoxDecoration(
-                color:
-                    selected ? _C.primary : Colors.transparent,
+                color: selected ? _C.primary : Colors.transparent,
                 shape: BoxShape.circle,
                 border: Border.all(
                   color: selected ? _C.primary : const Color(0xFFCCCCCC),
@@ -1341,8 +1311,7 @@ class _InterestChip extends StatelessWidget {
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 180),
-        padding:
-            const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
           color: selected ? _C.primary.withOpacity(0.08) : Colors.white,
           borderRadius: BorderRadius.circular(30),
@@ -1368,8 +1337,7 @@ class _InterestChip extends StatelessWidget {
               label,
               style: TextStyle(
                 fontSize: 13,
-                fontWeight:
-                    selected ? FontWeight.w700 : FontWeight.w500,
+                fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
                 color: selected ? _C.primary : _C.dark,
               ),
             ),
@@ -1391,9 +1359,7 @@ class _NextCard extends StatelessWidget {
   final String title;
   final String subtitle;
   const _NextCard(
-      {required this.icon,
-      required this.title,
-      required this.subtitle});
+      {required this.icon, required this.title, required this.subtitle});
 
   @override
   Widget build(BuildContext context) {
@@ -1427,8 +1393,7 @@ class _NextCard extends StatelessWidget {
                         color: _C.dark)),
                 const SizedBox(height: 2),
                 Text(subtitle,
-                    style: const TextStyle(
-                        fontSize: 12, color: _C.grey)),
+                    style: const TextStyle(fontSize: 12, color: _C.grey)),
               ],
             ),
           ),
@@ -1447,12 +1412,10 @@ class _WavePainter extends CustomPainter {
     final paint = Paint()..color = Colors.white;
     final path = Path();
     path.moveTo(0, size.height * 0.55);
-    path.quadraticBezierTo(
-        size.width * 0.25, size.height * 0.1,
+    path.quadraticBezierTo(size.width * 0.25, size.height * 0.1,
         size.width * 0.5, size.height * 0.45);
     path.quadraticBezierTo(
-        size.width * 0.75, size.height * 0.8,
-        size.width, size.height * 0.35);
+        size.width * 0.75, size.height * 0.8, size.width, size.height * 0.35);
     path.lineTo(size.width, size.height);
     path.lineTo(0, size.height);
     path.close();

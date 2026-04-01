@@ -3,25 +3,27 @@
 // that manually steps through each pocket card (no auto-play slideshow).
 // Pressing the arrow changes the card AND the info beneath it in sync.
 import 'package:flutter/material.dart';
+import 'package:gude_app/features/chatbot/presentation/ai_coach_overlay.dart';
+import 'package:gude_app/features/chatbot/services/ai_coach_service.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
 // ── Colours ─────────────────────────────────────────────────
 class _C {
-  static const primary   = Color(0xFFE30613);
-  static const dark      = Color(0xFF1A1A1A);
-  static const grey      = Color(0xFF888888);
+  static const primary = Color(0xFFE30613);
+  static const dark = Color(0xFF1A1A1A);
+  static const grey = Color(0xFF888888);
   static const lightGrey = Color(0xFFF5F5F5);
-  static const border    = Color(0xFFEEEEEE);
-  static const green     = Color(0xFF10B981);
+  static const border = Color(0xFFEEEEEE);
+  static const green = Color(0xFF10B981);
 }
 
 // ── Pocket model ─────────────────────────────────────────────
 class _Pocket {
   final String name, emoji, cardNumber, expiry;
   final double balance, income, spent;
-  final Color  cardColor, cardColorEnd;
-  final bool   isMain;
+  final Color cardColor, cardColorEnd;
+  final bool isMain;
   final List<_Tx> transactions;
   const _Pocket({
     required this.name,
@@ -31,9 +33,9 @@ class _Pocket {
     required this.balance,
     required this.cardColor,
     required this.cardColorEnd,
-    this.income  = 0,
-    this.spent   = 0,
-    this.isMain  = false,
+    this.income = 0,
+    this.spent = 0,
+    this.isMain = false,
     this.transactions = const [],
   });
 }
@@ -41,7 +43,7 @@ class _Pocket {
 class _Tx {
   final String label, date;
   final double amount;
-  final bool   isCredit;
+  final bool isCredit;
   final IconData icon;
   const _Tx(this.label, this.amount, this.isCredit, this.date, this.icon);
 }
@@ -49,62 +51,89 @@ class _Tx {
 // ── Data ─────────────────────────────────────────────────────
 final _pockets = [
   _Pocket(
-    name: 'Main Wallet', emoji: '💳',
-    cardNumber: '2015 1320 8870 2351', expiry: '09/30',
-    balance: 610, income: 4200, spent: 1830,
-    cardColor: const Color(0xFF1A1A1A), cardColorEnd: const Color(0xFF3A3A3A),
+    name: 'Main Wallet',
+    emoji: '💳',
+    cardNumber: '2015 1320 8870 2351',
+    expiry: '09/30',
+    balance: 610,
+    income: 4200,
+    spent: 1830,
+    cardColor: const Color(0xFF1A1A1A),
+    cardColorEnd: const Color(0xFF3A3A3A),
     isMain: true,
     transactions: const [
-      _Tx('Tutoring Session',  150, true,  'Today, 10:30',     Icons.school_outlined),
-      _Tx('Withdrawal to FNB', 500, false, 'Today, 08:15',     Icons.arrow_upward_rounded),
-      _Tx('Design Work',       300, true,  'Yesterday, 15:42', Icons.brush_outlined),
-      _Tx('Chicken Licken',     89, false, 'Yesterday, 13:10', Icons.fastfood_outlined),
-      _Tx('Photography Gig',   450, true,  'Mon, 09:00',       Icons.camera_alt_outlined),
-      _Tx('Uber',               75, false, 'Mon, 07:30',       Icons.directions_car_outlined),
+      _Tx('Tutoring Session', 150, true, 'Today, 10:30', Icons.school_outlined),
+      _Tx('Withdrawal to FNB', 500, false, 'Today, 08:15',
+          Icons.arrow_upward_rounded),
+      _Tx('Design Work', 300, true, 'Yesterday, 15:42', Icons.brush_outlined),
+      _Tx('Chicken Licken', 89, false, 'Yesterday, 13:10',
+          Icons.fastfood_outlined),
+      _Tx('Photography Gig', 450, true, 'Mon, 09:00',
+          Icons.camera_alt_outlined),
+      _Tx('Uber', 75, false, 'Mon, 07:30', Icons.directions_car_outlined),
     ],
   ),
   _Pocket(
-    name: 'Saving', emoji: '💰',
-    cardNumber: '2015 1320 8870 2351', expiry: '09/30',
+    name: 'Saving',
+    emoji: '💰',
+    cardNumber: '2015 1320 8870 2351',
+    expiry: '09/30',
     balance: 190,
-    cardColor: const Color(0xFF1A1A1A), cardColorEnd: const Color(0xFF3A3A3A),
+    cardColor: const Color(0xFF1A1A1A),
+    cardColorEnd: const Color(0xFF3A3A3A),
     transactions: const [
-      _Tx('Top up to balance', 100, true,  '26/8/2025, 3:07 PM',  Icons.add_circle_outline),
-      _Tx('Balance Changed',    20, false, '26/8/2025, 3:07 PM',  Icons.remove_circle_outline),
-      _Tx('Top up',             70, true,  '25/8/2025, 11:00 AM', Icons.add_circle_outline),
+      _Tx('Top up to balance', 100, true, '26/8/2025, 3:07 PM',
+          Icons.add_circle_outline),
+      _Tx('Balance Changed', 20, false, '26/8/2025, 3:07 PM',
+          Icons.remove_circle_outline),
+      _Tx('Top up', 70, true, '25/8/2025, 11:00 AM', Icons.add_circle_outline),
     ],
   ),
   _Pocket(
-    name: 'Transport', emoji: '🚌',
-    cardNumber: '1202 1320 8870 2351', expiry: '09/30',
+    name: 'Transport',
+    emoji: '🚌',
+    cardNumber: '1202 1320 8870 2351',
+    expiry: '09/30',
     balance: 100,
-    cardColor: const Color(0xFF1A3A8F), cardColorEnd: const Color(0xFF3B5BD5),
+    cardColor: const Color(0xFF1A3A8F),
+    cardColorEnd: const Color(0xFF3B5BD5),
     transactions: const [
-      _Tx('Gautrain',    32, false, '26/8/2025, 8:00 AM',  Icons.train_outlined),
-      _Tx('Top up',     100, true,  '25/8/2025, 9:00 AM',  Icons.add_circle_outline),
-      _Tx('Uber',        45, false, '24/8/2025, 6:30 PM',  Icons.directions_car_outlined),
+      _Tx('Gautrain', 32, false, '26/8/2025, 8:00 AM', Icons.train_outlined),
+      _Tx('Top up', 100, true, '25/8/2025, 9:00 AM', Icons.add_circle_outline),
+      _Tx('Uber', 45, false, '24/8/2025, 6:30 PM',
+          Icons.directions_car_outlined),
     ],
   ),
   _Pocket(
-    name: 'Grocery', emoji: '🛒',
-    cardNumber: '0057 0120 8870 0234', expiry: '09/30',
+    name: 'Grocery',
+    emoji: '🛒',
+    cardNumber: '0057 0120 8870 0234',
+    expiry: '09/30',
     balance: 120,
-    cardColor: const Color(0xFF065F46), cardColorEnd: const Color(0xFF059669),
+    cardColor: const Color(0xFF065F46),
+    cardColorEnd: const Color(0xFF059669),
     transactions: const [
-      _Tx('Checkers',          89, false, '26/8/2025, 12:00 PM', Icons.shopping_cart_outlined),
-      _Tx('Top up',           150, true,  '24/8/2025, 9:00 AM',  Icons.add_circle_outline),
-      _Tx('Woolworths Food',   61, false, '23/8/2025, 1:00 PM',  Icons.shopping_bag_outlined),
+      _Tx('Checkers', 89, false, '26/8/2025, 12:00 PM',
+          Icons.shopping_cart_outlined),
+      _Tx('Top up', 150, true, '24/8/2025, 9:00 AM', Icons.add_circle_outline),
+      _Tx('Woolworths Food', 61, false, '23/8/2025, 1:00 PM',
+          Icons.shopping_bag_outlined),
     ],
   ),
   _Pocket(
-    name: 'Accommodation', emoji: '🏠',
-    cardNumber: '0587 1320 8870 5723', expiry: '09/30',
+    name: 'Accommodation',
+    emoji: '🏠',
+    cardNumber: '0587 1320 8870 5723',
+    expiry: '09/30',
     balance: 200,
-    cardColor: const Color(0xFF5B21B6), cardColorEnd: const Color(0xFF7C3AED),
+    cardColor: const Color(0xFF5B21B6),
+    cardColorEnd: const Color(0xFF7C3AED),
     transactions: const [
-      _Tx('Rent payment',    200, false, '26/8/2025, 7:00 AM',  Icons.home_outlined),
-      _Tx('Top up',          200, true,  '25/8/2025, 8:00 AM',  Icons.add_circle_outline),
-      _Tx('Deposit refund',   50, true,  '20/8/2025, 3:00 PM',  Icons.redo_outlined),
+      _Tx('Rent payment', 200, false, '26/8/2025, 7:00 AM',
+          Icons.home_outlined),
+      _Tx('Top up', 200, true, '25/8/2025, 8:00 AM', Icons.add_circle_outline),
+      _Tx('Deposit refund', 50, true, '20/8/2025, 3:00 PM',
+          Icons.redo_outlined),
     ],
   ),
 ];
@@ -120,11 +149,12 @@ class _Cat {
 }
 
 const _cats = [
-  _Cat('Food',          650, 500,  Color(0xFF10B981), Icons.fastfood_outlined),
-  _Cat('Transport',     420, 300,  Color(0xFF3B82F6), Icons.directions_bus_outlined),
-  _Cat('Entertainment', 380, 150,  Color(0xFFF59E0B), Icons.sports_esports_outlined),
-  _Cat('Data/Airtime',  180, 200,  Color(0xFF8B5CF6), Icons.wifi_outlined),
-  _Cat('Textbooks',     150, 300,  Color(0xFFEC4899), Icons.book_outlined),
+  _Cat('Food', 650, 500, Color(0xFF10B981), Icons.fastfood_outlined),
+  _Cat('Transport', 420, 300, Color(0xFF3B82F6), Icons.directions_bus_outlined),
+  _Cat('Entertainment', 380, 150, Color(0xFFF59E0B),
+      Icons.sports_esports_outlined),
+  _Cat('Data/Airtime', 180, 200, Color(0xFF8B5CF6), Icons.wifi_outlined),
+  _Cat('Textbooks', 150, 300, Color(0xFFEC4899), Icons.book_outlined),
 ];
 
 // ════════════════════════════════════════════════════════════════
@@ -138,12 +168,12 @@ class WalletPage extends StatefulWidget {
 
 class _WalletPageState extends State<WalletPage>
     with SingleTickerProviderStateMixin {
-  int  _pocketIndex   = 0;
-  bool _balVisible    = true;
-  bool _showAllTx     = false;
+  int _pocketIndex = 0;
+  bool _balVisible = true;
+  bool _showAllTx = false;
 
   late AnimationController _arrowCtrl;
-  late Animation<double>   _arrowScale;
+  late Animation<double> _arrowScale;
 
   @override
   void initState() {
@@ -157,7 +187,10 @@ class _WalletPageState extends State<WalletPage>
   }
 
   @override
-  void dispose() { _arrowCtrl.dispose(); super.dispose(); }
+  void dispose() {
+    _arrowCtrl.dispose();
+    super.dispose();
+  }
 
   // Advance to next pocket — this is the ONLY navigation trigger
   void _nextPocket() {
@@ -165,7 +198,7 @@ class _WalletPageState extends State<WalletPage>
     _arrowCtrl.forward().then((_) => _arrowCtrl.reverse());
     setState(() {
       _pocketIndex = (_pocketIndex + 1) % _pockets.length;
-      _showAllTx   = false;
+      _showAllTx = false;
     });
   }
 
@@ -173,22 +206,44 @@ class _WalletPageState extends State<WalletPage>
 
   // ── Financial health helpers ──────────────────────────────
   static const _budget = 3000.0;
-  static const _spent  = 1830.0;
+  static const _spent = 1830.0;
   static const _income = 4200.0;
   double get _score => ((_budget - _spent) / _budget * 100).clamp(0, 100);
-  Color  get _hColor => _score >= 70
+  Color get _hColor => _score >= 70
       ? const Color(0xFF10B981)
       : _score >= 40
           ? const Color(0xFFF59E0B)
           : const Color(0xFFEF4444);
-  String get _hLabel => _score >= 70 ? 'Good' : _score >= 40 ? 'Fair' : 'Critical';
-  String get _hEmoji => _score >= 70 ? '🟢' : _score >= 40 ? '🟡' : '🔴';
+  String get _hLabel => _score >= 70
+      ? 'Good'
+      : _score >= 40
+          ? 'Fair'
+          : 'Critical';
+  String get _hEmoji => _score >= 70
+      ? '🟢'
+      : _score >= 40
+          ? '🟡'
+          : '🔴';
 
   @override
   Widget build(BuildContext context) {
     final p = _pocket;
+    // Build coach context from wallet data
+    const coachCtx = CoachContext(
+      walletBalance: 610,
+      monthlyBudget: _budget,
+      totalSpent: _spent,
+      income: _income,
+      stabilityScore: 62,
+      stabilityLabel: 'Steady',
+      marketplaceActivity: 3,
+      missedCheckins: 2,
+      page: 'wallet',
+    );
+
     return Scaffold(
       backgroundColor: _C.lightGrey,
+      floatingActionButton: AiCoachFab(context: coachCtx),
       body: CustomScrollView(
         slivers: [
           // ── App bar ──────────────────────────────────────
@@ -197,7 +252,8 @@ class _WalletPageState extends State<WalletPage>
             backgroundColor: Colors.white,
             elevation: 0,
             title: const Text('Wallet',
-                style: TextStyle(color: _C.dark, fontWeight: FontWeight.w800, fontSize: 20)),
+                style: TextStyle(
+                    color: _C.dark, fontWeight: FontWeight.w800, fontSize: 20)),
             actions: [
               IconButton(
                 icon: const Icon(Icons.notifications_outlined, color: _C.dark),
@@ -286,9 +342,8 @@ class _PocketContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final txList = showAllTx
-        ? pocket.transactions
-        : pocket.transactions.take(3).toList();
+    final txList =
+        showAllTx ? pocket.transactions : pocket.transactions.take(3).toList();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -341,19 +396,23 @@ class _PocketContent extends StatelessWidget {
                   const SizedBox(height: 6),
                   // Dot indicators
                   Row(
-                    children: List.generate(totalPockets, (i) => Container(
-                      width: i == pocketIndex ? 12 : 5,
-                      height: 5,
-                      margin: const EdgeInsets.symmetric(horizontal: 1.5),
-                      decoration: BoxDecoration(
-                        color: i == pocketIndex
-                            ? (pocket.cardColor == const Color(0xFF1A1A1A)
-                                ? _C.dark
-                                : pocket.cardColor)
-                            : _C.border,
-                        borderRadius: BorderRadius.circular(3),
-                      ),
-                    )),
+                    children: List.generate(
+                        totalPockets,
+                        (i) => Container(
+                              width: i == pocketIndex ? 12 : 5,
+                              height: 5,
+                              margin:
+                                  const EdgeInsets.symmetric(horizontal: 1.5),
+                              decoration: BoxDecoration(
+                                color: i == pocketIndex
+                                    ? (pocket.cardColor ==
+                                            const Color(0xFF1A1A1A)
+                                        ? _C.dark
+                                        : pocket.cardColor)
+                                    : _C.border,
+                                borderRadius: BorderRadius.circular(3),
+                              ),
+                            )),
                   ),
                 ],
               ),
@@ -370,7 +429,9 @@ class _PocketContent extends StatelessWidget {
               const SizedBox(width: 6),
               Text(pocket.name,
                   style: const TextStyle(
-                      fontSize: 14, fontWeight: FontWeight.w700, color: _C.dark)),
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: _C.dark)),
               const Spacer(),
               Text(
                 '${pocketIndex + 1} / $totalPockets',
@@ -388,13 +449,15 @@ class _PocketContent extends StatelessWidget {
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(14),
-              boxShadow: [BoxShadow(
-                  color: Colors.black.withOpacity(0.04), blurRadius: 6)],
+              boxShadow: [
+                BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 6)
+              ],
             ),
             child: Row(
               children: [
                 Container(
-                  width: 38, height: 38,
+                  width: 38,
+                  height: 38,
                   decoration: BoxDecoration(
                     color: pocket.cardColor.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(10),
@@ -414,7 +477,9 @@ class _PocketContent extends StatelessWidget {
                         ? 'R${pocket.balance.toStringAsFixed(2)} ZAR'
                         : 'R••••• ZAR',
                     style: const TextStyle(
-                        fontSize: 16, fontWeight: FontWeight.w800, color: _C.dark),
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                        color: _C.dark),
                   ),
                 ]),
                 const Spacer(),
@@ -424,7 +489,8 @@ class _PocketContent extends StatelessWidget {
                     balVisible
                         ? Icons.visibility_outlined
                         : Icons.visibility_off_outlined,
-                    color: _C.grey, size: 20,
+                    color: _C.grey,
+                    size: 20,
                   ),
                 ),
               ],
@@ -438,12 +504,30 @@ class _PocketContent extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _QA(icon: Icons.send_rounded,            label: 'Send',     onTap: () => onNavigate('/wallet/send')),
-              _QA(icon: Icons.call_received_rounded,   label: 'Received', onTap: () => onNavigate('/wallet/received')),
-              _QA(icon: Icons.swap_horiz_rounded,      label: 'Transfer', onTap: () {}),
-              _QA(icon: Icons.account_balance_rounded, label: 'Withdraw', onTap: () => onNavigate('/wallet/withdraw')),
-              _QA(icon: Icons.pie_chart_outline,       label: 'Budget',   onTap: () => onNavigate('/wallet/budget')),
-              _QA(icon: Icons.savings_outlined,        label: 'Goals',    onTap: () => onNavigate('/wallet/savings')),
+              _QA(
+                  icon: Icons.send_rounded,
+                  label: 'Send',
+                  onTap: () => onNavigate('/wallet/send')),
+              _QA(
+                  icon: Icons.call_received_rounded,
+                  label: 'Received',
+                  onTap: () => onNavigate('/wallet/received')),
+              _QA(
+                  icon: Icons.swap_horiz_rounded,
+                  label: 'Transfer',
+                  onTap: () {}),
+              _QA(
+                  icon: Icons.account_balance_rounded,
+                  label: 'Withdraw',
+                  onTap: () => onNavigate('/wallet/withdraw')),
+              _QA(
+                  icon: Icons.pie_chart_outline,
+                  label: 'Budget',
+                  onTap: () => onNavigate('/wallet/budget')),
+              _QA(
+                  icon: Icons.savings_outlined,
+                  label: 'Goals',
+                  onTap: () => onNavigate('/wallet/savings')),
             ],
           ),
         ),
@@ -451,9 +535,12 @@ class _PocketContent extends StatelessWidget {
         // ── Financial health (main card only) ─────────────
         if (pocket.isMain) ...[
           _HealthCard(
-              score: score, hColor: hColor,
-              hLabel: hLabel, hEmoji: hEmoji,
-              budget: budget, spent: spent),
+              score: score,
+              hColor: hColor,
+              hLabel: hLabel,
+              hEmoji: hEmoji,
+              budget: budget,
+              spent: spent),
           const Padding(
             padding: EdgeInsets.fromLTRB(16, 18, 16, 8),
             child: Text('Spending by Category',
@@ -467,12 +554,10 @@ class _PocketContent extends StatelessWidget {
               color: Colors.white,
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
-                BoxShadow(
-                    color: Colors.black.withOpacity(0.04), blurRadius: 8)
+                BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8)
               ],
             ),
-            child: Column(
-                children: cats.map((c) => _CatBar(cat: c)).toList()),
+            child: Column(children: cats.map((c) => _CatBar(cat: c)).toList()),
           ),
         ],
 
@@ -484,13 +569,17 @@ class _PocketContent extends StatelessWidget {
             children: [
               const Text('Transactions',
                   style: TextStyle(
-                      fontSize: 16, fontWeight: FontWeight.w700, color: _C.dark)),
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: _C.dark)),
               GestureDetector(
                 onTap: onToggleAllTx,
                 child: Text(
                   showAllTx ? 'Show less' : 'View all',
                   style: const TextStyle(
-                      color: _C.primary, fontSize: 13, fontWeight: FontWeight.w600),
+                      color: _C.primary,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600),
                 ),
               ),
             ],
@@ -518,7 +607,9 @@ class _PocketContent extends StatelessWidget {
                   shrinkWrap: true,
                   itemCount: txList.length,
                   separatorBuilder: (_, __) => const Divider(
-                      height: 1, indent: 62, endIndent: 16,
+                      height: 1,
+                      indent: 62,
+                      endIndent: 16,
                       color: Color(0xFFF0F0F0)),
                   itemBuilder: (_, i) => _TxTile(tx: txList[i]),
                 ),
@@ -567,18 +658,22 @@ class _PocketCard extends StatelessWidget {
       child: Stack(
         children: [
           Positioned(
-            top: -35, right: -25,
+            top: -35,
+            right: -25,
             child: Container(
-              width: 150, height: 150,
+              width: 150,
+              height: 150,
               decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: Colors.white.withOpacity(0.06)),
             ),
           ),
           Positioned(
-            bottom: -40, left: -15,
+            bottom: -40,
+            left: -15,
             child: Container(
-              width: 120, height: 120,
+              width: 120,
+              height: 120,
               decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: Colors.white.withOpacity(0.05)),
@@ -593,8 +688,7 @@ class _PocketCard extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Row(children: [
-                      Text(pocket.emoji,
-                          style: const TextStyle(fontSize: 16)),
+                      Text(pocket.emoji, style: const TextStyle(fontSize: 16)),
                       const SizedBox(width: 6),
                       Text(pocket.name,
                           style: const TextStyle(
@@ -609,23 +703,26 @@ class _PocketCard extends StatelessWidget {
                           balVisible
                               ? Icons.visibility_outlined
                               : Icons.visibility_off_outlined,
-                          color: Colors.white70, size: 15,
+                          color: Colors.white70,
+                          size: 15,
                         ),
                       ),
                       const SizedBox(width: 8),
                       Stack(children: [
                         Container(
-                            width: 22, height: 22,
+                            width: 22,
+                            height: 22,
                             decoration: const BoxDecoration(
                                 color: Color(0xFFEB001B),
                                 shape: BoxShape.circle)),
                         Positioned(
                           left: 12,
                           child: Container(
-                              width: 22, height: 22,
+                              width: 22,
+                              height: 22,
                               decoration: BoxDecoration(
-                                  color: const Color(0xFFF79E1B)
-                                      .withOpacity(0.9),
+                                  color:
+                                      const Color(0xFFF79E1B).withOpacity(0.9),
                                   shape: BoxShape.circle)),
                         ),
                       ]),
@@ -634,7 +731,8 @@ class _PocketCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 10),
                 Container(
-                  width: 32, height: 24,
+                  width: 32,
+                  height: 24,
                   decoration: BoxDecoration(
                     color: const Color(0xFFD4AF37),
                     borderRadius: BorderRadius.circular(4),
@@ -651,8 +749,8 @@ class _PocketCard extends StatelessWidget {
                 const SizedBox(height: 6),
                 Row(children: [
                   Text(pocket.expiry,
-                      style: const TextStyle(
-                          color: Colors.white60, fontSize: 11)),
+                      style:
+                          const TextStyle(color: Colors.white60, fontSize: 11)),
                   const Spacer(),
                   if (pocket.isMain) ...[
                     _CardStat(
@@ -713,11 +811,12 @@ class _CardStat extends StatelessWidget {
       ),
       const SizedBox(width: 4),
       Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text(label,
-            style: const TextStyle(color: Colors.white60, fontSize: 8)),
+        Text(label, style: const TextStyle(color: Colors.white60, fontSize: 8)),
         Text(value,
             style: const TextStyle(
-                color: Colors.white, fontSize: 10, fontWeight: FontWeight.w700)),
+                color: Colors.white,
+                fontSize: 10,
+                fontWeight: FontWeight.w700)),
       ]),
     ]);
   }
@@ -730,10 +829,14 @@ class _ChipPainter extends CustomPainter {
       ..color = const Color(0xFFB8964A)
       ..strokeWidth = 0.8
       ..style = PaintingStyle.stroke;
-    canvas.drawLine(Offset(size.width / 2, 0), Offset(size.width / 2, size.height), p);
-    canvas.drawLine(Offset(0, size.height / 2), Offset(size.width, size.height / 2), p);
-    canvas.drawLine(Offset(0, size.height * 0.3), Offset(size.width, size.height * 0.3), p);
-    canvas.drawLine(Offset(0, size.height * 0.7), Offset(size.width, size.height * 0.7), p);
+    canvas.drawLine(
+        Offset(size.width / 2, 0), Offset(size.width / 2, size.height), p);
+    canvas.drawLine(
+        Offset(0, size.height / 2), Offset(size.width, size.height / 2), p);
+    canvas.drawLine(
+        Offset(0, size.height * 0.3), Offset(size.width, size.height * 0.3), p);
+    canvas.drawLine(
+        Offset(0, size.height * 0.7), Offset(size.width, size.height * 0.7), p);
   }
 
   @override
@@ -783,16 +886,13 @@ class _HealthCard extends StatelessWidget {
           ]),
           const Spacer(),
           Container(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
             decoration: BoxDecoration(
                 color: hColor.withOpacity(0.12),
                 borderRadius: BorderRadius.circular(20)),
             child: Text('${score.toInt()}/100',
                 style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                    color: hColor)),
+                    fontSize: 13, fontWeight: FontWeight.w700, color: hColor)),
           ),
         ]),
         const SizedBox(height: 10),
@@ -854,8 +954,7 @@ class _CatBar extends StatelessWidget {
           if (cat.isOver) ...[
             const SizedBox(width: 4),
             Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
               decoration: BoxDecoration(
                   color: const Color(0xFFEF4444),
                   borderRadius: BorderRadius.circular(4)),
@@ -893,11 +992,11 @@ class _TxTile extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Row(children: [
         Container(
-          width: 40, height: 40,
+          width: 40,
+          height: 40,
           decoration: BoxDecoration(
-            color: tx.isCredit
-                ? const Color(0xFFE8F5E9)
-                : const Color(0xFFFFF3E0),
+            color:
+                tx.isCredit ? const Color(0xFFE8F5E9) : const Color(0xFFFFF3E0),
             borderRadius: BorderRadius.circular(12),
           ),
           child: Icon(tx.icon,
@@ -908,12 +1007,11 @@ class _TxTile extends StatelessWidget {
         ),
         const SizedBox(width: 12),
         Expanded(
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          child:
+              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Text(tx.label,
                 style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: _C.dark),
+                    fontSize: 13, fontWeight: FontWeight.w600, color: _C.dark),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis),
             Text(tx.date,
@@ -925,9 +1023,7 @@ class _TxTile extends StatelessWidget {
           style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w700,
-              color: tx.isCredit
-                  ? const Color(0xFF388E3C)
-                  : _C.dark),
+              color: tx.isCredit ? const Color(0xFF388E3C) : _C.dark),
         ),
       ]),
     );
@@ -938,8 +1034,7 @@ class _QA extends StatelessWidget {
   final IconData icon;
   final String label;
   final VoidCallback onTap;
-  const _QA(
-      {required this.icon, required this.label, required this.onTap});
+  const _QA({required this.icon, required this.label, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -947,7 +1042,8 @@ class _QA extends StatelessWidget {
       onTap: onTap,
       child: Column(children: [
         Container(
-          width: 46, height: 46,
+          width: 46,
+          height: 46,
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(14),
