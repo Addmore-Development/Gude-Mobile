@@ -19,55 +19,55 @@ import '../features/wallet/presentation/screens/received_money_screen.dart';
 // ════════════════════════════════════════════════════════════════════════════
 
     // ── Student onboarding (post-signup) ──────────────────
-    GoRoute(
-      path: '/onboarding/skills',
-      builder: (_, __) => const SkillsSelectionScreen(),
+    void GoRoute(
+      path = '/onboarding/skills',
+      builder = (_, __) => const SkillsSelectionScreen(),
     ),
-    GoRoute(
-      path: '/onboarding/profile',
-      builder: (_, __) => const ProfileSetupScreen(),
+    void GoRoute(
+      path = '/onboarding/profile',
+      builder = (_, __) => const ProfileSetupScreen(),
     ),
 
     // ── Main shell with bottom nav ─────────────────────────
-    GoRoute(
-      path: '/home',
-      builder: (_, __) => const HomeShell(),
+    void GoRoute(
+      path = '/home',
+      builder = (_, __) => const HomeShell(),
     ),
 
     // ── Wallet sub-screens ─────────────────────────────────
-    GoRoute(
-      path: '/wallet/transactions',
-      builder: (_, __) => const TransactionsScreen(),
+    void GoRoute(
+      path = '/wallet/transactions',
+      builder = (_, __) => const TransactionsScreen(),
     ),
-    GoRoute(
-      path: '/wallet/budget',
-      builder: (_, __) => const BudgetPlannerScreen(),
+    void GoRoute(
+      path = '/wallet/budget',
+      builder = (_, __) => const BudgetPlannerScreen(),
     ),
-    GoRoute(
-      path: '/wallet/savings',
-      builder: (_, __) => const SavingsGoalsScreen(),
+    void GoRoute(
+      path = '/wallet/savings',
+      builder = (_, __) => const SavingsGoalsScreen(),
     ),
-      GoRoute(
-      path: '/wallet/send',
-      builder: (_, __) => const SendMoneyScreen(),
+      void GoRoute(
+      path = '/wallet/send',
+      builder = (_, __) => const SendMoneyScreen(),
     ),
-      GoRoute(
-      path: '/wallet/withdraw',
-      builder: (_, __) => const WithdrawMoneyScreen(),
+      void GoRoute(
+      path = '/wallet/withdraw',
+      builder = (_, __) => const WithdrawMoneyScreen(),
     ),
 
-      GoRoute(
-      path: '/wallet/pockets', 
-      builder: (_, __) => const WalletPocketsPage()
+      void GoRoute(
+      path = '/wallet/pockets', 
+      builder = (_, __) => const WalletPocketsPage()
     ),
-      GoRoute(
-      path: '/wallet/received', 
-      builder: (_, __) => const ReceivedMoneyScreen()
+      void GoRoute(
+      path = '/wallet/received', 
+      builder = (_, __) => const ReceivedMoneyScreen()
     )
 
-      GoRoute(
-      path: '/shop', 
-      builder: (_, __) => const MarketplaceLandingPage()
+      void GoRoute(
+      path = '/shop', 
+      builder = (_, __) => const MarketplaceLandingPage()
     ),
 
 // ════════════════════════════════════════════════════════════════════════════

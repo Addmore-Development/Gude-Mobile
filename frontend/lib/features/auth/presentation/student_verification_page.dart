@@ -272,7 +272,7 @@ class _StudentCardStep extends StatelessWidget {
       _label('Institution'),
       const SizedBox(height: 6),
       DropdownButtonFormField<String>(
-        value: selectedInstitution,
+        initialValue: selectedInstitution,
         hint: const Text('Select your university / college',
             style: TextStyle(fontSize: 13, color: Color(0xFFBBBBBB))),
         items: _institutions.map((i) => DropdownMenuItem(value: i, child: Text(i))).toList(),
@@ -571,7 +571,7 @@ class _StepShell extends StatelessWidget {
   final String emoji, title, subtitle, nextLabel;
   final Widget child;
   final VoidCallback onNext;
-  const _StepShell({super.key, required this.emoji, required this.title, required this.subtitle, required this.child, required this.onNext, required this.nextLabel});
+  const _StepShell({required this.emoji, required this.title, required this.subtitle, required this.child, required this.onNext, required this.nextLabel});
 
   @override
   Widget build(BuildContext context) {

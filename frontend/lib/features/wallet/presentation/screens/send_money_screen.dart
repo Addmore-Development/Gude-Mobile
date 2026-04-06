@@ -43,7 +43,7 @@ class _SendMoneyScreenState extends State<SendMoneyScreen> {
 
   String _searchQuery = '';
 
-  List<Map<String, dynamic>> _contacts = [
+  final List<Map<String, dynamic>> _contacts = [
     {
       'name': 'Susan Precious',
       'number': '+2769335215',

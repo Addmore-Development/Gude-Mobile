@@ -73,7 +73,7 @@ class _WithdrawPageState extends State<WithdrawPage> {
           const Text('Please choose a retail Partners', style: TextStyle(fontSize: 12, color: AppColors.textGrey)),
           const SizedBox(height: 6),
           DropdownButtonFormField<String>(
-            value: _selectedStore,
+            initialValue: _selectedStore,
             decoration: const InputDecoration(hintText: 'Choose a Store'),
             items: ['Boxer', 'Checkers', 'PnP', 'Spar'].map((s) =>
               DropdownMenuItem(value: s, child: Text(s))).toList(),

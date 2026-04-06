@@ -37,7 +37,9 @@ class _NotificationsPageState extends State<NotificationsPage> {
 
   int get _unreadCount => _notifications.where((n) => !n.read).length;
 
-  void _markAllRead() => setState(() { for (final n in _notifications) n.read = true; });
+  void _markAllRead() => setState(() { for (final n in _notifications) {
+    n.read = true;
+  } });
 
   Color _categoryColor(String cat) {
     switch (cat) {

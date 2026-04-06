@@ -53,7 +53,11 @@ class _SkillsSelectionPageState extends State<SkillsSelectionPage> {
                     final selected = _selected.contains(label);
                     return GestureDetector(
                       onTap: () => setState(() {
-                        if (selected) _selected.remove(label); else _selected.add(label);
+                        if (selected) {
+                          _selected.remove(label);
+                        } else {
+                          _selected.add(label);
+                        }
                       }),
                       child: AnimatedContainer(
                         duration: const Duration(milliseconds: 200),

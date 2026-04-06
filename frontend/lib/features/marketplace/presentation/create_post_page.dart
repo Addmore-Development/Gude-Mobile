@@ -805,7 +805,7 @@ Widget _dropdownField({
   required ValueChanged<String?> onChanged,
 }) =>
     DropdownButtonFormField<String>(
-      value: value,
+      initialValue: value,
       style: const TextStyle(fontSize: 13, color: _C.dark),
       decoration: InputDecoration(
         contentPadding:

@@ -238,7 +238,7 @@ class _BuyerMessagesPageState extends State<BuyerMessagesPage> {
 
 class _BuyerChatPage extends StatefulWidget {
   final _BuyerConv conv;
-  const _BuyerChatPage({super.key, required this.conv});
+  const _BuyerChatPage({required this.conv});
   @override
   State<_BuyerChatPage> createState() => _BuyerChatPageState();
 }

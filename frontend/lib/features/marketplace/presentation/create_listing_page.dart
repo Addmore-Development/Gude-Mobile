@@ -36,7 +36,7 @@ class _CreateListingPageState extends State<CreateListingPage> {
               const SizedBox(height: 16),
               _label('Category'),
               DropdownButtonFormField<String>(
-                value: _selectedCategory,
+                initialValue: _selectedCategory,
                 decoration: InputDecoration(
                   filled: true, fillColor: Colors.white,
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: AppColors.inputBorder)),

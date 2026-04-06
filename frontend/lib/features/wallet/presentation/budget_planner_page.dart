@@ -43,7 +43,7 @@ class BudgetPlannerPage extends StatefulWidget {
 }
 
 class _BudgetPlannerPageState extends State<BudgetPlannerPage> {
-  double _monthlyBudget = 3000;
+  final double _monthlyBudget = 3000;
 
   final List<_BudgetItem> _items = [
     _BudgetItem(name: 'Food',          icon: Icons.restaurant_menu_outlined, color: const Color(0xFFE30613), allocated: 800,  spent: 650),

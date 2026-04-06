@@ -12,7 +12,7 @@ class _CartPageState extends State<CartPage> {
   bool _showVoucher = false;
   final _voucherController = TextEditingController();
   int _selectedTab = 0;
-  List<Map<String, dynamic>> _cartItems = [
+  final List<Map<String, dynamic>> _cartItems = [
     {'name': 'Loop Silicone Strong Magnetic Watch', 'price': 15.25, 'oldPrice': 30.00, 'qty': 1},
     {'name': 'Loop Silicone Strong Magnetic Watch', 'price': 15.26, 'oldPrice': 100.00,'qty': 1},
   ];
