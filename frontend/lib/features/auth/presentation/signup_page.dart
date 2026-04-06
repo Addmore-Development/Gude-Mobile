@@ -10,6 +10,7 @@ class _C {
   static const dark = Color(0xFF1A1A1A);
   static const grey = Color(0xFF888888);
   static const border = Color(0xFFE8E8E8);
+  static const focusBorder = Color(0xFF444444); // dark grey focus, NOT red
   static const inputBg = Color(0xFFFAFAFA);
 }
 
@@ -33,9 +34,8 @@ class _SignupPageState extends State<SignupPage> {
   final _confirmPassword = TextEditingController();
   final _city = TextEditingController();
   final _customInstitution = TextEditingController();
-  final _institutionName = TextEditingController(); // For institution signup
-  final _registrationNumber =
-      TextEditingController(); // For institution registration number
+  final _institutionName = TextEditingController();
+  final _registrationNumber = TextEditingController();
 
   bool _obscure = true;
   bool _obscureConfirm = true;
@@ -132,7 +132,6 @@ class _SignupPageState extends State<SignupPage> {
     ))['domain'] as String?;
   }
 
-  // Validation methods
   String? _validateName(String? v) {
     if (v == null || v.isEmpty) return 'Full name is required';
     if (_userType == 'student' && v.trim().split(' ').length < 2)
@@ -327,9 +326,7 @@ class _RoleSelectionPage extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(width: 14),
-                    Expanded(
-                      child: Container(), // Placeholder for symmetry
-                    ),
+                    Expanded(child: Container()),
                   ],
                 ),
                 const SizedBox(height: 28),
@@ -480,8 +477,8 @@ class _FormPage extends StatelessWidget {
     final domain = getDomain();
     final emailHint = isStudent
         ? (domain != null && domain.isNotEmpty
-            ? 'e.g. s1234@$domain'
-            : 'your.name@university.ac.za')
+            ? 'studentnumber@$domain'
+            : 'studentnumber@university.ac.za')
         : isInstitution
             ? 'institution@domain.ac.za'
             : 'your@email.com';
@@ -821,9 +818,10 @@ class _FormPage extends StatelessWidget {
         enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
             borderSide: const BorderSide(color: _C.border)),
+        // CHANGED: focus border is dark grey, not red
         focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: _C.primary, width: 1.5)),
+            borderSide: const BorderSide(color: _C.focusBorder, width: 1.5)),
         errorBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
             borderSide: const BorderSide(color: Color(0xFFEF4444))),
@@ -1120,9 +1118,10 @@ class _PasswordField extends StatelessWidget {
         enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
             borderSide: const BorderSide(color: _C.border)),
+        // CHANGED: focus border is dark grey, not red
         focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: _C.primary, width: 1.5)),
+            borderSide: const BorderSide(color: _C.focusBorder, width: 1.5)),
         errorBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
             borderSide: const BorderSide(color: Color(0xFFEF4444))),
@@ -1176,9 +1175,10 @@ class _DropdownField extends StatelessWidget {
         enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
             borderSide: const BorderSide(color: _C.border)),
+        // CHANGED: focus border is dark grey, not red
         focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: _C.primary, width: 1.5)),
+            borderSide: const BorderSide(color: _C.focusBorder, width: 1.5)),
         errorBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
             borderSide: const BorderSide(color: Color(0xFFEF4444))),

@@ -10,7 +10,7 @@ class _PageData {
   final String title;
   final String description;
   final String illustration; // emoji stand-in; swap for Image.asset
-  final Color  bgTint;
+  final Color bgTint;
 
   const _PageData({
     required this.title,
@@ -22,28 +22,32 @@ class _PageData {
 
 const _pages = [
   _PageData(
-    title:       'Student Wallet',
-    description: 'Unlock the key to a better student life with smart budgeting tools and real-time spend tracking.',
+    title: 'Student Wallet',
+    description:
+        'Unlock the key to a better student life with smart budgeting tools and real-time spend tracking.',
     illustration: '💰',
-    bgTint:      Color(0xFFFFF3F3),
+    bgTint: Color(0xFFFFF3F3),
   ),
   _PageData(
-    title:       'Marketplace',
-    description: 'Sell your skills, buy what you need — all within the student community at unbeatable prices.',
+    title: 'Marketplace',
+    description:
+        'Sell your skills, buy what you need — all within the student community at unbeatable prices.',
     illustration: '🛍️',
-    bgTint:      Color(0xFFFFF3F3),
+    bgTint: Color(0xFFFFF3F3),
   ),
   _PageData(
-    title:       'Wellness',
-    description: 'Track your mental and physical wellbeing while staying on top of your studies and goals.',
+    title: 'Wellness',
+    description:
+        'Track your mental and physical wellbeing while staying on top of your studies and goals.',
     illustration: '🧘',
-    bgTint:      Color(0xFFFFF3F3),
+    bgTint: Color(0xFFFFF3F3),
   ),
   _PageData(
-    title:       'Finance Games',
-    description: 'Learn financial literacy through fun, interactive games and challenges designed for students.',
+    title: 'Finance Games',
+    description:
+        'Learn financial literacy through fun, interactive games and challenges designed for students.',
     illustration: '🎮',
-    bgTint:      Color(0xFFFFF3F3),
+    bgTint: Color(0xFFFFF3F3),
   ),
 ];
 
@@ -69,8 +73,7 @@ class _OnboardingPageState extends State<OnboardingPage>
     super.initState();
     _fadeCtrl = AnimationController(
         vsync: this, duration: const Duration(milliseconds: 400));
-    _fadeAnim =
-        CurvedAnimation(parent: _fadeCtrl, curve: Curves.easeOut);
+    _fadeAnim = CurvedAnimation(parent: _fadeCtrl, curve: Curves.easeOut);
     _fadeCtrl.forward();
   }
 
@@ -90,8 +93,7 @@ class _OnboardingPageState extends State<OnboardingPage>
   void _next() {
     if (_current < _pages.length - 1) {
       _pageCtrl.nextPage(
-          duration: const Duration(milliseconds: 350),
-          curve: Curves.easeInOut);
+          duration: const Duration(milliseconds: 350), curve: Curves.easeInOut);
     } else {
       context.go('/login');
     }
@@ -124,7 +126,8 @@ class _OnboardingPageState extends State<OnboardingPage>
                           side: const BorderSide(color: Color(0xFFEEEEEE))),
                     ),
                     child: const Text('Skip',
-                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
+                        style: TextStyle(
+                            fontSize: 13, fontWeight: FontWeight.w500)),
                   ),
                 ],
               ),

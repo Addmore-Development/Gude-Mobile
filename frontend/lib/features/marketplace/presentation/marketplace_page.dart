@@ -8,12 +8,12 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 class _C {
-  static const primary   = Color(0xFFE30613);
-  static const dark      = Color(0xFF1A1A1A);
-  static const grey      = Color(0xFF888888);
+  static const primary = Color(0xFFE30613);
+  static const dark = Color(0xFF1A1A1A);
+  static const grey = Color(0xFF888888);
   static const lightGrey = Color(0xFFF5F5F5);
-  static const border    = Color(0xFFEEEEEE);
-  static const green     = Color(0xFF10B981);
+  static const border = Color(0xFFEEEEEE);
+  static const green = Color(0xFF10B981);
 }
 
 // ── Product / Service model ───────────────────────────────────
@@ -24,9 +24,8 @@ class MarketItem {
   final String emoji;
   final bool isNew, isSale, isService;
   final List<String> colors;
-  // Analytics (visible to the listing owner)
   final int views, purchases;
-  final Map<String, int> demographics;   // age range → %
+  final Map<String, int> demographics;
   final List<String> topLocations;
 
   const MarketItem({
@@ -42,12 +41,12 @@ class MarketItem {
     required this.rating,
     required this.reviews,
     required this.emoji,
-    this.isNew      = false,
-    this.isSale     = false,
-    this.isService  = false,
-    this.colors     = const [],
-    this.views      = 0,
-    this.purchases  = 0,
+    this.isNew = false,
+    this.isSale = false,
+    this.isService = false,
+    this.colors = const [],
+    this.views = 0,
+    this.purchases = 0,
     this.demographics = const {},
     this.topLocations = const [],
   });
@@ -55,70 +54,127 @@ class MarketItem {
 
 final _items = [
   const MarketItem(
-    id: 'p1', name: 'HP Laptop 15.6"', brand: 'HP',
+    id: 'p1',
+    name: 'HP Laptop 15.6"',
+    brand: 'HP',
     category: 'Electronics',
-    description: 'HP 15.6" Intel Core i5, 8GB RAM, 512GB SSD, Windows 11. Perfect for students.',
-    seller: 'CompuWorld', sellerAvatar: '🖥️',
-    price: 5200, originalPrice: 6500, rating: 4.7, reviews: 203,
-    emoji: '💻', isSale: true, colors: ['#C0C0C0','#1A1A1A'],
-    views: 847, purchases: 34,
+    description:
+        'HP 15.6" Intel Core i5, 8GB RAM, 512GB SSD, Windows 11. Perfect for students.',
+    seller: 'CompuWorld',
+    sellerAvatar: '🖥️',
+    price: 5200,
+    originalPrice: 6500,
+    rating: 4.7,
+    reviews: 203,
+    emoji: '💻',
+    isSale: true,
+    colors: ['#C0C0C0', '#1A1A1A'],
+    views: 847,
+    purchases: 34,
     demographics: {'18–24': 68, '25–34': 22, '35+': 10},
-    topLocations: ['Johannesburg','Cape Town','Durban'],
+    topLocations: ['Johannesburg', 'Cape Town', 'Durban'],
   ),
   const MarketItem(
-    id: 'p2', name: 'iPhone 12 Pro Max', brand: 'Apple',
+    id: 'p2',
+    name: 'iPhone 12 Pro Max',
+    brand: 'Apple',
     category: 'Electronics',
     description: 'Unlocked iPhone 12 Pro Max, 256 GB, excellent condition.',
-    seller: 'iStore SA', sellerAvatar: '🏪',
-    price: 12500, originalPrice: 15000, rating: 4.9, reviews: 89,
-    emoji: '📱', isNew: true, colors: ['#1A1A1A','#C0C0C0','#FFD700'],
-    views: 1203, purchases: 12,
+    seller: 'iStore SA',
+    sellerAvatar: '🏪',
+    price: 12500,
+    originalPrice: 15000,
+    rating: 4.9,
+    reviews: 89,
+    emoji: '📱',
+    isNew: true,
+    colors: ['#1A1A1A', '#C0C0C0', '#FFD700'],
+    views: 1203,
+    purchases: 12,
     demographics: {'18–24': 45, '25–34': 40, '35+': 15},
-    topLocations: ['Pretoria','Sandton','Cape Town'],
+    topLocations: ['Pretoria', 'Sandton', 'Cape Town'],
   ),
   const MarketItem(
-    id: 's1', name: 'Maths Tutoring (1 hr)', brand: 'Student Service',
+    id: 's1',
+    name: 'Maths Tutoring (1 hr)',
+    brand: 'Student Service',
     category: 'Service',
-    description: 'Expert maths tutoring for grade 10–12 and university level. Algebra, calculus, statistics.',
-    seller: 'Priya S.', sellerAvatar: '👩‍🏫',
-    price: 150, originalPrice: 200, rating: 4.8, reviews: 56,
-    emoji: '📐', isService: true,
-    views: 320, purchases: 45,
+    description:
+        'Expert maths tutoring for grade 10–12 and university level. Algebra, calculus, statistics.',
+    seller: 'Priya S.',
+    sellerAvatar: '👩‍🏫',
+    price: 150,
+    originalPrice: 200,
+    rating: 4.8,
+    reviews: 56,
+    emoji: '📐',
+    isService: true,
+    views: 320,
+    purchases: 45,
     demographics: {'18–24': 80, '25–34': 15, '35+': 5},
-    topLocations: ['Online','Johannesburg'],
+    topLocations: ['Online', 'Johannesburg'],
   ),
   const MarketItem(
-    id: 's2', name: 'Graphic Design Package', brand: 'Student Service',
+    id: 's2',
+    name: 'Graphic Design Package',
+    brand: 'Student Service',
     category: 'Service',
-    description: 'Logo design, social media graphics, and full branding packages. 48-hour turnaround.',
-    seller: 'Yusuf A.', sellerAvatar: '🎨',
-    price: 200, originalPrice: 350, rating: 4.6, reviews: 34,
-    emoji: '🎨', isNew: true, isService: true,
-    views: 510, purchases: 28,
+    description:
+        'Logo design, social media graphics, and full branding packages. 48-hour turnaround.',
+    seller: 'Yusuf A.',
+    sellerAvatar: '🎨',
+    price: 200,
+    originalPrice: 350,
+    rating: 4.6,
+    reviews: 34,
+    emoji: '🎨',
+    isNew: true,
+    isService: true,
+    views: 510,
+    purchases: 28,
     demographics: {'18–24': 55, '25–34': 35, '35+': 10},
-    topLocations: ['Cape Town','Online'],
+    topLocations: ['Cape Town', 'Online'],
   ),
   const MarketItem(
-    id: 'p3', name: 'Scientific Calculator', brand: 'Casio',
+    id: 'p3',
+    name: 'Scientific Calculator',
+    brand: 'Casio',
     category: 'Stationery',
-    description: 'Casio FX-991ZA PLUS — the go-to for SA university maths, engineering, and science.',
-    seller: 'Campus Store', sellerAvatar: '📚',
-    price: 245, originalPrice: 350, rating: 4.9, reviews: 312,
-    emoji: '🧮', isSale: true, colors: ['#1A1A1A'],
-    views: 650, purchases: 89,
+    description:
+        'Casio FX-991ZA PLUS — the go-to for SA university maths, engineering, and science.',
+    seller: 'Campus Store',
+    sellerAvatar: '📚',
+    price: 245,
+    originalPrice: 350,
+    rating: 4.9,
+    reviews: 312,
+    emoji: '🧮',
+    isSale: true,
+    colors: ['#1A1A1A'],
+    views: 650,
+    purchases: 89,
     demographics: {'18–24': 75, '25–34': 20, '35+': 5},
     topLocations: ['All campuses'],
   ),
   const MarketItem(
-    id: 's3', name: 'Photography Session', brand: 'Student Service',
+    id: 's3',
+    name: 'Photography Session',
+    brand: 'Student Service',
     category: 'Service',
-    description: 'Professional photography for events, portraits, and products. Edited files delivered in 24 hrs.',
-    seller: 'Nandi M.', sellerAvatar: '📷',
-    price: 350, originalPrice: 500, rating: 4.7, reviews: 29,
-    emoji: '📷', isService: true,
-    views: 280, purchases: 18,
+    description:
+        'Professional photography for events, portraits, and products. Edited files delivered in 24 hrs.',
+    seller: 'Nandi M.',
+    sellerAvatar: '📷',
+    price: 350,
+    originalPrice: 500,
+    rating: 4.7,
+    reviews: 29,
+    emoji: '📷',
+    isService: true,
+    views: 280,
+    purchases: 18,
     demographics: {'18–24': 50, '25–34': 38, '35+': 12},
-    topLocations: ['Johannesburg','Pretoria'],
+    topLocations: ['Johannesburg', 'Pretoria'],
   ),
 ];
 
@@ -129,12 +185,20 @@ class _Cart {
   _Cart._();
   final Map<String, int> items = {};
   void add(String id) => items[id] = (items[id] ?? 0) + 1;
-  void remove(String id) { if ((items[id] ?? 0) > 1) { items[id] = items[id]! - 1; } else { items.remove(id); } }
+  void remove(String id) {
+    if ((items[id] ?? 0) > 1) {
+      items[id] = items[id]! - 1;
+    } else {
+      items.remove(id);
+    }
+  }
+
   int get count => items.values.fold(0, (a, b) => a + b);
   double total(List<MarketItem> all) => items.entries.fold(0, (s, e) {
-    final item = all.firstWhere((i) => i.id == e.key, orElse: () => all.first);
-    return s + item.price * e.value;
-  });
+        final item =
+            all.firstWhere((i) => i.id == e.key, orElse: () => all.first);
+        return s + item.price * e.value;
+      });
 }
 
 // ════════════════════════════════════════════════════════════════
@@ -169,23 +233,28 @@ class _MarketplacePageState extends State<MarketplacePage> {
             backgroundColor: Colors.white,
             elevation: 0,
             title: const Text('Market',
-                style: TextStyle(color: _C.dark, fontWeight: FontWeight.w800, fontSize: 20)),
+                style: TextStyle(
+                    color: _C.dark, fontWeight: FontWeight.w800, fontSize: 20)),
             actions: [
               // Cart badge
               Stack(
                 children: [
                   IconButton(
-                    icon: const Icon(Icons.shopping_bag_outlined, color: _C.dark),
+                    icon:
+                        const Icon(Icons.shopping_bag_outlined, color: _C.dark),
                     onPressed: () => Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (_) => CartPage(allItems: _items)),
+                      MaterialPageRoute(
+                          builder: (_) => CartPage(allItems: _items)),
                     ).then((_) => _refresh()),
                   ),
                   if (_cart.count > 0)
                     Positioned(
-                      right: 6, top: 6,
+                      right: 6,
+                      top: 6,
                       child: Container(
-                        width: 17, height: 17,
+                        width: 17,
+                        height: 17,
                         decoration: const BoxDecoration(
                             color: _C.primary, shape: BoxShape.circle),
                         child: Center(
@@ -225,7 +294,8 @@ class _MarketplacePageState extends State<MarketplacePage> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text('🛒 Student Deals',
-                              style: TextStyle(color: Colors.white54, fontSize: 11)),
+                              style: TextStyle(
+                                  color: Colors.white54, fontSize: 11)),
                           Text('Shop. Save.\nThrive.',
                               style: TextStyle(
                                   color: Colors.white,
@@ -251,7 +321,8 @@ class _MarketplacePageState extends State<MarketplacePage> {
                                   fontSize: 15,
                                   fontWeight: FontWeight.w900)),
                           Text('Black Friday',
-                              style: TextStyle(color: Colors.white70, fontSize: 10)),
+                              style: TextStyle(
+                                  color: Colors.white70, fontSize: 10)),
                         ],
                       ),
                     ),
@@ -286,8 +357,8 @@ class _MarketplacePageState extends State<MarketplacePage> {
                                       fontWeight: FontWeight.w700,
                                       color: _C.dark)),
                               Text('Advertise to students & buyers',
-                                  style: TextStyle(
-                                      fontSize: 11, color: _C.grey)),
+                                  style:
+                                      TextStyle(fontSize: 11, color: _C.grey)),
                             ],
                           ),
                         ),
@@ -321,8 +392,7 @@ class _MarketplacePageState extends State<MarketplacePage> {
                         suffixIcon: Icon(Icons.tune_rounded,
                             color: Color(0xFFAAAAAA), size: 18),
                         border: InputBorder.none,
-                        contentPadding:
-                            EdgeInsets.symmetric(vertical: 14),
+                        contentPadding: EdgeInsets.symmetric(vertical: 14),
                       ),
                     ),
                   ),
@@ -356,8 +426,7 @@ class _MarketplacePageState extends State<MarketplacePage> {
                                 style: TextStyle(
                                     fontSize: 12,
                                     fontWeight: FontWeight.w600,
-                                    color:
-                                        sel ? Colors.white : _C.grey)),
+                                    color: sel ? Colors.white : _C.grey)),
                           ),
                         ),
                       );
@@ -424,9 +493,9 @@ class _MarketplacePageState extends State<MarketplacePage> {
   }
 
   void _showAddListingSheet(BuildContext context) {
-    final nameCtrl  = TextEditingController();
+    final nameCtrl = TextEditingController();
     final priceCtrl = TextEditingController();
-    final descCtrl  = TextEditingController();
+    final descCtrl = TextEditingController();
     String type = 'Product';
 
     showModalBottomSheet(
@@ -439,13 +508,15 @@ class _MarketplacePageState extends State<MarketplacePage> {
         builder: (ctx, setS) => Padding(
           padding: EdgeInsets.only(
               bottom: MediaQuery.of(ctx).viewInsets.bottom,
-              left: 20, right: 20, top: 20),
+              left: 20,
+              right: 20,
+              top: 20),
           child: Column(mainAxisSize: MainAxisSize.min, children: [
             Container(
-              width: 36, height: 4,
+              width: 36,
+              height: 4,
               decoration: BoxDecoration(
-                  color: _C.border,
-                  borderRadius: BorderRadius.circular(2)),
+                  color: _C.border, borderRadius: BorderRadius.circular(2)),
             ),
             const SizedBox(height: 16),
             const Text('Create a Listing',
@@ -455,15 +526,20 @@ class _MarketplacePageState extends State<MarketplacePage> {
 
             // Type toggle
             Row(children: [
-              _TypeBtn(label: 'Product', selected: type == 'Product',
+              _TypeBtn(
+                  label: 'Product',
+                  selected: type == 'Product',
                   onTap: () => setS(() => type = 'Product')),
               const SizedBox(width: 10),
-              _TypeBtn(label: 'Service', selected: type == 'Service',
+              _TypeBtn(
+                  label: 'Service',
+                  selected: type == 'Service',
                   onTap: () => setS(() => type = 'Service')),
             ]),
             const SizedBox(height: 14),
 
-            _Field(ctrl: nameCtrl,
+            _Field(
+                ctrl: nameCtrl,
                 hint: type == 'Product' ? 'Product name' : 'Service title'),
             const SizedBox(height: 10),
             _Field(ctrl: priceCtrl, hint: 'Price (R)', isNum: true),
@@ -584,8 +660,6 @@ class _ItemCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final pct = ((item.originalPrice - item.price) / item.originalPrice * 100)
-        .round();
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -593,8 +667,7 @@ class _ItemCard extends StatelessWidget {
           color: Colors.white,
           borderRadius: BorderRadius.circular(14),
           boxShadow: [
-            BoxShadow(
-                color: Colors.black.withOpacity(0.06), blurRadius: 6)
+            BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 6)
           ],
         ),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -606,16 +679,16 @@ class _ItemCard extends StatelessWidget {
                 borderRadius: BorderRadius.vertical(top: Radius.circular(14)),
               ),
               child: Center(
-                child: Text(item.emoji,
-                    style: const TextStyle(fontSize: 50)),
+                child: Text(item.emoji, style: const TextStyle(fontSize: 50)),
               ),
             ),
             if (item.isSale)
               Positioned(
-                top: 8, left: 8,
+                top: 8,
+                left: 8,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 6, vertical: 2),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   decoration: BoxDecoration(
                       color: _C.primary,
                       borderRadius: BorderRadius.circular(6)),
@@ -628,13 +701,13 @@ class _ItemCard extends StatelessWidget {
               ),
             if (item.isNew)
               Positioned(
-                top: 8, left: 8,
+                top: 8,
+                left: 8,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 6, vertical: 2),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   decoration: BoxDecoration(
-                      color: _C.green,
-                      borderRadius: BorderRadius.circular(6)),
+                      color: _C.green, borderRadius: BorderRadius.circular(6)),
                   child: const Text('NEW',
                       style: TextStyle(
                           color: Colors.white,
@@ -644,10 +717,11 @@ class _ItemCard extends StatelessWidget {
               ),
             if (item.isService)
               Positioned(
-                top: 8, left: 8,
+                top: 8,
+                left: 8,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 6, vertical: 2),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   decoration: BoxDecoration(
                       color: const Color(0xFF1A3A8F),
                       borderRadius: BorderRadius.circular(6)),
@@ -659,7 +733,8 @@ class _ItemCard extends StatelessWidget {
                 ),
               ),
             Positioned(
-              top: 8, right: 8,
+              top: 8,
+              right: 8,
               child: GestureDetector(
                 onTap: () {},
                 child: Container(
@@ -703,7 +778,6 @@ class _ItemCard extends StatelessWidget {
                           decoration: TextDecoration.lineThrough)),
                 ]),
                 const SizedBox(height: 6),
-                // Rating on left, cart button pinned to far right
                 Row(children: [
                   const Icon(Icons.star_rounded,
                       size: 12, color: Color(0xFFF59E0B)),
@@ -720,10 +794,8 @@ class _ItemCard extends StatelessWidget {
                       decoration: BoxDecoration(
                           color: _C.primary,
                           borderRadius: BorderRadius.circular(9)),
-                      child: const Icon(
-                          Icons.add_shopping_cart_rounded,
-                          size: 14,
-                          color: Colors.white),
+                      child: const Icon(Icons.add_shopping_cart_rounded,
+                          size: 14, color: Colors.white),
                     ),
                   ),
                 ]),
@@ -758,7 +830,6 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
   Widget build(BuildContext context) {
     final discount =
         ((item.originalPrice - item.price) / item.originalPrice * 100).round();
-    // Check if this user is the "owner" — demo: services show analytics
     final isOwner = item.isService;
 
     return Scaffold(
@@ -794,9 +865,11 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
             ),
             if (_cart.count > 0)
               Positioned(
-                right: 6, top: 6,
+                right: 6,
+                top: 6,
                 child: Container(
-                  width: 16, height: 16,
+                  width: 16,
+                  height: 16,
                   decoration: const BoxDecoration(
                       color: _C.primary, shape: BoxShape.circle),
                   child: Center(
@@ -827,7 +900,8 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                             style: const TextStyle(fontSize: 90))),
                     if (discount > 0)
                       Positioned(
-                        top: 12, left: 12,
+                        top: 12,
+                        left: 12,
                         child: Container(
                           padding: const EdgeInsets.symmetric(
                               horizontal: 8, vertical: 4),
@@ -849,7 +923,6 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Name + price
                       Text(item.name,
                           style: const TextStyle(
                               fontSize: 18,
@@ -870,7 +943,6 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                                 decoration: TextDecoration.lineThrough)),
                       ]),
                       const SizedBox(height: 8),
-                      // Rating
                       Row(children: [
                         ...List.generate(
                             5,
@@ -882,8 +954,8 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                                 color: const Color(0xFFF59E0B))),
                         const SizedBox(width: 6),
                         Text('${item.rating} (${item.reviews} reviews)',
-                            style: const TextStyle(
-                                fontSize: 12, color: _C.grey)),
+                            style:
+                                const TextStyle(fontSize: 12, color: _C.grey)),
                       ]),
                       const SizedBox(height: 14),
 
@@ -906,11 +978,11 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                             final c = Color(int.parse(
                                 item.colors[i].replaceAll('#', '0xFF')));
                             return GestureDetector(
-                              onTap: () =>
-                                  setState(() => _selectedColor = i),
+                              onTap: () => setState(() => _selectedColor = i),
                               child: Container(
                                 margin: const EdgeInsets.only(right: 8),
-                                width: 26, height: 26,
+                                width: 26,
+                                height: 26,
                                 decoration: BoxDecoration(
                                   color: c,
                                   shape: BoxShape.circle,
@@ -942,7 +1014,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                               height: 1.5)),
                       const SizedBox(height: 14),
 
-                      // Seller + message / hire
+                      // Seller
                       const Text('Seller',
                           style: TextStyle(
                               fontSize: 13,
@@ -958,7 +1030,8 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                         ),
                         child: Row(children: [
                           Container(
-                            width: 40, height: 40,
+                            width: 40,
+                            height: 40,
                             decoration: BoxDecoration(
                                 color: _C.primary.withOpacity(0.1),
                                 shape: BoxShape.circle),
@@ -985,7 +1058,6 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                               ],
                             ),
                           ),
-                          // Message seller privately
                           GestureDetector(
                             onTap: () => _openSellerChat(context),
                             child: Container(
@@ -1031,14 +1103,15 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
               color: Colors.white,
               border: Border(top: BorderSide(color: _C.border))),
           child: Row(children: [
-            // Qty
             Container(
               decoration: BoxDecoration(
                   border: Border.all(color: _C.border),
                   borderRadius: BorderRadius.circular(10)),
               child: Row(children: [
                 IconButton(
-                  onPressed: () => setState(() { if (_qty > 1) _qty--; }),
+                  onPressed: () => setState(() {
+                    if (_qty > 1) _qty--;
+                  }),
                   icon: const Icon(Icons.remove, size: 16),
                 ),
                 Text('$_qty',
@@ -1079,8 +1152,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                         Navigator.push(
                             context,
                             MaterialPageRoute(
-                                builder: (_) =>
-                                    CartPage(allItems: _items)));
+                                builder: (_) => CartPage(allItems: _items)));
                       },
                       child: Text('Checkout ($_qty)',
                           style: const TextStyle(
@@ -1136,13 +1208,20 @@ class _AnalyticsPanel extends StatelessWidget {
           ]),
           const SizedBox(height: 10),
           Row(children: [
-            _AStatBox(label: 'Views',     value: '${item.views}',     icon: Icons.visibility_outlined),
+            _AStatBox(
+                label: 'Views',
+                value: '${item.views}',
+                icon: Icons.visibility_outlined),
             const SizedBox(width: 8),
-            _AStatBox(label: 'Purchases', value: '${item.purchases}', icon: Icons.shopping_bag_outlined),
+            _AStatBox(
+                label: 'Purchases',
+                value: '${item.purchases}',
+                icon: Icons.shopping_bag_outlined),
             const SizedBox(width: 8),
             _AStatBox(
               label: 'Conv. Rate',
-              value: '${(item.purchases / item.views * 100).toStringAsFixed(1)}%',
+              value:
+                  '${(item.purchases / item.views * 100).toStringAsFixed(1)}%',
               icon: Icons.trending_up_rounded,
             ),
           ]),
@@ -1157,8 +1236,8 @@ class _AnalyticsPanel extends StatelessWidget {
                   SizedBox(
                       width: 46,
                       child: Text(e.key,
-                          style: const TextStyle(
-                              fontSize: 11, color: _C.grey))),
+                          style:
+                              const TextStyle(fontSize: 11, color: _C.grey))),
                   const SizedBox(width: 6),
                   Expanded(
                     child: ClipRRect(
@@ -1167,8 +1246,8 @@ class _AnalyticsPanel extends StatelessWidget {
                         value: e.value / 100,
                         minHeight: 6,
                         backgroundColor: _C.border,
-                        valueColor: const AlwaysStoppedAnimation(
-                            Color(0xFF1A3A8F)),
+                        valueColor:
+                            const AlwaysStoppedAnimation(Color(0xFF1A3A8F)),
                       ),
                     ),
                   ),
@@ -1186,7 +1265,8 @@ class _AnalyticsPanel extends StatelessWidget {
                   fontSize: 12, fontWeight: FontWeight.w700, color: _C.dark)),
           const SizedBox(height: 6),
           Wrap(
-            spacing: 6, runSpacing: 4,
+            spacing: 6,
+            runSpacing: 4,
             children: item.topLocations
                 .map((loc) => Container(
                       padding: const EdgeInsets.symmetric(
@@ -1222,19 +1302,15 @@ class _AStatBox extends StatelessWidget {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(
-              color: const Color(0xFF1A3A8F).withOpacity(0.2)),
+          border: Border.all(color: const Color(0xFF1A3A8F).withOpacity(0.2)),
         ),
         child: Column(children: [
           Icon(icon, size: 16, color: const Color(0xFF1A3A8F)),
           const SizedBox(height: 4),
           Text(value,
               style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w800,
-                  color: _C.dark)),
-          Text(label,
-              style: const TextStyle(fontSize: 10, color: _C.grey)),
+                  fontSize: 14, fontWeight: FontWeight.w800, color: _C.dark)),
+          Text(label, style: const TextStyle(fontSize: 10, color: _C.grey)),
         ]),
       ),
     );
@@ -1242,7 +1318,7 @@ class _AStatBox extends StatelessWidget {
 }
 
 // ════════════════════════════════════════════════════════════════
-//  Direct Chat Page (private seller ↔ buyer messaging)
+//  Direct Chat Page
 // ════════════════════════════════════════════════════════════════
 class _DirectChatPage extends StatefulWidget {
   final String sellerName, sellerAvatar, context;
@@ -1256,15 +1332,19 @@ class _DirectChatPage extends StatefulWidget {
 }
 
 class _DirectChatPageState extends State<_DirectChatPage> {
-  final _ctrl    = TextEditingController();
-  final _scroll  = ScrollController();
-  final _msgs    = <Map<String, dynamic>>[];
+  final _ctrl = TextEditingController();
+  final _scroll = ScrollController();
+  final _msgs = <Map<String, dynamic>>[];
 
   @override
   void initState() {
     super.initState();
     _msgs.addAll([
-      {'from': 'seller', 'text': 'Hi! Thanks for your interest in my listing. How can I help?', 'time': _now()},
+      {
+        'from': 'seller',
+        'text': 'Hi! Thanks for your interest in my listing. How can I help?',
+        'time': _now()
+      },
     ]);
   }
 
@@ -1286,7 +1366,6 @@ class _DirectChatPageState extends State<_DirectChatPage> {
             duration: const Duration(milliseconds: 300), curve: Curves.easeOut);
       }
     });
-    // Auto-reply after 1.5 s
     Future.delayed(const Duration(milliseconds: 1500), () {
       if (!mounted) return;
       const replies = [
@@ -1334,16 +1413,14 @@ class _DirectChatPageState extends State<_DirectChatPage> {
           CircleAvatar(
             radius: 18,
             backgroundColor: _C.primary.withOpacity(0.1),
-            child: Text(widget.sellerAvatar,
-                style: const TextStyle(fontSize: 14)),
+            child:
+                Text(widget.sellerAvatar, style: const TextStyle(fontSize: 14)),
           ),
           const SizedBox(width: 10),
           Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Text(widget.sellerName,
                 style: const TextStyle(
-                    color: _C.dark,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 14)),
+                    color: _C.dark, fontWeight: FontWeight.w700, fontSize: 14)),
             const Text('Online',
                 style: TextStyle(color: Color(0xFF10B981), fontSize: 11)),
           ]),
@@ -1355,7 +1432,6 @@ class _DirectChatPageState extends State<_DirectChatPage> {
         ],
       ),
       body: Column(children: [
-        // Context banner
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           color: _C.primary.withOpacity(0.06),
@@ -1369,14 +1445,13 @@ class _DirectChatPageState extends State<_DirectChatPage> {
                     fontWeight: FontWeight.w600)),
           ]),
         ),
-        // Messages
         Expanded(
           child: ListView.builder(
             controller: _scroll,
             padding: const EdgeInsets.all(16),
             itemCount: _msgs.length,
             itemBuilder: (_, i) {
-              final m  = _msgs[i];
+              final m = _msgs[i];
               final me = m['from'] == 'me';
               return Align(
                 alignment: me ? Alignment.centerRight : Alignment.centerLeft,
@@ -1384,18 +1459,15 @@ class _DirectChatPageState extends State<_DirectChatPage> {
                   margin: const EdgeInsets.only(bottom: 8),
                   constraints: BoxConstraints(
                       maxWidth: MediaQuery.of(context).size.width * 0.68),
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 14, vertical: 10),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                   decoration: BoxDecoration(
-                    color:
-                        me ? _C.primary : const Color(0xFFF5F5F5),
+                    color: me ? _C.primary : const Color(0xFFF5F5F5),
                     borderRadius: BorderRadius.only(
                       topLeft: const Radius.circular(16),
                       topRight: const Radius.circular(16),
-                      bottomLeft:
-                          Radius.circular(me ? 16 : 4),
-                      bottomRight:
-                          Radius.circular(me ? 4 : 16),
+                      bottomLeft: Radius.circular(me ? 16 : 4),
+                      bottomRight: Radius.circular(me ? 4 : 16),
                     ),
                   ),
                   child: Column(
@@ -1410,9 +1482,7 @@ class _DirectChatPageState extends State<_DirectChatPage> {
                       Text(m['time'] as String,
                           style: TextStyle(
                               fontSize: 10,
-                              color: me
-                                  ? Colors.white70
-                                  : _C.grey)),
+                              color: me ? Colors.white70 : _C.grey)),
                     ],
                   ),
                 ),
@@ -1420,7 +1490,6 @@ class _DirectChatPageState extends State<_DirectChatPage> {
             },
           ),
         ),
-        // Input
         Container(
           padding: const EdgeInsets.fromLTRB(12, 8, 12, 24),
           decoration: const BoxDecoration(
@@ -1452,7 +1521,8 @@ class _DirectChatPageState extends State<_DirectChatPage> {
             GestureDetector(
               onTap: _send,
               child: Container(
-                width: 40, height: 40,
+                width: 40,
+                height: 40,
                 decoration: const BoxDecoration(
                     color: _C.primary, shape: BoxShape.circle),
                 child: const Icon(Icons.send_rounded,
@@ -1488,15 +1558,16 @@ class _CartPageState extends State<CartPage>
   }
 
   @override
-  void dispose() { _tabs.dispose(); super.dispose(); }
+  void dispose() {
+    _tabs.dispose();
+    super.dispose();
+  }
 
-  List<MapEntry<MarketItem, int>> get _entries => _cart.items.entries
-      .map((e) {
+  List<MapEntry<MarketItem, int>> get _entries => _cart.items.entries.map((e) {
         final item = widget.allItems.firstWhere((i) => i.id == e.key,
             orElse: () => widget.allItems.first);
         return MapEntry(item, e.value);
-      })
-      .toList();
+      }).toList();
 
   @override
   Widget build(BuildContext context) {
@@ -1535,9 +1606,9 @@ class _CartPageState extends State<CartPage>
       body: TabBarView(
         controller: _tabs,
         children: [
-          // ── Cart tab ────────────────────────────────────
           _entries.isEmpty
-              ? const Center(child: Column(
+              ? const Center(
+                  child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text('🛒', style: TextStyle(fontSize: 48)),
@@ -1553,7 +1624,7 @@ class _CartPageState extends State<CartPage>
                       itemCount: _entries.length,
                       itemBuilder: (_, i) {
                         final item = _entries[i].key;
-                        final qty  = _entries[i].value;
+                        final qty = _entries[i].value;
                         return Container(
                           margin: const EdgeInsets.only(bottom: 12),
                           decoration: BoxDecoration(
@@ -1561,7 +1632,8 @@ class _CartPageState extends State<CartPage>
                               borderRadius: BorderRadius.circular(14)),
                           child: Row(children: [
                             Container(
-                              width: 80, height: 80,
+                              width: 80,
+                              height: 80,
                               decoration: const BoxDecoration(
                                 color: Color(0xFFF5F5F5),
                                 borderRadius: BorderRadius.horizontal(
@@ -1575,8 +1647,7 @@ class _CartPageState extends State<CartPage>
                               child: Padding(
                                 padding: const EdgeInsets.all(12),
                                 child: Column(
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.start,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(item.name,
                                         style: const TextStyle(
@@ -1604,8 +1675,7 @@ class _CartPageState extends State<CartPage>
                                             horizontal: 10),
                                         child: Text('$qty',
                                             style: const TextStyle(
-                                                fontWeight:
-                                                    FontWeight.w700)),
+                                                fontWeight: FontWeight.w700)),
                                       ),
                                       _QtyBtn(
                                         icon: Icons.add,
@@ -1633,7 +1703,6 @@ class _CartPageState extends State<CartPage>
                       },
                     ),
                   ),
-                  // Order summary
                   Container(
                     padding: const EdgeInsets.all(16),
                     color: Colors.white,
@@ -1642,25 +1711,21 @@ class _CartPageState extends State<CartPage>
                       const SizedBox(height: 4),
                       _Row('Shipping', 'R0.00'),
                       const Divider(height: 16),
-                      _Row('Total', 'R${total.toStringAsFixed(2)}',
-                          bold: true),
+                      _Row('Total', 'R${total.toStringAsFixed(2)}', bold: true),
                       const SizedBox(height: 14),
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton(
                           style: ElevatedButton.styleFrom(
                             backgroundColor: _C.primary,
-                            padding: const EdgeInsets.symmetric(
-                                vertical: 14),
+                            padding: const EdgeInsets.symmetric(vertical: 14),
                             shape: RoundedRectangleBorder(
-                                borderRadius:
-                                    BorderRadius.circular(12)),
+                                borderRadius: BorderRadius.circular(12)),
                           ),
                           onPressed: () => Navigator.push(
                             context,
                             MaterialPageRoute(
-                                builder: (_) => CheckoutPage(
-                                    total: total)),
+                                builder: (_) => CheckoutPage(total: total)),
                           ),
                           child: const Text('Proceed to Checkout',
                               style: TextStyle(
@@ -1671,7 +1736,6 @@ class _CartPageState extends State<CartPage>
                     ]),
                   ),
                 ]),
-          // Wishlist tab
           const Center(
               child: Text('Wishlist coming soon',
                   style: TextStyle(color: _C.grey))),
@@ -1685,23 +1749,20 @@ class _QtyBtn extends StatelessWidget {
   final IconData icon;
   final VoidCallback onTap;
   final bool filled;
-  const _QtyBtn(
-      {required this.icon, required this.onTap, this.filled = false});
+  const _QtyBtn({required this.icon, required this.onTap, this.filled = false});
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: 26, height: 26,
+        width: 26,
+        height: 26,
         decoration: BoxDecoration(
           color: filled ? _C.primary : Colors.white,
           borderRadius: BorderRadius.circular(6),
-          border: Border.all(
-              color: filled ? _C.primary : _C.border),
+          border: Border.all(color: filled ? _C.primary : _C.border),
         ),
-        child: Icon(icon,
-            size: 14,
-            color: filled ? Colors.white : _C.dark),
+        child: Icon(icon, size: 14, color: filled ? Colors.white : _C.dark),
       ),
     );
   }
@@ -1720,13 +1781,11 @@ class _Row extends StatelessWidget {
             style: TextStyle(
                 fontSize: 13,
                 color: bold ? _C.dark : _C.grey,
-                fontWeight:
-                    bold ? FontWeight.w700 : FontWeight.w400)),
+                fontWeight: bold ? FontWeight.w700 : FontWeight.w400)),
         Text(r,
             style: TextStyle(
                 fontSize: 13,
-                fontWeight:
-                    bold ? FontWeight.w800 : FontWeight.w600,
+                fontWeight: bold ? FontWeight.w800 : FontWeight.w600,
                 color: bold ? _C.primary : _C.dark)),
       ],
     );
@@ -1734,7 +1793,7 @@ class _Row extends StatelessWidget {
 }
 
 // ════════════════════════════════════════════════════════════════
-//  Checkout Page — each payment method expands to collect details
+//  Checkout Page
 // ════════════════════════════════════════════════════════════════
 class CheckoutPage extends StatefulWidget {
   final double total;
@@ -1744,30 +1803,36 @@ class CheckoutPage extends StatefulWidget {
 }
 
 class _CheckoutPageState extends State<CheckoutPage> {
-  int _step = 0; // 0=Shipping 1=Payment 2=Review
-  String? _selectedMethod; // 'wallet' | 'card' | 'eft'
+  int _step = 0;
+  String? _selectedMethod;
 
-  // Card fields
-  final _cardNum  = TextEditingController();
+  final _cardNum = TextEditingController();
   final _cardName = TextEditingController();
-  final _cardExp  = TextEditingController();
-  final _cardCvv  = TextEditingController();
-
-  // EFT
+  final _cardExp = TextEditingController();
+  final _cardCvv = TextEditingController();
   final _bankName = TextEditingController();
-  final _accNum   = TextEditingController();
-
-  // Shipping
+  final _accNum = TextEditingController();
   final _fullName = TextEditingController();
-  final _phone    = TextEditingController();
-  final _address  = TextEditingController();
-  final _city     = TextEditingController();
-  final _postal   = TextEditingController();
+  final _phone = TextEditingController();
+  final _address = TextEditingController();
+  final _city = TextEditingController();
+  final _postal = TextEditingController();
 
   @override
   void dispose() {
-    for (final c in [_cardNum,_cardName,_cardExp,_cardCvv,_bankName,_accNum,
-                     _fullName,_phone,_address,_city,_postal]) c.dispose();
+    for (final c in [
+      _cardNum,
+      _cardName,
+      _cardExp,
+      _cardCvv,
+      _bankName,
+      _accNum,
+      _fullName,
+      _phone,
+      _address,
+      _city,
+      _postal
+    ]) c.dispose();
     super.dispose();
   }
 
@@ -1781,7 +1846,11 @@ class _CheckoutPageState extends State<CheckoutPage> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios, color: _C.dark, size: 18),
           onPressed: () {
-            if (_step > 0) setState(() => _step--); else Navigator.pop(context);
+            if (_step > 0) {
+              setState(() => _step--);
+            } else {
+              Navigator.pop(context);
+            }
           },
         ),
         title: const Text('Checkout',
@@ -1790,7 +1859,6 @@ class _CheckoutPageState extends State<CheckoutPage> {
         centerTitle: true,
       ),
       body: Column(children: [
-        // Step indicator
         Container(
           color: Colors.white,
           padding: const EdgeInsets.symmetric(vertical: 12),
@@ -1800,14 +1868,17 @@ class _CheckoutPageState extends State<CheckoutPage> {
               for (int i = 0; i < 3; i++) ...[
                 _StepChip(
                     label: ['Shipping', 'Payment', 'Review'][i],
-                    icon: [Icons.local_shipping_outlined,
-                        Icons.payment_outlined,
-                        Icons.rate_review_outlined][i],
+                    icon: [
+                      Icons.local_shipping_outlined,
+                      Icons.payment_outlined,
+                      Icons.rate_review_outlined
+                    ][i],
                     isActive: i == _step,
                     isDone: i < _step),
                 if (i < 2)
                   Container(
-                      width: 28, height: 1,
+                      width: 28,
+                      height: 1,
                       color: i < _step ? _C.primary : _C.border),
               ],
             ],
@@ -1823,7 +1894,6 @@ class _CheckoutPageState extends State<CheckoutPage> {
                     : _reviewStep(),
           ),
         ),
-        // Bottom buttons
         Container(
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 28),
           color: Colors.white,
@@ -1884,44 +1954,49 @@ class _CheckoutPageState extends State<CheckoutPage> {
         children: [
           const Text('Delivery Details',
               style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w700,
-                  color: _C.dark)),
+                  fontSize: 15, fontWeight: FontWeight.w700, color: _C.dark)),
           const SizedBox(height: 14),
-          _CheckoutField(ctrl: _fullName, hint: 'Full name', label: 'Full Name'),
+          _CheckoutField(
+              ctrl: _fullName, hint: 'Full name', label: 'Full Name'),
           const SizedBox(height: 10),
-          _CheckoutField(ctrl: _phone, hint: '07X XXX XXXX', label: 'Phone', isNum: true),
+          _CheckoutField(
+              ctrl: _phone, hint: '07X XXX XXXX', label: 'Phone', isNum: true),
           const SizedBox(height: 10),
-          _CheckoutField(ctrl: _address, hint: '12 Street, Suburb', label: 'Street Address'),
+          _CheckoutField(
+              ctrl: _address,
+              hint: '12 Street, Suburb',
+              label: 'Street Address'),
           const SizedBox(height: 10),
           Row(children: [
-            Expanded(child: _CheckoutField(ctrl: _city, hint: 'City', label: 'City')),
+            Expanded(
+                child:
+                    _CheckoutField(ctrl: _city, hint: 'City', label: 'City')),
             const SizedBox(width: 10),
-            Expanded(child: _CheckoutField(ctrl: _postal, hint: '2001', label: 'Postal Code', isNum: true)),
+            Expanded(
+                child: _CheckoutField(
+                    ctrl: _postal,
+                    hint: '2001',
+                    label: 'Postal Code',
+                    isNum: true)),
           ]),
         ],
       );
 
-  // ── Payment form — each method expands ───────────────────
   Widget _paymentForm() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text('Payment Method',
             style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w700,
-                color: _C.dark)),
+                fontSize: 15, fontWeight: FontWeight.w700, color: _C.dark)),
         const SizedBox(height: 14),
-
-        // Wallet
         _PayMethod(
           selected: _selectedMethod == 'wallet',
           icon: Icons.account_balance_wallet_outlined,
           label: 'Gude Wallet',
           badge: 'R190.00 available',
-          onTap: () => setState(
-              () => _selectedMethod = _selectedMethod == 'wallet' ? null : 'wallet'),
+          onTap: () => setState(() =>
+              _selectedMethod = _selectedMethod == 'wallet' ? null : 'wallet'),
           child: _selectedMethod == 'wallet'
               ? Container(
                   margin: const EdgeInsets.only(top: 12),
@@ -1931,44 +2006,55 @@ class _CheckoutPageState extends State<CheckoutPage> {
                       borderRadius: BorderRadius.circular(10),
                       border: Border.all(color: _C.border)),
                   child: const Row(children: [
-                    Icon(Icons.check_circle_rounded,
-                        color: _C.green, size: 18),
+                    Icon(Icons.check_circle_rounded, color: _C.green, size: 18),
                     SizedBox(width: 8),
-                    Text('R190.00 will be deducted from your Saving Pocket.',
-                        style: TextStyle(fontSize: 12, color: _C.dark)),
+                    Expanded(
+                      child: Text(
+                          'R190.00 will be deducted from your Saving Pocket.',
+                          style: TextStyle(fontSize: 12, color: _C.dark)),
+                    ),
                   ]),
                 )
               : null,
         ),
-
         const SizedBox(height: 10),
-
-        // Credit / Debit Card — expands to show fields
         _PayMethod(
           selected: _selectedMethod == 'card',
           icon: Icons.credit_card_outlined,
           label: 'Credit / Debit Card',
-          onTap: () => setState(
-              () => _selectedMethod = _selectedMethod == 'card' ? null : 'card'),
+          onTap: () => setState(() =>
+              _selectedMethod = _selectedMethod == 'card' ? null : 'card'),
           child: _selectedMethod == 'card'
               ? Column(children: [
                   const SizedBox(height: 12),
-                  _CheckoutField(ctrl: _cardNum, hint: '1234 5678 9012 3456', label: 'Card Number', isNum: true),
+                  _CheckoutField(
+                      ctrl: _cardNum,
+                      hint: '1234 5678 9012 3456',
+                      label: 'Card Number',
+                      isNum: true),
                   const SizedBox(height: 8),
-                  _CheckoutField(ctrl: _cardName, hint: 'As on card', label: 'Cardholder Name'),
+                  _CheckoutField(
+                      ctrl: _cardName,
+                      hint: 'As on card',
+                      label: 'Cardholder Name'),
                   const SizedBox(height: 8),
                   Row(children: [
-                    Expanded(child: _CheckoutField(ctrl: _cardExp, hint: 'MM / YY', label: 'Expiry')),
+                    Expanded(
+                        child: _CheckoutField(
+                            ctrl: _cardExp, hint: 'MM / YY', label: 'Expiry')),
                     const SizedBox(width: 10),
-                    Expanded(child: _CheckoutField(ctrl: _cardCvv, hint: '•••', label: 'CVV', obscure: true, isNum: true)),
+                    Expanded(
+                        child: _CheckoutField(
+                            ctrl: _cardCvv,
+                            hint: '•••',
+                            label: 'CVV',
+                            obscure: true,
+                            isNum: true)),
                   ]),
                 ])
               : null,
         ),
-
         const SizedBox(height: 10),
-
-        // EFT
         _PayMethod(
           selected: _selectedMethod == 'eft',
           icon: Icons.swap_horiz_rounded,
@@ -1978,9 +2064,16 @@ class _CheckoutPageState extends State<CheckoutPage> {
           child: _selectedMethod == 'eft'
               ? Column(children: [
                   const SizedBox(height: 12),
-                  _CheckoutField(ctrl: _bankName, hint: 'e.g. FNB, Capitec, ABSA', label: 'Bank Name'),
+                  _CheckoutField(
+                      ctrl: _bankName,
+                      hint: 'e.g. FNB, Capitec, ABSA',
+                      label: 'Bank Name'),
                   const SizedBox(height: 8),
-                  _CheckoutField(ctrl: _accNum, hint: 'Account number', label: 'Account Number', isNum: true),
+                  _CheckoutField(
+                      ctrl: _accNum,
+                      hint: 'Account number',
+                      label: 'Account Number',
+                      isNum: true),
                   const SizedBox(height: 8),
                   Container(
                     padding: const EdgeInsets.all(10),
@@ -1988,8 +2081,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
                         color: const Color(0xFFFFF3CD),
                         borderRadius: BorderRadius.circular(10),
                         border: Border.all(
-                            color: const Color(0xFFFFD700)
-                                .withOpacity(0.5))),
+                            color: const Color(0xFFFFD700).withOpacity(0.5))),
                     child: const Text(
                       'Reference: GUDE-PAY-XXXX will be shown after placing your order.',
                       style: TextStyle(fontSize: 11, color: Color(0xFF92400E)),
@@ -2007,33 +2099,27 @@ class _CheckoutPageState extends State<CheckoutPage> {
         children: [
           const Text('Order Summary',
               style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w700,
-                  color: _C.dark)),
+                  fontSize: 15, fontWeight: FontWeight.w700, color: _C.dark)),
           const SizedBox(height: 12),
           Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12)),
+                color: Colors.white, borderRadius: BorderRadius.circular(12)),
             child: Column(children: [
               _Row('Subtotal', 'R${widget.total.toStringAsFixed(2)}'),
               const SizedBox(height: 6),
               _Row('Shipping', 'R0.00'),
               const Divider(height: 16),
-              _Row('Total', 'R${widget.total.toStringAsFixed(2)}',
-                  bold: true),
+              _Row('Total', 'R${widget.total.toStringAsFixed(2)}', bold: true),
             ]),
           ),
           const SizedBox(height: 12),
           Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12)),
+                color: Colors.white, borderRadius: BorderRadius.circular(12)),
             child: Row(children: [
-              const Icon(Icons.payment_outlined,
-                  color: _C.primary, size: 20),
+              const Icon(Icons.payment_outlined, color: _C.primary, size: 20),
               const SizedBox(width: 10),
               Text(
                 _selectedMethod == 'wallet'
@@ -2052,7 +2138,6 @@ class _CheckoutPageState extends State<CheckoutPage> {
       );
 }
 
-// ── Payment method tile — tapping expands to collect details ──
 class _PayMethod extends StatelessWidget {
   final bool selected;
   final IconData icon;
@@ -2090,8 +2175,7 @@ class _PayMethod extends StatelessWidget {
             child: Padding(
               padding: const EdgeInsets.all(14),
               child: Row(children: [
-                Icon(icon,
-                    color: selected ? _C.primary : _C.grey, size: 22),
+                Icon(icon, color: selected ? _C.primary : _C.grey, size: 22),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
@@ -2104,8 +2188,8 @@ class _PayMethod extends StatelessWidget {
                               color: selected ? _C.primary : _C.dark)),
                       if (badge != null)
                         Text(badge!,
-                            style: const TextStyle(
-                                fontSize: 11, color: _C.grey)),
+                            style:
+                                const TextStyle(fontSize: 11, color: _C.grey)),
                     ],
                   ),
                 ),
@@ -2118,8 +2202,8 @@ class _PayMethod extends StatelessWidget {
                 const SizedBox(width: 4),
                 if (selected)
                   Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 8, vertical: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
                         color: _C.primary.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(6)),
@@ -2134,8 +2218,7 @@ class _PayMethod extends StatelessWidget {
           ),
           if (child != null)
             Padding(
-              padding:
-                  const EdgeInsets.fromLTRB(14, 0, 14, 14),
+              padding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
               child: child,
             ),
         ],
@@ -2152,7 +2235,7 @@ class _CheckoutField extends StatelessWidget {
     required this.ctrl,
     required this.hint,
     required this.label,
-    this.isNum   = false,
+    this.isNum = false,
     this.obscure = false,
   });
   @override
@@ -2160,20 +2243,16 @@ class _CheckoutField extends StatelessWidget {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       Text(label,
           style: const TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
-              color: _C.grey)),
+              fontSize: 11, fontWeight: FontWeight.w600, color: _C.grey)),
       const SizedBox(height: 4),
       TextField(
         controller: ctrl,
         obscureText: obscure,
-        keyboardType:
-            isNum ? TextInputType.number : TextInputType.text,
+        keyboardType: isNum ? TextInputType.number : TextInputType.text,
         style: const TextStyle(fontSize: 14, color: _C.dark),
         decoration: InputDecoration(
           hintText: hint,
-          hintStyle:
-              const TextStyle(fontSize: 12, color: Color(0xFFAAAAAA)),
+          hintStyle: const TextStyle(fontSize: 12, color: Color(0xFFAAAAAA)),
           contentPadding:
               const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
           border: OutlineInputBorder(
@@ -2184,8 +2263,7 @@ class _CheckoutField extends StatelessWidget {
               borderSide: const BorderSide(color: _C.border)),
           focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
-              borderSide:
-                  const BorderSide(color: _C.primary, width: 1.5)),
+              borderSide: const BorderSide(color: _C.primary, width: 1.5)),
           filled: true,
           fillColor: Colors.white,
         ),
@@ -2207,7 +2285,8 @@ class _StepChip extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(children: [
       Container(
-        width: 30, height: 30,
+        width: 30,
+        height: 30,
         decoration: BoxDecoration(
           color: isDone || isActive ? _C.primary : _C.border,
           shape: BoxShape.circle,
@@ -2215,10 +2294,7 @@ class _StepChip extends StatelessWidget {
         child: Center(
           child: isDone
               ? const Icon(Icons.check, size: 14, color: Colors.white)
-              : Icon(icon,
-                  size: 14,
-                  color:
-                      isActive ? Colors.white : _C.grey),
+              : Icon(icon, size: 14, color: isActive ? Colors.white : _C.grey),
         ),
       ),
       const SizedBox(height: 4),
@@ -2247,12 +2323,12 @@ class _OrderSuccessPage extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Container(
-                width: 110, height: 110,
+                width: 110,
+                height: 110,
                 decoration: const BoxDecoration(
                     color: Color(0xFFF0FFF4), shape: BoxShape.circle),
                 child: const Center(
-                    child: Text('🎉',
-                        style: TextStyle(fontSize: 52))),
+                    child: Text('🎉', style: TextStyle(fontSize: 52))),
               ),
               const SizedBox(height: 24),
               const Text('Order placed successfully!',
@@ -2265,8 +2341,7 @@ class _OrderSuccessPage extends StatelessWidget {
               const Text(
                 'Thank you for shopping at Gude! Happy shopping!',
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                    fontSize: 13, color: _C.grey, height: 1.5),
+                style: TextStyle(fontSize: 13, color: _C.grey, height: 1.5),
               ),
               const SizedBox(height: 32),
               SizedBox(
@@ -2282,8 +2357,7 @@ class _OrderSuccessPage extends StatelessWidget {
                       Navigator.of(context).popUntil((r) => r.isFirst),
                   child: const Text('Continue Shopping',
                       style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w700)),
+                          color: Colors.white, fontWeight: FontWeight.w700)),
                 ),
               ),
             ],

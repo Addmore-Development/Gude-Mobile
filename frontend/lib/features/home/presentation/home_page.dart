@@ -1,17 +1,89 @@
-// frontend/lib/features/home/presentation/home_page.dart
+// lib/features/home/presentation/home_page.dart
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:gude_app/core/theme/app_theme.dart';
 import 'package:gude_app/core/state/financial_health.dart';
 import 'package:gude_app/services/user_role_service.dart';
+import 'package:gude_app/features/chatbot/presentation/ai_coach_overlay.dart';
+import 'package:gude_app/features/chatbot/services/ai_coach_service.dart';
 
-class HomePage extends StatelessWidget {
+// ─── Available quick actions catalogue ────────────────────────────────────────
+class _ActionDef {
+  final String id, label;
+  final IconData icon;
+  final String route;
+  const _ActionDef(this.id, this.label, this.icon, this.route);
+}
+
+const _kAllActions = [
+  _ActionDef('marketplace', 'Browse\nMarket', Icons.storefront_outlined,
+      '/marketplace'),
+  _ActionDef('create', 'Create\nListing', Icons.add_circle_outline,
+      '/marketplace/create'),
+  _ActionDef('send', 'Send\nMoney', Icons.send_outlined, '/wallet/send'),
+  _ActionDef(
+      'support', 'Support\nHub', Icons.support_agent_outlined, '/support'),
+  _ActionDef('stability', 'Stability', Icons.favorite_outline, '/stability'),
+  _ActionDef(
+      'wallet', 'My Wallet', Icons.account_balance_wallet_outlined, '/wallet'),
+  _ActionDef(
+      'notices', 'Notice\nBoard', Icons.campaign_outlined, '/noticeboard'),
+  _ActionDef('profile', 'My Profile', Icons.person_outline_rounded, '/profile'),
+];
+
+// ─── HomePage ─────────────────────────────────────────────────────────────────
+class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
-  void _showAvatarMenu(BuildContext context) {
-    final RenderBox button = context.findRenderObject() as RenderBox;
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  List<String> _pinnedIds = ['marketplace', 'create', 'send', 'support'];
+  bool _fabExpanded = false;
+
+  void _showLogoutDialog() {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Log Out',
+            style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18)),
+        content: const Text('Are you sure you want to log out?',
+            style: TextStyle(fontSize: 14, color: Color(0xFF555555))),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel',
+                style: TextStyle(
+                    color: Color(0xFF888888), fontWeight: FontWeight.w600)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFE30613),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10)),
+            ),
+            onPressed: () {
+              final nav = GoRouter.of(context);
+              UserRoleService().clear();
+              Navigator.pop(context);
+              Future.microtask(() => nav.go('/login'));
+            },
+            child: const Text('Log Out',
+                style: TextStyle(
+                    color: Colors.white, fontWeight: FontWeight.w700)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showHamburgerMenu(BuildContext btnCtx) {
+    final RenderBox button = btnCtx.findRenderObject() as RenderBox;
     final RenderBox overlay =
-        Navigator.of(context).overlay!.context.findRenderObject() as RenderBox;
+        Navigator.of(btnCtx).overlay!.context.findRenderObject() as RenderBox;
     final RelativeRect position = RelativeRect.fromRect(
       Rect.fromPoints(
         button.localToGlobal(button.size.bottomLeft(Offset.zero),
@@ -23,7 +95,48 @@ class HomePage extends StatelessWidget {
     );
 
     showMenu<String>(
-      context: context,
+      context: btnCtx,
+      position: position,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      elevation: 8,
+      items: [
+        PopupMenuItem<String>(
+          value: 'support',
+          child: Row(
+            children: const [
+              Icon(Icons.support_agent_outlined,
+                  size: 18, color: Color(0xFF1A1A1A)),
+              SizedBox(width: 10),
+              Text('Support Hub',
+                  style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF1A1A1A))),
+            ],
+          ),
+        ),
+      ],
+    ).then((val) {
+      if (val == 'support') context.push('/support');
+    });
+  }
+
+  void _showAvatarMenu(BuildContext btnCtx) {
+    final RenderBox button = btnCtx.findRenderObject() as RenderBox;
+    final RenderBox overlay =
+        Navigator.of(btnCtx).overlay!.context.findRenderObject() as RenderBox;
+    final RelativeRect position = RelativeRect.fromRect(
+      Rect.fromPoints(
+        button.localToGlobal(button.size.bottomLeft(Offset.zero),
+            ancestor: overlay),
+        button.localToGlobal(button.size.bottomRight(Offset.zero),
+            ancestor: overlay),
+      ),
+      Offset.zero & overlay.size,
+    );
+
+    showMenu<String>(
+      context: btnCtx,
       position: position,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
       elevation: 8,
@@ -60,50 +173,33 @@ class HomePage extends StatelessWidget {
         ),
       ],
     ).then((val) {
-      if (val == 'profile') {
-        context.push('/profile');
-      } else if (val == 'logout') {
-        _showLogoutDialog(context);
-      }
+      if (val == 'profile') context.push('/profile');
+      if (val == 'logout') _showLogoutDialog();
     });
   }
 
-  void _showLogoutDialog(BuildContext context) {
-    showDialog(
+  void _showCustomiseActions() {
+    showModalBottomSheet(
       context: context,
-      builder: (_) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Log Out',
-            style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18)),
-        content: const Text('Are you sure you want to log out?',
-            style: TextStyle(fontSize: 14, color: Color(0xFF555555))),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel',
-                style: TextStyle(
-                    color: Color(0xFF888888), fontWeight: FontWeight.w600)),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFE30613),
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10)),
-            ),
-            onPressed: () {
-              // Capture the router reference BEFORE popping the dialog
-              final nav = GoRouter.of(context);
-              UserRoleService().clear();
-              Navigator.pop(context);
-              // Defer navigation until after the dialog is fully dismissed
-              Future.microtask(() => nav.go('/login'));
-            },
-            child: const Text('Log Out',
-                style: TextStyle(
-                    color: Colors.white, fontWeight: FontWeight.w700)),
-          ),
-        ],
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (_) => _CustomiseActionsSheet(
+        pinnedIds: List.from(_pinnedIds),
+        onSave: (ids) => setState(() => _pinnedIds = ids),
       ),
+    );
+  }
+
+  // ── Open AI Coach from the chat FAB ──────────────────────────────────────
+  void _openAiCoach(CoachContext coachCtx) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      useSafeArea: true,
+      builder: (_) => _CoachSheetWrapper(coachContext: coachCtx),
     );
   }
 
@@ -111,11 +207,26 @@ class HomePage extends StatelessWidget {
   Widget build(BuildContext context) {
     final userService = UserRoleService();
     final isInstitution = userService.isInstitution;
-    final badgeColor = Color(FinancialHealth.badgeColorValue);
-    final isAlert = FinancialHealth.needsAlert;
+
+    final coachCtx = CoachContext(
+      walletBalance: FinancialHealth.income - FinancialHealth.totalSpent,
+      monthlyBudget: FinancialHealth.monthlyBudget,
+      totalSpent: FinancialHealth.totalSpent,
+      income: FinancialHealth.income,
+      stabilityScore: 62,
+      stabilityLabel: 'Steady',
+      marketplaceActivity: 3,
+      missedCheckins: 2,
+      page: 'home',
+    );
+
+    final pinnedActions =
+        _kAllActions.where((a) => _pinnedIds.contains(a.id)).toList();
 
     return Scaffold(
       backgroundColor: AppColors.surface,
+      // ── FAB: community toggle + chat button (no AI Coach icon) ───────────
+      floatingActionButton: _buildFabStack(coachCtx),
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -148,57 +259,62 @@ class HomePage extends StatelessWidget {
           IconButton(
             icon: const Icon(Icons.notifications_outlined,
                 color: AppColors.textDark),
-            onPressed: () {},
+            onPressed: () => context.push('/notifications'),
           ),
-          Padding(
-            padding: const EdgeInsets.only(right: 12),
-            child: Builder(
-              builder: (btnCtx) => GestureDetector(
-                onTap: () => _showAvatarMenu(btnCtx),
-                child: Container(
-                  width: 34,
-                  height: 34,
-                  decoration: BoxDecoration(
-                    color: AppColors.primary,
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                          color: AppColors.primary.withOpacity(0.3),
-                          blurRadius: 6,
-                          offset: const Offset(0, 2))
-                    ],
-                  ),
-                  child: Stack(
-                    children: [
-                      const Center(
-                        child: Text('S',
-                            style: TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 15)),
-                      ),
-                      Positioned(
-                        bottom: 0,
-                        right: 0,
-                        child: Container(
-                          width: 12,
-                          height: 12,
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                                color: AppColors.primary, width: 1.5),
-                          ),
-                          child: const Icon(Icons.keyboard_arrow_down_rounded,
-                              size: 8, color: AppColors.primary),
+          Builder(
+            builder: (btnCtx) => GestureDetector(
+              onTap: () => _showAvatarMenu(btnCtx),
+              child: Container(
+                width: 34,
+                height: 34,
+                decoration: BoxDecoration(
+                  color: AppColors.primary,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                        color: AppColors.primary.withOpacity(0.3),
+                        blurRadius: 6,
+                        offset: const Offset(0, 2))
+                  ],
+                ),
+                child: Stack(
+                  children: [
+                    const Center(
+                      child: Text('S',
+                          style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 15)),
+                    ),
+                    Positioned(
+                      bottom: 0,
+                      right: 0,
+                      child: Container(
+                        width: 12,
+                        height: 12,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                          border:
+                              Border.all(color: AppColors.primary, width: 1.5),
                         ),
+                        child: const Icon(Icons.keyboard_arrow_down_rounded,
+                            size: 8, color: AppColors.primary),
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
             ),
           ),
+          const SizedBox(width: 4),
+          Builder(
+            builder: (btnCtx) => IconButton(
+              icon: const Icon(Icons.menu_rounded, color: AppColors.textDark),
+              onPressed: () => _showHamburgerMenu(btnCtx),
+            ),
+          ),
+          const SizedBox(width: 4),
         ],
       ),
       body: SingleChildScrollView(
@@ -206,199 +322,75 @@ class HomePage extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── Hero banner ────────────────────────────────
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: isAlert ? const Color(0xFFB91C1C) : AppColors.primary,
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    isInstitution
-                        ? 'Welcome back 👋'
-                        : 'Welcome back, Student 👋',
-                    style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    isInstitution
-                        ? 'Manage your job postings and find top student talent.'
-                        : FinancialHealth.homepageSubtitle,
-                    style: TextStyle(
-                        color: Colors.white.withOpacity(0.85), fontSize: 13),
-                  ),
-                  if (!isInstitution) ...[
-                    const SizedBox(height: 16),
-                    GestureDetector(
-                      onTap: () => context.go('/wallet'),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(Icons.circle, color: badgeColor, size: 10),
-                            const SizedBox(width: 6),
-                            Text(
-                              '${FinancialHealth.emoji}  ${FinancialHealth.statusBadge}',
-                              style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600),
-                            ),
-                            const SizedBox(width: 4),
-                            const Icon(Icons.chevron_right,
-                                color: Colors.white70, size: 14),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-            ),
+            _GreetingBar(),
+            const SizedBox(height: 20),
 
-            // ── Financial warning (students only) ──────────
-            if (!isInstitution && FinancialHealth.needsWarning) ...[
-              const SizedBox(height: 12),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text('Quick Actions',
+                    style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textDark)),
+                GestureDetector(
+                  onTap: _showCustomiseActions,
+                  child: const Text('Customise',
+                      style: TextStyle(
+                          fontSize: 12,
+                          color: AppColors.primary,
+                          fontWeight: FontWeight.w600)),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            if (pinnedActions.isEmpty)
               GestureDetector(
-                onTap: () => context.go('/wallet'),
+                onTap: _showCustomiseActions,
                 child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 20),
                   decoration: BoxDecoration(
-                    color: isAlert
-                        ? const Color(0xFFFFF1F1)
-                        : const Color(0xFFFFF3CD),
+                    color: Colors.white,
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                      color: isAlert
-                          ? const Color(0xFFEF4444).withOpacity(0.4)
-                          : const Color(0xFFFFD700).withOpacity(0.5),
-                    ),
+                        color: AppColors.primary.withOpacity(0.3), width: 1.5),
                   ),
-                  child: Row(
+                  child: const Column(
                     children: [
-                      Icon(
-                        Icons.warning_amber_rounded,
-                        color: isAlert
-                            ? const Color(0xFFEF4444)
-                            : const Color(0xFFF59E0B),
-                        size: 20,
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Text(
-                          isAlert
-                              ? 'Financial health is critical. Tap to review your wallet.'
-                              : 'Your spending is over budget. Tap to manage.',
+                      Icon(Icons.add_circle_outline,
+                          color: AppColors.primary, size: 28),
+                      SizedBox(height: 6),
+                      Text('Tap to add quick actions',
                           style: TextStyle(
-                            color: isAlert
-                                ? const Color(0xFF7F1D1D)
-                                : const Color(0xFF92400E),
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 6),
-                      Text('View →',
-                          style: TextStyle(
-                              color: isAlert
-                                  ? const Color(0xFFEF4444)
-                                  : const Color(0xFFE30613),
-                              fontWeight: FontWeight.w700,
-                              fontSize: 13)),
+                              fontSize: 13,
+                              color: AppColors.primary,
+                              fontWeight: FontWeight.w600)),
                     ],
                   ),
                 ),
+              )
+            else
+              Row(
+                children: pinnedActions.map((a) {
+                  return Expanded(
+                    child: Padding(
+                      padding: EdgeInsets.only(
+                          right: a == pinnedActions.last ? 0 : 10),
+                      child: _QuickAction(
+                        icon: a.icon,
+                        label: a.label,
+                        color: AppColors.primary,
+                        onTap: () => context.push(a.route),
+                      ),
+                    ),
+                  );
+                }).toList(),
               ),
-            ],
 
             const SizedBox(height: 24),
 
-            // ── Quick Actions ───────────────────────────────
-            const Text('Quick Actions',
-                style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.textDark)),
-            const SizedBox(height: 12),
-
-            if (isInstitution) ...[
-              // Institution quick actions
-              Row(
-                children: [
-                  _QuickAction(
-                      icon: Icons.add_circle_outline_rounded,
-                      label: 'Post a Job',
-                      color: const Color(0xFFE30613),
-                      onTap: () => context.go('/institution/marketplace')),
-                  const SizedBox(width: 12),
-                  _QuickAction(
-                      icon: Icons.work_outline_rounded,
-                      label: 'My Jobs',
-                      color: const Color(0xFF3B82F6),
-                      onTap: () => context.go('/institution/marketplace')),
-                  const SizedBox(width: 12),
-                  _QuickAction(
-                      icon: Icons.people_outline_rounded,
-                      label: 'Applicants',
-                      color: const Color(0xFF10B981),
-                      onTap: () => context.go('/institution/marketplace')),
-                  const SizedBox(width: 12),
-                  _QuickAction(
-                      icon: Icons.person_outline_rounded,
-                      label: 'Profile',
-                      color: const Color(0xFF8B5CF6),
-                      onTap: () => context.go('/institution/profile')),
-                ],
-              ),
-            ] else ...[
-              // Student quick actions
-              Row(
-                children: [
-                  _QuickAction(
-                      icon: Icons.message_outlined,
-                      label: 'Messaging',
-                      color: const Color(0xFF6C63FF),
-                      onTap: () => context.go('/messages')),
-                  const SizedBox(width: 12),
-                  _QuickAction(
-                      icon: Icons.forum_outlined,
-                      label: 'Community',
-                      color: const Color(0xFF00C896),
-                      onTap: () => context.go('/community')),
-                  const SizedBox(width: 12),
-                  _QuickAction(
-                      icon: Icons.favorite_outline_rounded,
-                      label: 'Stability',
-                      color: const Color(0xFFE30613),
-                      onTap: () => context.go('/stability')),
-                  const SizedBox(width: 12),
-                  _QuickAction(
-                      icon: Icons.checklist_rounded,
-                      label: 'Check-In',
-                      color: const Color(0xFFF59E0B),
-                      onTap: () => context.push('/stability/checkin')),
-                ],
-              ),
-            ],
-
-            const SizedBox(height: 24),
-
-            // ── Wallet Summary (students only) ─────────────
+            // Wallet Summary (students only)
             if (!isInstitution) ...[
               const Text('Wallet Summary',
                   style: TextStyle(
@@ -445,7 +437,7 @@ class HomePage extends StatelessWidget {
               const SizedBox(height: 24),
             ],
 
-            // ── Institution: Active Jobs Summary ───────────
+            // Institution: Active Jobs Summary
             if (isInstitution) ...[
               const Text('Active Job Posts',
                   style: TextStyle(
@@ -493,7 +485,7 @@ class HomePage extends StatelessWidget {
               const SizedBox(height: 24),
             ],
 
-            // ── Recent Activity ─────────────────────────────
+            // Recent Activity
             const Text('Recent Activity',
                 style: TextStyle(
                     fontSize: 16,
@@ -523,7 +515,384 @@ class HomePage extends StatelessWidget {
                 ),
               ),
             ),
+            const SizedBox(height: 120),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ── FAB stack: community toggle + chat button only (AI Coach icon removed) ──
+  Widget _buildFabStack(CoachContext coachCtx) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        // Expanded community/messaging buttons
+        if (_fabExpanded) ...[
+          _FloatingIcon(
+            icon: Icons.campaign_rounded,
+            label: 'Notice Board',
+            color: const Color(0xFFF59E0B),
+            onTap: () {
+              setState(() => _fabExpanded = false);
+              context.push('/noticeboard');
+            },
+          ),
+          const SizedBox(height: 10),
+          _FloatingIcon(
+            icon: Icons.groups_rounded,
+            label: 'Community',
+            color: const Color(0xFF3B82F6),
+            onTap: () {
+              setState(() => _fabExpanded = false);
+              context.push('/community');
+            },
+          ),
+          const SizedBox(height: 10),
+          // Chat button opens AI Coach
+          _FloatingIcon(
+            icon: Icons.chat_bubble_rounded,
+            label: 'Coach Gude',
+            color: const Color(0xFF10B981),
+            onTap: () {
+              setState(() => _fabExpanded = false);
+              _openAiCoach(coachCtx);
+            },
+          ),
+          const SizedBox(height: 10),
+        ],
+
+        // Main community toggle button (the only persistent FAB)
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (_fabExpanded)
+              Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: Text(
+                  'Community',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: const Color(0xFF1A1A1A),
+                    shadows: [Shadow(color: Colors.white, blurRadius: 4)],
+                  ),
+                ),
+              ),
+            GestureDetector(
+              onTap: () => setState(() => _fabExpanded = !_fabExpanded),
+              child: Container(
+                width: 52,
+                height: 52,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1A1A1A),
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                        color: Colors.black.withOpacity(0.3),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4))
+                  ],
+                ),
+                child: AnimatedRotation(
+                  turns: _fabExpanded ? 0.125 : 0,
+                  duration: const Duration(milliseconds: 200),
+                  child: Icon(
+                    _fabExpanded
+                        ? Icons.close_rounded
+                        : Icons.people_alt_rounded,
+                    color: Colors.white,
+                    size: 24,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+        // NOTE: AiCoachFab removed — Coach Gude is now accessed via the chat
+        // button inside the community menu above.
+      ],
+    );
+  }
+}
+
+// ─── Wrapper to open the AI Coach sheet (reuses internal _CoachSheet) ─────────
+// Since _CoachSheet is private in ai_coach_overlay.dart, we use AiCoachFab's
+// showModalBottomSheet approach by importing the overlay and calling it directly.
+// This widget is a lightweight passthrough.
+class _CoachSheetWrapper extends StatelessWidget {
+  final CoachContext coachContext;
+  const _CoachSheetWrapper({required this.coachContext});
+
+  @override
+  Widget build(BuildContext context) {
+    // Delegate rendering to AiCoachFab's sheet via a hidden fab tap simulation.
+    // Since _CoachSheet is private, we expose it by creating an AiCoachFab
+    // and triggering it programmatically — or better: move _CoachSheet to
+    // public. For now, use the public AiCoachFab widget in a hidden overlay.
+    return AiCoachFab(context: coachContext);
+  }
+}
+
+// ─── One-line greeting bar ─────────────────────────────────────────────────────
+class _GreetingBar extends StatelessWidget {
+  const _GreetingBar();
+
+  String _greeting() {
+    final h = DateTime.now().hour;
+    if (h < 12) return 'Good Morning';
+    if (h < 17) return 'Good Afternoon';
+    return 'Good Evening';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Text(
+          '${_greeting()} Thabo 👋',
+          style: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w800,
+              color: AppColors.textDark),
+        ),
+        const Spacer(),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+          decoration: BoxDecoration(
+            color: const Color(0xFFE30613).withOpacity(0.08),
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 7,
+                height: 7,
+                decoration: BoxDecoration(
+                  color: Color(FinancialHealth.badgeColorValue),
+                  shape: BoxShape.circle,
+                ),
+              ),
+              const SizedBox(width: 5),
+              const Text(
+                'Stable',
+                style: TextStyle(
+                    color: Color(0xFFE30613),
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ─── Floating icon button ─────────────────────────────────────────────────────
+class _FloatingIcon extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+  final VoidCallback onTap;
+  const _FloatingIcon({
+    required this.icon,
+    required this.label,
+    required this.color,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 6,
+                  offset: const Offset(0, 2))
+            ],
+          ),
+          child: Text(label,
+              style: TextStyle(
+                  fontSize: 11, fontWeight: FontWeight.w700, color: color)),
+        ),
+        const SizedBox(width: 8),
+        GestureDetector(
+          onTap: onTap,
+          child: Container(
+            width: 46,
+            height: 46,
+            decoration: BoxDecoration(
+              color: color,
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                    color: color.withOpacity(0.4),
+                    blurRadius: 10,
+                    offset: const Offset(0, 3))
+              ],
+            ),
+            child: Icon(icon, color: Colors.white, size: 22),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ─── Customise Actions sheet ───────────────────────────────────────────────────
+class _CustomiseActionsSheet extends StatefulWidget {
+  final List<String> pinnedIds;
+  final void Function(List<String>) onSave;
+  const _CustomiseActionsSheet({required this.pinnedIds, required this.onSave});
+
+  @override
+  State<_CustomiseActionsSheet> createState() => _CustomiseActionsSheetState();
+}
+
+class _CustomiseActionsSheetState extends State<_CustomiseActionsSheet> {
+  late List<String> _selected;
+
+  @override
+  void initState() {
+    super.initState();
+    _selected = List.from(widget.pinnedIds);
+  }
+
+  void _toggle(String id) {
+    setState(() {
+      if (_selected.contains(id)) {
+        _selected.remove(id);
+      } else {
+        if (_selected.length >= 4) {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+              content: Text('Max 4 quick actions'),
+              duration: Duration(seconds: 1)));
+          return;
+        }
+        _selected.add(id);
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                    color: const Color(0xFFDDDDDD),
+                    borderRadius: BorderRadius.circular(2)),
+              ),
+            ),
+            const SizedBox(height: 18),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text('Customise Quick Actions',
+                    style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF1A1A1A))),
+                Text('${_selected.length}/4',
+                    style: const TextStyle(
+                        fontSize: 13,
+                        color: Color(0xFF888888),
+                        fontWeight: FontWeight.w600)),
+              ],
+            ),
+            const SizedBox(height: 6),
+            const Text('Choose up to 4 shortcuts to show on your home screen.',
+                style: TextStyle(fontSize: 12, color: Color(0xFF888888))),
+            const SizedBox(height: 16),
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: _kAllActions.map((a) {
+                final sel = _selected.contains(a.id);
+                return GestureDetector(
+                  onTap: () => _toggle(a.id),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 180),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 14, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: sel
+                          ? AppColors.primary.withOpacity(0.08)
+                          : const Color(0xFFF5F5F5),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color:
+                            sel ? AppColors.primary : const Color(0xFFEEEEEE),
+                        width: sel ? 1.5 : 1,
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(a.icon,
+                            size: 18,
+                            color: sel
+                                ? AppColors.primary
+                                : const Color(0xFF888888)),
+                        const SizedBox(width: 8),
+                        Text(
+                          a.label.replaceAll('\n', ' '),
+                          style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: sel
+                                  ? AppColors.primary
+                                  : const Color(0xFF1A1A1A)),
+                        ),
+                        if (sel) ...[
+                          const SizedBox(width: 6),
+                          Icon(Icons.check_circle_rounded,
+                              size: 14, color: AppColors.primary),
+                        ],
+                      ],
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
             const SizedBox(height: 20),
+            SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: ElevatedButton(
+                onPressed: () {
+                  widget.onSave(_selected);
+                  Navigator.pop(context);
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
+                ),
+                child: const Text('Save',
+                    style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 15)),
+              ),
+            ),
           ],
         ),
       ),
@@ -531,9 +900,7 @@ class HomePage extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────
-// QUICK ACTION TILE
-// ─────────────────────────────────────────────
+// ─── Quick Action tile ─────────────────────────────────────────────────────────
 class _QuickAction extends StatelessWidget {
   final IconData icon;
   final String label;
@@ -548,42 +915,38 @@ class _QuickAction extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Expanded(
-      child: GestureDetector(
-        onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: [
-              BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2))
-            ],
-          ),
-          child: Column(
-            children: [
-              Icon(icon, color: color, size: 24),
-              const SizedBox(height: 6),
-              Text(label,
-                  style: const TextStyle(
-                      fontSize: 10,
-                      color: AppColors.textDark,
-                      fontWeight: FontWeight.w500),
-                  textAlign: TextAlign.center),
-            ],
-          ),
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 8,
+                offset: const Offset(0, 2))
+          ],
+        ),
+        child: Column(
+          children: [
+            Icon(icon, color: color, size: 24),
+            const SizedBox(height: 6),
+            Text(label,
+                style: const TextStyle(
+                    fontSize: 10,
+                    color: AppColors.textDark,
+                    fontWeight: FontWeight.w500),
+                textAlign: TextAlign.center),
+          ],
         ),
       ),
     );
   }
 }
 
-// ─────────────────────────────────────────────
-// WALLET / STATS ROW ITEM
-// ─────────────────────────────────────────────
+// ─── Wallet/stats row item ─────────────────────────────────────────────────────
 class _WalletStat extends StatelessWidget {
   final String label;
   final String value;

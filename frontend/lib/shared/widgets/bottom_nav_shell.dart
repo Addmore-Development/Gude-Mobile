@@ -1,5 +1,4 @@
 // lib/shared/widgets/bottom_nav_shell.dart
-// Student bottom nav — includes Messages tab and Community tab
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -8,13 +7,13 @@ class BottomNavShell extends StatelessWidget {
   const BottomNavShell({super.key, required this.child});
 
   static const _tabs = [
-    _Tab('/home',        Icons.home_outlined,            Icons.home_rounded,            'Home'),
-    _Tab('/marketplace', Icons.storefront_outlined,       Icons.storefront_rounded,      'Market'),
-    _Tab('/wallet',      Icons.account_balance_wallet_outlined, Icons.account_balance_wallet_rounded, 'Wallet'),
-    _Tab('/messages',    Icons.chat_bubble_outline_rounded, Icons.chat_bubble_rounded,   'Messages'),
-    _Tab('/community',   Icons.groups_outlined,           Icons.groups_rounded,          'Community'),
-    _Tab('/stability',   Icons.favorite_outline,          Icons.favorite_rounded,        'Stability'),
-    _Tab('/profile',     Icons.person_outline_rounded,    Icons.person_rounded,          'Profile'),
+    _Tab('/home', Icons.home_outlined, Icons.home_rounded, 'Home'),
+    _Tab('/marketplace', Icons.storefront_outlined, Icons.storefront_rounded,
+        'Market'),
+    _Tab('/wallet', Icons.account_balance_wallet_outlined,
+        Icons.account_balance_wallet_rounded, 'Wallet'),
+    _Tab('/stability', Icons.favorite_outline, Icons.favorite_rounded,
+        'Stability'),
   ];
 
   int _activeIndex(BuildContext context) {
@@ -49,7 +48,9 @@ class BottomNavShell extends StatelessWidget {
                       Icon(
                         sel ? tab.activeIcon : tab.icon,
                         size: 22,
-                        color: sel ? const Color(0xFFE30613) : const Color(0xFF888888),
+                        color: sel
+                            ? const Color(0xFFE30613)
+                            : const Color(0xFF888888),
                       ),
                       const SizedBox(height: 2),
                       Text(
@@ -57,7 +58,9 @@ class BottomNavShell extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 9,
                           fontWeight: sel ? FontWeight.w700 : FontWeight.w500,
-                          color: sel ? const Color(0xFFE30613) : const Color(0xFF888888),
+                          color: sel
+                              ? const Color(0xFFE30613)
+                              : const Color(0xFF888888),
                         ),
                       ),
                     ],

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:gude_app/core/theme/app_theme.dart';
+import 'package:gude_app/features/chatbot/presentation/ai_coach_overlay.dart';
+import 'package:gude_app/features/chatbot/services/ai_coach_service.dart';
 
 // ─────────────────────────────────────────────
 // COLORS
@@ -390,8 +392,25 @@ class _StabilityPageState extends State<StabilityPage>
 
   @override
   Widget build(BuildContext context) {
+    final coachCtx = CoachContext(
+      walletBalance: 610,
+      monthlyBudget: 3000,
+      totalSpent: 1830,
+      income: 650,
+      stabilityScore: _score,
+      stabilityLabel: _scoreLabel,
+      marketplaceActivity: 3,
+      missedCheckins:
+          _signals.where((s) => s.label == 'Wellbeing Check-ins').first.score <
+                  50
+              ? 2
+              : 0,
+      page: 'stability',
+    );
+
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5),
+      floatingActionButton: AiCoachFab(context: coachCtx),
       body: CustomScrollView(slivers: [
         SliverAppBar(
           pinned: true,

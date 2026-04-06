@@ -1,37 +1,39 @@
 // lib/features/profile/presentation/profile_page.dart
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:gude_app/core/theme/app_theme.dart';
+import 'package:image_picker/image_picker.dart';
 
 // ─────────────────────────────────────────────
 // AVAILABLE SKILLS
 // ─────────────────────────────────────────────
 
 const List<Map<String, dynamic>> _availableSkills = [
-  {'label': 'Mathematics',     'icon': Icons.calculate_outlined},
-  {'label': 'Tutoring',        'icon': Icons.menu_book_outlined},
-  {'label': 'Python',          'icon': Icons.code_rounded},
-  {'label': 'Design',          'icon': Icons.brush_outlined},
-  {'label': 'Photography',     'icon': Icons.camera_alt_outlined},
-  {'label': 'Writing',         'icon': Icons.edit_note_outlined},
-  {'label': 'Video Editing',   'icon': Icons.movie_filter_outlined},
-  {'label': 'Translation',     'icon': Icons.translate_outlined},
-  {'label': 'Music',           'icon': Icons.music_note_outlined},
-  {'label': 'Social Media',    'icon': Icons.smartphone_outlined},
-  {'label': 'Delivery',        'icon': Icons.delivery_dining_outlined},
-  {'label': 'Campus Help',     'icon': Icons.school_outlined},
-  {'label': 'Accounting',      'icon': Icons.receipt_long_outlined},
-  {'label': 'Data Analysis',   'icon': Icons.bar_chart_outlined},
+  {'label': 'Mathematics', 'icon': Icons.calculate_outlined},
+  {'label': 'Tutoring', 'icon': Icons.menu_book_outlined},
+  {'label': 'Python', 'icon': Icons.code_rounded},
+  {'label': 'Design', 'icon': Icons.brush_outlined},
+  {'label': 'Photography', 'icon': Icons.camera_alt_outlined},
+  {'label': 'Writing', 'icon': Icons.edit_note_outlined},
+  {'label': 'Video Editing', 'icon': Icons.movie_filter_outlined},
+  {'label': 'Translation', 'icon': Icons.translate_outlined},
+  {'label': 'Music', 'icon': Icons.music_note_outlined},
+  {'label': 'Social Media', 'icon': Icons.smartphone_outlined},
+  {'label': 'Delivery', 'icon': Icons.delivery_dining_outlined},
+  {'label': 'Campus Help', 'icon': Icons.school_outlined},
+  {'label': 'Accounting', 'icon': Icons.receipt_long_outlined},
+  {'label': 'Data Analysis', 'icon': Icons.bar_chart_outlined},
   {'label': 'Web Development', 'icon': Icons.language_outlined},
-  {'label': 'Graphic Design',  'icon': Icons.palette_outlined},
+  {'label': 'Graphic Design', 'icon': Icons.palette_outlined},
   {'label': 'Content Writing', 'icon': Icons.article_outlined},
-  {'label': 'Marketing',       'icon': Icons.campaign_outlined},
-  {'label': 'Economics',       'icon': Icons.trending_up_rounded},
-  {'label': 'Cooking',         'icon': Icons.restaurant_outlined},
-  {'label': 'Cleaning',        'icon': Icons.cleaning_services_outlined},
-  {'label': 'Babysitting',     'icon': Icons.child_care_outlined},
-  {'label': 'Haircare',        'icon': Icons.content_cut_outlined},
-  {'label': 'Fitness Coaching','icon': Icons.fitness_center_outlined},
+  {'label': 'Marketing', 'icon': Icons.campaign_outlined},
+  {'label': 'Economics', 'icon': Icons.trending_up_rounded},
+  {'label': 'Cooking', 'icon': Icons.restaurant_outlined},
+  {'label': 'Cleaning', 'icon': Icons.cleaning_services_outlined},
+  {'label': 'Babysitting', 'icon': Icons.child_care_outlined},
+  {'label': 'Haircare', 'icon': Icons.content_cut_outlined},
+  {'label': 'Fitness Coaching', 'icon': Icons.fitness_center_outlined},
 ];
 
 // ─────────────────────────────────────────────
@@ -46,42 +48,169 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
+  // ── Image picker ────────────────────────────
+  final ImagePicker _picker = ImagePicker();
+
   // ── Verification state ──────────────────────
   final bool _emailVerified = true;
-  bool _studentIdUploaded   = false;
-  bool _universityVerified  = false;
-  bool _isUploadingId       = false;
+  bool _studentIdUploaded = false;
+  bool _universityVerified = false;
+  bool _isUploadingId = false;
+
+  // ── Profile picture ─────────────────────────
+  File? _profilePicFile;
+
+  // ── Student ID file ─────────────────────────
+  File? _studentIdFile;
+
+  // ── Bio ─────────────────────────────────────
+  String _bio = '';
 
   // ── Skills ──────────────────────────────────
   List<String> _skills = ['Mathematics', 'Tutoring', 'Python'];
 
-  // ── Simulate ID upload & auto-verify ────────
-  Future<void> _handleUploadStudentId() async {
-    final confirmed = await _showUploadSheet();
-    if (!confirmed) return;
-
-    setState(() => _isUploadingId = true);
-    await Future.delayed(const Duration(seconds: 2));
-    if (!mounted) return;
-    setState(() {
-      _isUploadingId       = false;
-      _studentIdUploaded   = true;
-      _universityVerified  = true;
-    });
-    _showVerifiedSnackbar();
+  // ─────────────────────────────────────────────
+  // PICK IMAGE HELPER
+  // Returns null if user cancels.
+  // ─────────────────────────────────────────────
+  Future<File?> _pickImage(ImageSource source) async {
+    try {
+      final XFile? picked = await _picker.pickImage(
+        source: source,
+        imageQuality: 85,
+        maxWidth: 1080,
+      );
+      if (picked == null) return null;
+      return File(picked.path);
+    } catch (e) {
+      if (mounted) {
+        _showSnackbar('Could not open picker: $e', const Color(0xFFEF4444));
+      }
+      return null;
+    }
   }
 
-  Future<bool> _showUploadSheet() async {
-    final result = await showModalBottomSheet<bool>(
+  // ─────────────────────────────────────────────
+  // PROFILE PICTURE
+  // ─────────────────────────────────────────────
+  void _showProfilePicOptions() {
+    showModalBottomSheet(
       context: context,
       backgroundColor: Colors.white,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (_) => SafeArea(
-        child: SingleChildScrollView(
-          padding: EdgeInsets.only(
-              bottom: MediaQuery.of(context).viewInsets.bottom),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 36,
+                  height: 4,
+                  decoration: BoxDecoration(
+                      color: const Color(0xFFDDDDDD),
+                      borderRadius: BorderRadius.circular(2)),
+                ),
+              ),
+              const SizedBox(height: 18),
+              Row(children: [
+                Container(
+                  width: 42,
+                  height: 42,
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(Icons.account_circle_outlined,
+                      color: AppColors.primary, size: 22),
+                ),
+                const SizedBox(width: 12),
+                const Expanded(
+                    child: Text('Profile Picture',
+                        style: TextStyle(
+                            fontSize: 17,
+                            fontWeight: FontWeight.w800,
+                            color: Color(0xFF1A1A1A)))),
+              ]),
+              const SizedBox(height: 10),
+              const Text(
+                "Choose how you'd like to update your profile picture.",
+                style: TextStyle(
+                    fontSize: 13, color: Color(0xFF666666), height: 1.5),
+              ),
+              const SizedBox(height: 20),
+              _UploadOption(
+                icon: Icons.camera_alt_outlined,
+                label: 'Take a photo',
+                onTap: () async {
+                  Navigator.pop(context);
+                  final file = await _pickImage(ImageSource.camera);
+                  if (file != null) {
+                    setState(() => _profilePicFile = file);
+                    _showSnackbar(
+                        'Profile picture updated!', const Color(0xFF10B981));
+                  }
+                },
+              ),
+              const SizedBox(height: 10),
+              _UploadOption(
+                icon: Icons.photo_library_outlined,
+                label: 'Choose from gallery',
+                onTap: () async {
+                  Navigator.pop(context);
+                  final file = await _pickImage(ImageSource.gallery);
+                  if (file != null) {
+                    setState(() => _profilePicFile = file);
+                    _showSnackbar(
+                        'Profile picture updated!', const Color(0xFF10B981));
+                  }
+                },
+              ),
+              if (_profilePicFile != null) ...[
+                const SizedBox(height: 10),
+                _UploadOption(
+                  icon: Icons.delete_outline_rounded,
+                  label: 'Remove photo',
+                  onTap: () {
+                    Navigator.pop(context);
+                    setState(() => _profilePicFile = null);
+                    _showSnackbar(
+                        'Profile picture removed.', const Color(0xFF888888));
+                  },
+                ),
+              ],
+              const SizedBox(height: 4),
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Center(
+                    child: Text('Cancel',
+                        style: TextStyle(color: Color(0xFF888888)))),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ─────────────────────────────────────────────
+  // BIO
+  // ─────────────────────────────────────────────
+  void _showEditBioSheet() {
+    final ctrl = TextEditingController(text: _bio);
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (ctx) => Padding(
+        padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
+        child: SafeArea(
           child: Padding(
             padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
             child: Column(
@@ -90,7 +219,8 @@ class _ProfilePageState extends State<ProfilePage> {
               children: [
                 Center(
                   child: Container(
-                    width: 36, height: 4,
+                    width: 36,
+                    height: 4,
                     decoration: BoxDecoration(
                         color: const Color(0xFFDDDDDD),
                         borderRadius: BorderRadius.circular(2)),
@@ -99,7 +229,139 @@ class _ProfilePageState extends State<ProfilePage> {
                 const SizedBox(height: 18),
                 Row(children: [
                   Container(
-                    width: 42, height: 42,
+                    width: 42,
+                    height: 42,
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(Icons.edit_note_outlined,
+                        color: AppColors.primary, size: 22),
+                  ),
+                  const SizedBox(width: 12),
+                  const Expanded(
+                      child: Text('Edit Bio',
+                          style: TextStyle(
+                              fontSize: 17,
+                              fontWeight: FontWeight.w800,
+                              color: Color(0xFF1A1A1A)))),
+                ]),
+                const SizedBox(height: 10),
+                const Text(
+                  'Tell others a little about yourself — your degree, interests, or what services you offer.',
+                  style: TextStyle(
+                      fontSize: 13, color: Color(0xFF666666), height: 1.5),
+                ),
+                const SizedBox(height: 16),
+                Container(
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF5F5F5),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xFFEEEEEE)),
+                  ),
+                  child: TextField(
+                    controller: ctrl,
+                    maxLines: 5,
+                    maxLength: 200,
+                    style:
+                        const TextStyle(fontSize: 14, color: Color(0xFF1A1A1A)),
+                    decoration: const InputDecoration(
+                      hintText:
+                          '3rd-year Computer Science student at NMU. I tutor maths and build websites.',
+                      hintStyle:
+                          TextStyle(color: Color(0xFFAAAAAA), fontSize: 13),
+                      border: InputBorder.none,
+                      contentPadding: EdgeInsets.all(14),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      setState(() => _bio = ctrl.text.trim());
+                      Navigator.pop(ctx);
+                      _showSnackbar('Bio saved!', const Color(0xFF10B981));
+                    },
+                    style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12))),
+                    child: const Text('Save Bio',
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700)),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ─────────────────────────────────────────────
+  // STUDENT ID UPLOAD
+  // ─────────────────────────────────────────────
+  Future<void> _handleUploadStudentId() async {
+    final file = await _showStudentIdSheet();
+    if (file == null) return;
+
+    setState(() {
+      _isUploadingId = true;
+      _studentIdFile = file;
+    });
+
+    // Simulate a network upload delay
+    await Future.delayed(const Duration(seconds: 2));
+    if (!mounted) return;
+
+    setState(() {
+      _isUploadingId = false;
+      _studentIdUploaded = true;
+      _universityVerified = true;
+    });
+    _showSnackbar(
+        'Student ID uploaded — university verified!', const Color(0xFF10B981));
+  }
+
+  /// Shows the student ID source picker and returns the chosen File,
+  /// or null if the user cancelled.
+  Future<File?> _showStudentIdSheet() async {
+    return showModalBottomSheet<File?>(
+      context: context,
+      backgroundColor: Colors.white,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (_) => SafeArea(
+        child: SingleChildScrollView(
+          padding:
+              EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 36,
+                    height: 4,
+                    decoration: BoxDecoration(
+                        color: const Color(0xFFDDDDDD),
+                        borderRadius: BorderRadius.circular(2)),
+                  ),
+                ),
+                const SizedBox(height: 18),
+                Row(children: [
+                  Container(
+                    width: 42,
+                    height: 42,
                     decoration: BoxDecoration(
                       color: AppColors.primary.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(12),
@@ -109,12 +371,11 @@ class _ProfilePageState extends State<ProfilePage> {
                   ),
                   const SizedBox(width: 12),
                   const Expanded(
-                    child: Text('Upload Student ID',
-                        style: TextStyle(
-                            fontSize: 17,
-                            fontWeight: FontWeight.w800,
-                            color: Color(0xFF1A1A1A))),
-                  ),
+                      child: Text('Upload Student ID',
+                          style: TextStyle(
+                              fontSize: 17,
+                              fontWeight: FontWeight.w800,
+                              color: Color(0xFF1A1A1A)))),
                 ]),
                 const SizedBox(height: 10),
                 const Text(
@@ -124,30 +385,35 @@ class _ProfilePageState extends State<ProfilePage> {
                       fontSize: 13, color: Color(0xFF666666), height: 1.5),
                 ),
                 const SizedBox(height: 20),
+                // Take a photo
                 _UploadOption(
                   icon: Icons.camera_alt_outlined,
                   label: 'Take a photo',
-                  onTap: () => Navigator.pop(context, true),
+                  onTap: () async {
+                    Navigator.pop(context);
+                    final file = await _pickImage(ImageSource.camera);
+                    // Return result via a second pop is not possible here since
+                    // we already popped; instead we call the handler directly.
+                    if (file != null && mounted) _applyStudentId(file);
+                  },
                 ),
                 const SizedBox(height: 10),
+                // Choose from gallery
                 _UploadOption(
                   icon: Icons.photo_library_outlined,
                   label: 'Choose from gallery',
-                  onTap: () => Navigator.pop(context, true),
-                ),
-                const SizedBox(height: 10),
-                _UploadOption(
-                  icon: Icons.upload_file_outlined,
-                  label: 'Upload from files',
-                  onTap: () => Navigator.pop(context, true),
+                  onTap: () async {
+                    Navigator.pop(context);
+                    final file = await _pickImage(ImageSource.gallery);
+                    if (file != null && mounted) _applyStudentId(file);
+                  },
                 ),
                 const SizedBox(height: 4),
                 TextButton(
-                  onPressed: () => Navigator.pop(context, false),
+                  onPressed: () => Navigator.pop(context, null),
                   child: const Center(
-                    child: Text('Cancel',
-                        style: TextStyle(color: Color(0xFF888888))),
-                  ),
+                      child: Text('Cancel',
+                          style: TextStyle(color: Color(0xFF888888)))),
                 ),
               ],
             ),
@@ -155,23 +421,44 @@ class _ProfilePageState extends State<ProfilePage> {
         ),
       ),
     );
-    return result ?? false;
   }
 
-  void _showVerifiedSnackbar() {
+  /// Called after the student ID sheet picks a file outside the future chain.
+  Future<void> _applyStudentId(File file) async {
+    setState(() {
+      _isUploadingId = true;
+      _studentIdFile = file;
+    });
+    await Future.delayed(const Duration(seconds: 2));
+    if (!mounted) return;
+    setState(() {
+      _isUploadingId = false;
+      _studentIdUploaded = true;
+      _universityVerified = true;
+    });
+    _showSnackbar(
+        'Student ID uploaded — university verified!', const Color(0xFF10B981));
+  }
+
+  // ─────────────────────────────────────────────
+  // HELPERS
+  // ─────────────────────────────────────────────
+  void _showSnackbar(String message, Color color) {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: const Row(children: [
-        Icon(Icons.check_circle_rounded, color: Colors.white, size: 18),
-        SizedBox(width: 8),
-        Text('Student ID uploaded — university verified! ✅'),
+      content: Row(children: [
+        const Icon(Icons.check_circle_rounded, color: Colors.white, size: 18),
+        const SizedBox(width: 8),
+        Expanded(child: Text(message)),
       ]),
-      backgroundColor: const Color(0xFF10B981),
+      backgroundColor: color,
       behavior: SnackBarBehavior.floating,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
     ));
   }
 
-  // ── Add Skill sheet ──────────────────────────
+  // ─────────────────────────────────────────────
+  // SKILLS
+  // ─────────────────────────────────────────────
   void _showAddSkillSheet() {
     showModalBottomSheet(
       context: context,
@@ -188,6 +475,9 @@ class _ProfilePageState extends State<ProfilePage> {
 
   void _removeSkill(String skill) => setState(() => _skills.remove(skill));
 
+  // ─────────────────────────────────────────────
+  // BUILD
+  // ─────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -226,18 +516,25 @@ class _ProfilePageState extends State<ProfilePage> {
                       CircleAvatar(
                         radius: 44,
                         backgroundColor: AppColors.primary.withOpacity(0.1),
-                        child: const Text('S',
-                            style: TextStyle(
-                                color: AppColors.primary,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 40)),
+                        backgroundImage: _profilePicFile != null
+                            ? FileImage(_profilePicFile!)
+                            : null,
+                        child: _profilePicFile == null
+                            ? const Text('S',
+                                style: TextStyle(
+                                    color: AppColors.primary,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 40))
+                            : null,
                       ),
                       Positioned(
-                        bottom: 0, right: 0,
+                        bottom: 0,
+                        right: 0,
                         child: GestureDetector(
-                          onTap: () {},
+                          onTap: _showProfilePicOptions,
                           child: Container(
-                            width: 28, height: 28,
+                            width: 28,
+                            height: 28,
                             decoration: const BoxDecoration(
                                 color: AppColors.primary,
                                 shape: BoxShape.circle),
@@ -255,12 +552,12 @@ class _ProfilePageState extends State<ProfilePage> {
                           fontWeight: FontWeight.bold,
                           color: AppColors.textDark)),
                   const Text('s21961082@mandela.ac.za',
-                      style: TextStyle(
-                          fontSize: 13, color: AppColors.textGrey)),
+                      style:
+                          TextStyle(fontSize: 13, color: AppColors.textGrey)),
                   const SizedBox(height: 8),
                   Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                     decoration: BoxDecoration(
                         color: AppColors.primary.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(20)),
@@ -276,15 +573,89 @@ class _ProfilePageState extends State<ProfilePage> {
                     children: [
                       _ProfileStat(label: 'Jobs Done', value: '0'),
                       Container(
-                          width: 1, height: 40,
-                          color: AppColors.inputBorder),
+                          width: 1, height: 40, color: AppColors.inputBorder),
                       _ProfileStat(label: 'Rating', value: '-'),
                       Container(
-                          width: 1, height: 40,
-                          color: AppColors.inputBorder),
+                          width: 1, height: 40, color: AppColors.inputBorder),
                       _ProfileStat(label: 'Earned', value: 'R0'),
                     ],
                   ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 8),
+
+            // ── Bio ────────────────────────────
+            Container(
+              color: Colors.white,
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text('Bio',
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                              color: AppColors.textDark)),
+                      GestureDetector(
+                        onTap: _showEditBioSheet,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: AppColors.primary.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                                color: AppColors.primary.withOpacity(0.3)),
+                          ),
+                          child: Row(mainAxisSize: MainAxisSize.min, children: [
+                            const Icon(Icons.edit_outlined,
+                                color: AppColors.primary, size: 13),
+                            const SizedBox(width: 4),
+                            Text(
+                              _bio.isEmpty ? 'Add Bio' : 'Edit Bio',
+                              style: const TextStyle(
+                                  color: AppColors.primary,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700),
+                            ),
+                          ]),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  if (_bio.isEmpty)
+                    GestureDetector(
+                      onTap: _showEditBioSheet,
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(vertical: 18),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF8F8F8),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: const Color(0xFFEEEEEE)),
+                        ),
+                        child: const Column(children: [
+                          Icon(Icons.person_outline_rounded,
+                              color: AppColors.textGrey, size: 28),
+                          SizedBox(height: 6),
+                          Text('Tap to add a bio',
+                              style: TextStyle(
+                                  color: AppColors.textGrey, fontSize: 13)),
+                        ]),
+                      ),
+                    )
+                  else
+                    Text(_bio,
+                        style: const TextStyle(
+                            fontSize: 13,
+                            color: Color(0xFF444444),
+                            height: 1.55)),
                 ],
               ),
             ),
@@ -305,14 +676,13 @@ class _ProfilePageState extends State<ProfilePage> {
                           color: AppColors.textDark)),
                   const SizedBox(height: 12),
                   _VerificationRow(
-                    label: 'Email verified',
-                    done: _emailVerified,
-                  ),
+                      label: 'Email verified', done: _emailVerified),
                   _VerificationRow(
                     label: 'Student ID uploaded',
                     done: _studentIdUploaded,
                     isLoading: _isUploadingId,
-                    onVerify: _studentIdUploaded ? null : _handleUploadStudentId,
+                    onVerify:
+                        _studentIdUploaded ? null : _handleUploadStudentId,
                   ),
                   _VerificationRow(
                     label: 'University verified',
@@ -354,22 +724,26 @@ class _ProfilePageState extends State<ProfilePage> {
                                 color: AppColors.primary.withOpacity(0.3)),
                           ),
                           child: const Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(Icons.add_rounded,
-                                  color: AppColors.primary, size: 14),
-                              SizedBox(width: 4),
-                              Text('Add Skill',
-                                  style: TextStyle(
-                                      color: AppColors.primary,
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w700)),
-                            ],
-                          ),
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.add_rounded,
+                                    color: AppColors.primary, size: 14),
+                                SizedBox(width: 4),
+                                Text('Add Skill',
+                                    style: TextStyle(
+                                        color: AppColors.primary,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w700)),
+                              ]),
                         ),
                       ),
                     ],
                   ),
+                  const SizedBox(height: 4),
+                  const Text(
+                      'Other students and institutions can find you by searching these skills.',
+                      style: TextStyle(
+                          fontSize: 11, color: Color(0xFFAAAAAA), height: 1.4)),
                   const SizedBox(height: 12),
                   if (_skills.isEmpty)
                     GestureDetector(
@@ -382,16 +756,14 @@ class _ProfilePageState extends State<ProfilePage> {
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(color: const Color(0xFFEEEEEE)),
                         ),
-                        child: const Column(
-                          children: [
-                            Icon(Icons.add_circle_outline,
-                                color: AppColors.textGrey, size: 32),
-                            SizedBox(height: 8),
-                            Text('Tap to add your skills',
-                                style: TextStyle(
-                                    color: AppColors.textGrey, fontSize: 13)),
-                          ],
-                        ),
+                        child: const Column(children: [
+                          Icon(Icons.add_circle_outline,
+                              color: AppColors.textGrey, size: 32),
+                          SizedBox(height: 8),
+                          Text('Tap to add your skills',
+                              style: TextStyle(
+                                  color: AppColors.textGrey, fontSize: 13)),
+                        ]),
                       ),
                     )
                   else
@@ -400,9 +772,7 @@ class _ProfilePageState extends State<ProfilePage> {
                       runSpacing: 8,
                       children: _skills
                           .map((s) => _SkillChip(
-                                label: s,
-                                onRemove: () => _removeSkill(s),
-                              ))
+                              label: s, onRemove: () => _removeSkill(s)))
                           .toList(),
                     ),
                 ],
@@ -417,20 +787,17 @@ class _ProfilePageState extends State<ProfilePage> {
               child: Column(
                 children: [
                   _SettingsTile(
-                    icon: Icons.notifications_outlined,
-                    label: 'Notifications',
-                    onTap: () {},
-                  ),
+                      icon: Icons.notifications_outlined,
+                      label: 'Notifications',
+                      onTap: () {}),
                   _SettingsTile(
-                    icon: Icons.lock_outline,
-                    label: 'Privacy & Security',
-                    onTap: () {},
-                  ),
+                      icon: Icons.lock_outline,
+                      label: 'Privacy & Security',
+                      onTap: () {}),
                   _SettingsTile(
-                    icon: Icons.help_outline,
-                    label: 'Help & Support',
-                    onTap: () {},
-                  ),
+                      icon: Icons.help_outline,
+                      label: 'Help & Support',
+                      onTap: () {}),
                   _SettingsTile(
                     icon: Icons.logout,
                     label: 'Log Out',
@@ -443,33 +810,28 @@ class _ProfilePageState extends State<ProfilePage> {
                               borderRadius: BorderRadius.circular(16)),
                           title: const Text('Log out',
                               style: TextStyle(fontWeight: FontWeight.bold)),
-                          content: const Text(
-                              'Are you sure you want to log out?'),
+                          content:
+                              const Text('Are you sure you want to log out?'),
                           actions: [
                             TextButton(
                               onPressed: () => Navigator.pop(context),
                               child: const Text('Cancel',
-                                  style: TextStyle(
-                                      color: AppColors.textGrey)),
+                                  style: TextStyle(color: AppColors.textGrey)),
                             ),
                             ElevatedButton(
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: AppColors.primary,
                                 shape: RoundedRectangleBorder(
-                                    borderRadius:
-                                        BorderRadius.circular(8)),
+                                    borderRadius: BorderRadius.circular(8)),
                                 minimumSize: const Size(80, 36),
                               ),
                               onPressed: () {
-                                // Capture router BEFORE popping the dialog
                                 final nav = GoRouter.of(context);
                                 Navigator.pop(context);
-                                // Defer navigation until dialog is fully gone
                                 Future.microtask(() => nav.go('/login'));
                               },
                               child: const Text('Log out',
-                                  style:
-                                      TextStyle(color: Colors.white)),
+                                  style: TextStyle(color: Colors.white)),
                             ),
                           ],
                         ),
@@ -479,6 +841,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 ],
               ),
             ),
+
             const SizedBox(height: 32),
           ],
         ),
@@ -494,11 +857,7 @@ class _ProfilePageState extends State<ProfilePage> {
 class _AddSkillSheet extends StatefulWidget {
   final List<String> currentSkills;
   final void Function(List<String>) onSave;
-
-  const _AddSkillSheet({
-    required this.currentSkills,
-    required this.onSave,
-  });
+  const _AddSkillSheet({required this.currentSkills, required this.onSave});
 
   @override
   State<_AddSkillSheet> createState() => _AddSkillSheetState();
@@ -526,8 +885,7 @@ class _AddSkillSheetState extends State<_AddSkillSheet> {
   List<Map<String, dynamic>> get _filtered {
     if (_filter.isEmpty) return _availableSkills;
     return _availableSkills
-        .where((s) =>
-            (s['label'] as String).toLowerCase().contains(_filter))
+        .where((s) => (s['label'] as String).toLowerCase().contains(_filter))
         .toList();
   }
 
@@ -554,7 +912,6 @@ class _AddSkillSheetState extends State<_AddSkillSheet> {
   @override
   Widget build(BuildContext context) {
     final filtered = _filtered;
-
     return DraggableScrollableSheet(
       expand: false,
       initialChildSize: 0.78,
@@ -564,7 +921,8 @@ class _AddSkillSheetState extends State<_AddSkillSheet> {
         children: [
           Container(
             margin: const EdgeInsets.only(top: 12, bottom: 4),
-            width: 36, height: 4,
+            width: 36,
+            height: 4,
             decoration: BoxDecoration(
                 color: const Color(0xFFDDDDDD),
                 borderRadius: BorderRadius.circular(2)),
@@ -582,8 +940,8 @@ class _AddSkillSheetState extends State<_AddSkillSheet> {
                 ),
                 if (_selected.isNotEmpty)
                   Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 8, vertical: 3),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                     decoration: BoxDecoration(
                       color: AppColors.primary.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(12),
@@ -604,22 +962,20 @@ class _AddSkillSheetState extends State<_AddSkillSheet> {
                 Expanded(
                   child: Container(
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF5F5F5),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
+                        color: const Color(0xFFF5F5F5),
+                        borderRadius: BorderRadius.circular(10)),
                     child: TextField(
                       controller: _customCtrl,
                       style: const TextStyle(
                           fontSize: 13, color: Color(0xFF1A1A1A)),
                       decoration: const InputDecoration(
-                        hintText: 'Search or type a custom skill…',
-                        hintStyle: TextStyle(
-                            color: Color(0xFFAAAAAA), fontSize: 13),
+                        hintText: 'Search or type a custom skill...',
+                        hintStyle:
+                            TextStyle(color: Color(0xFFAAAAAA), fontSize: 13),
                         prefixIcon: Icon(Icons.search,
                             color: Color(0xFFAAAAAA), size: 18),
                         border: InputBorder.none,
-                        contentPadding:
-                            EdgeInsets.symmetric(vertical: 11),
+                        contentPadding: EdgeInsets.symmetric(vertical: 11),
                       ),
                     ),
                   ),
@@ -653,23 +1009,22 @@ class _AddSkillSheetState extends State<_AddSkillSheet> {
             child: filtered.isEmpty
                 ? const Center(
                     child: Text('No skills match your search',
-                        style: TextStyle(
-                            color: Color(0xFF888888), fontSize: 13)))
+                        style:
+                            TextStyle(color: Color(0xFF888888), fontSize: 13)))
                 : GridView.builder(
                     controller: scrollCtrl,
                     padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
                     gridDelegate:
                         const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 3,
-                      crossAxisSpacing: 10,
-                      mainAxisSpacing: 10,
-                      childAspectRatio: 1.0,
-                    ),
+                            crossAxisCount: 3,
+                            crossAxisSpacing: 10,
+                            mainAxisSpacing: 10,
+                            childAspectRatio: 1.0),
                     itemCount: filtered.length,
                     itemBuilder: (_, i) {
-                      final skill    = filtered[i];
-                      final label    = skill['label'] as String;
-                      final icon     = skill['icon'] as IconData;
+                      final skill = filtered[i];
+                      final label = skill['label'] as String;
+                      final icon = skill['icon'] as IconData;
                       final selected = _selected.contains(label);
                       return GestureDetector(
                         onTap: () => _toggleSkill(label),
@@ -681,33 +1036,31 @@ class _AddSkillSheetState extends State<_AddSkillSheet> {
                                 : const Color(0xFFF5F5F5),
                             borderRadius: BorderRadius.circular(14),
                             border: Border.all(
-                              color: selected
-                                  ? AppColors.primary
-                                  : Colors.transparent,
-                              width: 1.5,
-                            ),
+                                color: selected
+                                    ? AppColors.primary
+                                    : Colors.transparent,
+                                width: 1.5),
                           ),
                           child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(icon,
-                                  size: 26,
-                                  color: selected
-                                      ? AppColors.primary
-                                      : const Color(0xFF888888)),
-                              const SizedBox(height: 6),
-                              Text(label,
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(
-                                      fontSize: 10,
-                                      fontWeight: selected
-                                          ? FontWeight.w700
-                                          : FontWeight.w400,
-                                      color: selected
-                                          ? AppColors.primary
-                                          : const Color(0xFF666666))),
-                            ],
-                          ),
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(icon,
+                                    size: 26,
+                                    color: selected
+                                        ? AppColors.primary
+                                        : const Color(0xFF888888)),
+                                const SizedBox(height: 6),
+                                Text(label,
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                        fontSize: 10,
+                                        fontWeight: selected
+                                            ? FontWeight.w700
+                                            : FontWeight.w400,
+                                        color: selected
+                                            ? AppColors.primary
+                                            : const Color(0xFF666666))),
+                              ]),
                         ),
                       );
                     },
@@ -725,10 +1078,9 @@ class _AddSkillSheetState extends State<_AddSkillSheet> {
                   Navigator.pop(context);
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12)),
-                ),
+                    backgroundColor: AppColors.primary,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12))),
                 child: Text(
                   _selected.isEmpty
                       ? 'Save (no skills)'
@@ -776,7 +1128,8 @@ class _UploadOption extends StatelessWidget {
         child: Row(
           children: [
             Container(
-              width: 38, height: 38,
+              width: 38,
+              height: 38,
               decoration: BoxDecoration(
                 color: AppColors.primary.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(10),
@@ -829,15 +1182,14 @@ class _VerificationRow extends StatelessWidget {
             children: [
               if (isLoading)
                 const SizedBox(
-                  width: 20, height: 20,
+                  width: 20,
+                  height: 20,
                   child: CircularProgressIndicator(
                       strokeWidth: 2, color: AppColors.primary),
                 )
               else
                 Icon(
-                  done
-                      ? Icons.check_circle
-                      : Icons.radio_button_unchecked,
+                  done ? Icons.check_circle : Icons.radio_button_unchecked,
                   color: done ? Colors.green : AppColors.textGrey,
                   size: 20,
                 ),
@@ -846,21 +1198,19 @@ class _VerificationRow extends StatelessWidget {
                 child: Text(label,
                     style: TextStyle(
                         fontSize: 14,
-                        color: done
-                            ? AppColors.textDark
-                            : AppColors.textGrey)),
+                        color: done ? AppColors.textDark : AppColors.textGrey)),
               ),
               if (!done && !isLoading && onVerify != null)
                 GestureDetector(
                   onTap: onVerify,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 14, vertical: 6),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                     decoration: BoxDecoration(
                       color: AppColors.primary.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                          color: AppColors.primary.withOpacity(0.3)),
+                      border:
+                          Border.all(color: AppColors.primary.withOpacity(0.3)),
                     ),
                     child: const Text('Verify',
                         style: TextStyle(
@@ -870,9 +1220,8 @@ class _VerificationRow extends StatelessWidget {
                   ),
                 ),
               if (isLoading)
-                const Text('Processing…',
-                    style: TextStyle(
-                        fontSize: 12, color: AppColors.textGrey)),
+                const Text('Processing...',
+                    style: TextStyle(fontSize: 12, color: AppColors.textGrey)),
             ],
           ),
           if (subtitle != null && !done) ...[
@@ -893,7 +1242,7 @@ class _VerificationRow extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────
-// SKILL CHIP — with remove ×
+// SKILL CHIP
 // ─────────────────────────────────────────────
 
 class _SkillChip extends StatelessWidget {
@@ -905,8 +1254,7 @@ class _SkillChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding:
-          const EdgeInsets.only(left: 12, right: 4, top: 6, bottom: 6),
+      padding: const EdgeInsets.only(left: 12, right: 4, top: 6, bottom: 6),
       decoration: BoxDecoration(
         color: AppColors.primary.withOpacity(0.08),
         borderRadius: BorderRadius.circular(20),
@@ -924,7 +1272,8 @@ class _SkillChip extends StatelessWidget {
           GestureDetector(
             onTap: onRemove,
             child: Container(
-              width: 18, height: 18,
+              width: 18,
+              height: 18,
               decoration: BoxDecoration(
                 color: AppColors.primary.withOpacity(0.15),
                 shape: BoxShape.circle,
@@ -956,8 +1305,7 @@ class _ProfileStat extends StatelessWidget {
               fontWeight: FontWeight.bold,
               color: AppColors.textDark)),
       Text(label,
-          style: const TextStyle(
-              fontSize: 12, color: AppColors.textGrey)),
+          style: const TextStyle(fontSize: 12, color: AppColors.textGrey)),
     ]);
   }
 }
@@ -982,17 +1330,15 @@ class _SettingsTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListTile(
-      leading: Icon(icon,
-          color: isRed ? AppColors.primary : AppColors.textGrey),
+      leading:
+          Icon(icon, color: isRed ? AppColors.primary : AppColors.textGrey),
       title: Text(label,
           style: TextStyle(
               fontSize: 14,
-              color:
-                  isRed ? AppColors.primary : AppColors.textDark)),
+              color: isRed ? AppColors.primary : AppColors.textDark)),
       trailing: isRed
           ? null
-          : const Icon(Icons.chevron_right,
-              color: AppColors.textGrey),
+          : const Icon(Icons.chevron_right, color: AppColors.textGrey),
       onTap: onTap,
     );
   }

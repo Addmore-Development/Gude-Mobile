@@ -156,6 +156,7 @@ class _InstitutionMarketplacePageState
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
+        automaticallyImplyLeading: false, // no back arrow — this is a nav tab
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
