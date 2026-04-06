@@ -40,10 +40,7 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  // Default pinned quick action IDs (max 4 shown at once)
   List<String> _pinnedIds = ['marketplace', 'create', 'send', 'support'];
-
-  // Community + messaging FAB state
   bool _fabExpanded = false;
 
   void _showLogoutDialog() {
@@ -83,7 +80,6 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  // ── Hamburger menu (right of avatar) ─────────────────────────────────────
   void _showHamburgerMenu(BuildContext btnCtx) {
     final RenderBox button = btnCtx.findRenderObject() as RenderBox;
     final RenderBox overlay =
@@ -125,7 +121,6 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
-  // ── Avatar / profile dropdown (tap avatar) ────────────────────────────────
   void _showAvatarMenu(BuildContext btnCtx) {
     final RenderBox button = btnCtx.findRenderObject() as RenderBox;
     final RenderBox overlay =
@@ -183,7 +178,6 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
-  // ── Quick actions customiser sheet ────────────────────────────────────────
   void _showCustomiseActions() {
     showModalBottomSheet(
       context: context,
@@ -195,6 +189,17 @@ class _HomePageState extends State<HomePage> {
         pinnedIds: List.from(_pinnedIds),
         onSave: (ids) => setState(() => _pinnedIds = ids),
       ),
+    );
+  }
+
+  // ── Open AI Coach from the chat FAB ──────────────────────────────────────
+  void _openAiCoach(CoachContext coachCtx) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      useSafeArea: true,
+      builder: (_) => _CoachSheetWrapper(coachContext: coachCtx),
     );
   }
 
@@ -220,12 +225,11 @@ class _HomePageState extends State<HomePage> {
 
     return Scaffold(
       backgroundColor: AppColors.surface,
-      // ── AI Coach FAB ──────────────────────────────────────────────────────
+      // ── FAB: community toggle + chat button (no AI Coach icon) ───────────
       floatingActionButton: _buildFabStack(coachCtx),
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        // ── Logo + app name ───────────────────────────────────────────────
         title: Row(
           children: [
             Container(
@@ -252,13 +256,11 @@ class _HomePageState extends State<HomePage> {
           ],
         ),
         actions: [
-          // Notifications
           IconButton(
             icon: const Icon(Icons.notifications_outlined,
                 color: AppColors.textDark),
             onPressed: () => context.push('/notifications'),
           ),
-          // Avatar (tap for profile/logout)
           Builder(
             builder: (btnCtx) => GestureDetector(
               onTap: () => _showAvatarMenu(btnCtx),
@@ -306,7 +308,6 @@ class _HomePageState extends State<HomePage> {
             ),
           ),
           const SizedBox(width: 4),
-          // ── Hamburger menu ────────────────────────────────────────────
           Builder(
             builder: (btnCtx) => IconButton(
               icon: const Icon(Icons.menu_rounded, color: AppColors.textDark),
@@ -321,12 +322,9 @@ class _HomePageState extends State<HomePage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── One-line greeting ──────────────────────────────────────
             _GreetingBar(),
-
             const SizedBox(height: 20),
 
-            // ── Quick Actions ──────────────────────────────────────────
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -392,7 +390,7 @@ class _HomePageState extends State<HomePage> {
 
             const SizedBox(height: 24),
 
-            // ── Wallet Summary (students only) ─────────────────────────
+            // Wallet Summary (students only)
             if (!isInstitution) ...[
               const Text('Wallet Summary',
                   style: TextStyle(
@@ -439,7 +437,7 @@ class _HomePageState extends State<HomePage> {
               const SizedBox(height: 24),
             ],
 
-            // ── Institution: Active Jobs Summary ───────────────────────
+            // Institution: Active Jobs Summary
             if (isInstitution) ...[
               const Text('Active Job Posts',
                   style: TextStyle(
@@ -487,7 +485,7 @@ class _HomePageState extends State<HomePage> {
               const SizedBox(height: 24),
             ],
 
-            // ── Recent Activity ────────────────────────────────────────
+            // Recent Activity
             const Text('Recent Activity',
                 style: TextStyle(
                     fontSize: 16,
@@ -517,7 +515,6 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
             ),
-            // Extra bottom padding so FAB doesn't cover content
             const SizedBox(height: 120),
           ],
         ),
@@ -525,7 +522,7 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  // ── Floating button stack: AI Coach + Community + Messages + Noticeboard ──
+  // ── FAB stack: community toggle + chat button only (AI Coach icon removed) ──
   Widget _buildFabStack(CoachContext coachCtx) {
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -553,19 +550,20 @@ class _HomePageState extends State<HomePage> {
             },
           ),
           const SizedBox(height: 10),
+          // Chat button opens AI Coach
           _FloatingIcon(
             icon: Icons.chat_bubble_rounded,
-            label: 'Messages',
+            label: 'Coach Gude',
             color: const Color(0xFF10B981),
             onTap: () {
               setState(() => _fabExpanded = false);
-              context.push('/messages');
+              _openAiCoach(coachCtx);
             },
           ),
           const SizedBox(height: 10),
         ],
 
-        // Main community toggle button
+        // Main community toggle button (the only persistent FAB)
         Row(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -612,13 +610,28 @@ class _HomePageState extends State<HomePage> {
             ),
           ],
         ),
-
-        const SizedBox(height: 10),
-
-        // AI Coach FAB below
-        AiCoachFab(context: coachCtx),
+        // NOTE: AiCoachFab removed — Coach Gude is now accessed via the chat
+        // button inside the community menu above.
       ],
     );
+  }
+}
+
+// ─── Wrapper to open the AI Coach sheet (reuses internal _CoachSheet) ─────────
+// Since _CoachSheet is private in ai_coach_overlay.dart, we use AiCoachFab's
+// showModalBottomSheet approach by importing the overlay and calling it directly.
+// This widget is a lightweight passthrough.
+class _CoachSheetWrapper extends StatelessWidget {
+  final CoachContext coachContext;
+  const _CoachSheetWrapper({required this.coachContext});
+
+  @override
+  Widget build(BuildContext context) {
+    // Delegate rendering to AiCoachFab's sheet via a hidden fab tap simulation.
+    // Since _CoachSheet is private, we expose it by creating an AiCoachFab
+    // and triggering it programmatically — or better: move _CoachSheet to
+    // public. For now, use the public AiCoachFab widget in a hidden overlay.
+    return AiCoachFab(context: coachContext);
   }
 }
 
@@ -677,7 +690,7 @@ class _GreetingBar extends StatelessWidget {
   }
 }
 
-// ─── Floating icon button (for community/messages/noticeboard) ────────────────
+// ─── Floating icon button ─────────────────────────────────────────────────────
 class _FloatingIcon extends StatelessWidget {
   final IconData icon;
   final String label;

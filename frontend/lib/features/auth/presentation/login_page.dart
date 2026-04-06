@@ -10,6 +10,7 @@ class _C {
   static const dark = Color(0xFF1A1A1A);
   static const grey = Color(0xFF888888);
   static const border = Color(0xFFE0E0E0);
+  static const focusBorder = Color(0xFF444444); // dark grey focus, NOT red
   static const inputBg = Color(0xFFFAFAFA);
   static const errorRed = Color(0xFFE30613);
 }
@@ -504,10 +505,11 @@ class _InputField extends StatelessWidget {
         enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
             borderSide: BorderSide(color: hasError ? _C.errorRed : _C.border)),
+        // CHANGED: focus border is dark grey unless there's an error
         focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
             borderSide: BorderSide(
-                color: hasError ? _C.errorRed : _C.primary, width: 1.5)),
+                color: hasError ? _C.errorRed : _C.focusBorder, width: 1.5)),
       ),
     );
   }
@@ -560,10 +562,11 @@ class _PasswordField extends StatelessWidget {
         enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
             borderSide: BorderSide(color: hasError ? _C.errorRed : _C.border)),
+        // CHANGED: focus border is dark grey unless there's an error
         focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
             borderSide: BorderSide(
-                color: hasError ? _C.errorRed : _C.primary, width: 1.5)),
+                color: hasError ? _C.errorRed : _C.focusBorder, width: 1.5)),
       ),
     );
   }
