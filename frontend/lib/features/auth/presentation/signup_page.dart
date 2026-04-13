@@ -73,6 +73,7 @@ class _SignupPageState extends State<SignupPage> {
 
     final userService = UserRoleService();
     userService.userType = _userType;
+    userService.userName = _name.text.trim(); // save name for home page greeting
 
     if (_userType == 'institution') {
       userService.institutionName = _institutionName.text.trim();

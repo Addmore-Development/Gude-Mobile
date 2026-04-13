@@ -137,6 +137,12 @@ class AppRouter {
       // ── Notice Board ───────────────────────────────────────────────
       GoRoute(
           path: '/notice-board', builder: (c, s) => const NoticeBoardPage()),
+      GoRoute(
+          path: '/noticeboard', builder: (c, s) => const NoticeBoardPage()),
+
+      // ── Community Chat ─────────────────────────────────────────────
+      GoRoute(
+          path: '/community', builder: (c, s) => const ChatsChatPage()),
 
       // ── Wallet sub-screens (outside shell) ─────────────────────────
       GoRoute(
@@ -172,7 +178,7 @@ class AppRouter {
           GoRoute(
               path: '/messages', builder: (c, s) => const MessagingInboxPage()),
           GoRoute(
-              path: '/community', builder: (c, s) => const CommunityChatPage()),
+              path: '/chats', builder: (c, s) => const ChatsChatPage()),
           GoRoute(path: '/support', builder: (c, s) => const SupportPage()),
           GoRoute(path: '/stability', builder: (c, s) => const StabilityPage()),
           GoRoute(path: '/profile', builder: (c, s) => const ProfilePage()),

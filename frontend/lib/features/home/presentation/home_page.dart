@@ -40,8 +40,10 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  List<String> _pinnedIds = ['marketplace', 'create', 'send', 'support'];
+  // Default: only Notice Board pinned — user can add more via Customise
+  List<String> _pinnedIds = ['notices'];
   bool _fabExpanded = false;
+  bool _walletRevealed = false;
 
   void _showLogoutDialog() {
     showDialog(
@@ -80,47 +82,7 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  void _showHamburgerMenu(BuildContext btnCtx) {
-    final RenderBox button = btnCtx.findRenderObject() as RenderBox;
-    final RenderBox overlay =
-        Navigator.of(btnCtx).overlay!.context.findRenderObject() as RenderBox;
-    final RelativeRect position = RelativeRect.fromRect(
-      Rect.fromPoints(
-        button.localToGlobal(button.size.bottomLeft(Offset.zero),
-            ancestor: overlay),
-        button.localToGlobal(button.size.bottomRight(Offset.zero),
-            ancestor: overlay),
-      ),
-      Offset.zero & overlay.size,
-    );
-
-    showMenu<String>(
-      context: btnCtx,
-      position: position,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-      elevation: 8,
-      items: [
-        PopupMenuItem<String>(
-          value: 'support',
-          child: Row(
-            children: const [
-              Icon(Icons.support_agent_outlined,
-                  size: 18, color: Color(0xFF1A1A1A)),
-              SizedBox(width: 10),
-              Text('Support Hub',
-                  style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFF1A1A1A))),
-            ],
-          ),
-        ),
-      ],
-    ).then((val) {
-      if (val == 'support') context.push('/support');
-    });
-  }
-
+  // Avatar dropdown now includes all former hamburger items too
   void _showAvatarMenu(BuildContext btnCtx) {
     final RenderBox button = btnCtx.findRenderObject() as RenderBox;
     final RenderBox overlay =
@@ -156,6 +118,36 @@ class _HomePageState extends State<HomePage> {
             ],
           ),
         ),
+        PopupMenuItem<String>(
+          value: 'support',
+          child: Row(
+            children: const [
+              Icon(Icons.support_agent_outlined,
+                  size: 18, color: Color(0xFF1A1A1A)),
+              SizedBox(width: 10),
+              Text('Support Hub',
+                  style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF1A1A1A))),
+            ],
+          ),
+        ),
+        PopupMenuItem<String>(
+          value: 'settings',
+          child: Row(
+            children: const [
+              Icon(Icons.settings_outlined,
+                  size: 18, color: Color(0xFF1A1A1A)),
+              SizedBox(width: 10),
+              Text('Settings',
+                  style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF1A1A1A))),
+            ],
+          ),
+        ),
         const PopupMenuDivider(height: 1),
         PopupMenuItem<String>(
           value: 'logout',
@@ -174,6 +166,8 @@ class _HomePageState extends State<HomePage> {
       ],
     ).then((val) {
       if (val == 'profile') context.push('/profile');
+      if (val == 'support') context.push('/support');
+      if (val == 'settings') context.push('/settings');
       if (val == 'logout') _showLogoutDialog();
     });
   }
@@ -192,7 +186,6 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  // ── Open AI Coach from the chat FAB ──────────────────────────────────────
   void _openAiCoach(CoachContext coachCtx) {
     showModalBottomSheet(
       context: context,
@@ -207,6 +200,15 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     final userService = UserRoleService();
     final isInstitution = userService.isInstitution;
+    // Get user's first name for the initial and greeting
+    final userName = userService.userName.isNotEmpty
+        ? userService.userName.split(' ').first
+        : (isInstitution && userService.institutionName.isNotEmpty
+            ? userService.institutionName
+            : 'there');
+    final firstInitial = userName.isNotEmpty
+        ? userName[0].toUpperCase()
+        : 'U';
 
     final coachCtx = CoachContext(
       walletBalance: FinancialHealth.income - FinancialHealth.totalSpent,
@@ -225,7 +227,6 @@ class _HomePageState extends State<HomePage> {
 
     return Scaffold(
       backgroundColor: AppColors.surface,
-      // ── FAB: community toggle + chat button (no AI Coach icon) ───────────
       floatingActionButton: _buildFabStack(coachCtx),
       appBar: AppBar(
         backgroundColor: Colors.white,
@@ -261,6 +262,8 @@ class _HomePageState extends State<HomePage> {
                 color: AppColors.textDark),
             onPressed: () => context.push('/notifications'),
           ),
+          // Avatar with first initial — dropdown includes all menu items
+          // (hamburger removed; its items merged here)
           Builder(
             builder: (btnCtx) => GestureDetector(
               onTap: () => _showAvatarMenu(btnCtx),
@@ -279,9 +282,9 @@ class _HomePageState extends State<HomePage> {
                 ),
                 child: Stack(
                   children: [
-                    const Center(
-                      child: Text('S',
-                          style: TextStyle(
+                    Center(
+                      child: Text(firstInitial,
+                          style: const TextStyle(
                               color: Colors.white,
                               fontWeight: FontWeight.bold,
                               fontSize: 15)),
@@ -307,14 +310,8 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
           ),
-          const SizedBox(width: 4),
-          Builder(
-            builder: (btnCtx) => IconButton(
-              icon: const Icon(Icons.menu_rounded, color: AppColors.textDark),
-              onPressed: () => _showHamburgerMenu(btnCtx),
-            ),
-          ),
-          const SizedBox(width: 4),
+          const SizedBox(width: 12),
+          // Hamburger REMOVED — items merged into avatar dropdown above
         ],
       ),
       body: SingleChildScrollView(
@@ -322,7 +319,7 @@ class _HomePageState extends State<HomePage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _GreetingBar(),
+            _GreetingBar(userName: userName),
             const SizedBox(height: 20),
 
             Row(
@@ -390,13 +387,34 @@ class _HomePageState extends State<HomePage> {
 
             const SizedBox(height: 24),
 
-            // Wallet Summary (students only)
             if (!isInstitution) ...[
-              const Text('Wallet Summary',
-                  style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.textDark)),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text('Wallet Summary',
+                      style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.textDark)),
+                  GestureDetector(
+                    onTap: () => setState(() => _walletRevealed = !_walletRevealed),
+                    child: Row(
+                      children: [
+                        Icon(
+                          _walletRevealed ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                          size: 18,
+                          color: AppColors.textGrey,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          _walletRevealed ? 'Hide' : 'Reveal',
+                          style: const TextStyle(fontSize: 12, color: AppColors.textGrey),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
               const SizedBox(height: 12),
               Container(
                 padding: const EdgeInsets.all(20),
@@ -410,34 +428,41 @@ class _HomePageState extends State<HomePage> {
                         offset: const Offset(0, 2))
                   ],
                 ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    _WalletStat(
-                        label: 'Balance',
-                        value:
-                            'R ${(FinancialHealth.income - FinancialHealth.totalSpent).toStringAsFixed(2)}',
-                        icon: Icons.account_balance_wallet_outlined),
-                    Container(
-                        width: 1, height: 40, color: AppColors.inputBorder),
-                    _WalletStat(
-                        label: 'Earned',
-                        value: 'R ${FinancialHealth.income.toStringAsFixed(2)}',
-                        icon: Icons.trending_up),
-                    Container(
-                        width: 1, height: 40, color: AppColors.inputBorder),
-                    _WalletStat(
-                        label: 'Spent',
-                        value:
-                            'R ${FinancialHealth.totalSpent.toStringAsFixed(2)}',
-                        icon: Icons.shopping_bag_outlined),
-                  ],
-                ),
+                child: _walletRevealed
+                    ? Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        children: [
+                          _WalletStat(
+                              label: 'Balance',
+                              value: 'R ${(FinancialHealth.income - FinancialHealth.totalSpent).toStringAsFixed(2)}',
+                              icon: Icons.account_balance_wallet_outlined),
+                          Container(width: 1, height: 40, color: AppColors.inputBorder),
+                          _WalletStat(
+                              label: 'Earned',
+                              value: 'R ${FinancialHealth.income.toStringAsFixed(2)}',
+                              icon: Icons.trending_up),
+                          Container(width: 1, height: 40, color: AppColors.inputBorder),
+                          _WalletStat(
+                              label: 'Spent',
+                              value: 'R ${FinancialHealth.totalSpent.toStringAsFixed(2)}',
+                              icon: Icons.shopping_bag_outlined),
+                        ],
+                      )
+                    : Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: const [
+                          Icon(Icons.visibility_off_outlined, size: 16, color: AppColors.textGrey),
+                          SizedBox(width: 8),
+                          Text(
+                            'Tap Reveal to show your balance',
+                            style: TextStyle(fontSize: 13, color: AppColors.textGrey),
+                          ),
+                        ],
+                      ),
               ),
               const SizedBox(height: 24),
             ],
 
-            // Institution: Active Jobs Summary
             if (isInstitution) ...[
               const Text('Active Job Posts',
                   style: TextStyle(
@@ -485,7 +510,6 @@ class _HomePageState extends State<HomePage> {
               const SizedBox(height: 24),
             ],
 
-            // Recent Activity
             const Text('Recent Activity',
                 style: TextStyle(
                     fontSize: 16,
@@ -522,13 +546,11 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  // ── FAB stack: community toggle + chat button only (AI Coach icon removed) ──
   Widget _buildFabStack(CoachContext coachCtx) {
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
-        // Expanded community/messaging buttons
         if (_fabExpanded) ...[
           _FloatingIcon(
             icon: Icons.campaign_rounded,
@@ -540,9 +562,10 @@ class _HomePageState extends State<HomePage> {
             },
           ),
           const SizedBox(height: 10),
+          // Renamed: Community → Chats
           _FloatingIcon(
-            icon: Icons.groups_rounded,
-            label: 'Community',
+            icon: Icons.chat_bubble_outline_rounded,
+            label: 'Chats',
             color: const Color(0xFF3B82F6),
             onTap: () {
               setState(() => _fabExpanded = false);
@@ -550,10 +573,10 @@ class _HomePageState extends State<HomePage> {
             },
           ),
           const SizedBox(height: 10),
-          // Chat button opens AI Coach
+          // Renamed: Coach Gude / Chatbot → AI Buddy
           _FloatingIcon(
-            icon: Icons.chat_bubble_rounded,
-            label: 'Coach Gude',
+            icon: Icons.smart_toy_rounded,
+            label: 'AI Buddy',
             color: const Color(0xFF10B981),
             onTap: () {
               setState(() => _fabExpanded = false);
@@ -563,7 +586,6 @@ class _HomePageState extends State<HomePage> {
           const SizedBox(height: 10),
         ],
 
-        // Main community toggle button (the only persistent FAB)
         Row(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -571,7 +593,7 @@ class _HomePageState extends State<HomePage> {
               Padding(
                 padding: const EdgeInsets.only(right: 8),
                 child: Text(
-                  'Community',
+                  'Chats',
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
@@ -610,54 +632,49 @@ class _HomePageState extends State<HomePage> {
             ),
           ],
         ),
-        // NOTE: AiCoachFab removed — Coach Gude is now accessed via the chat
-        // button inside the community menu above.
       ],
     );
   }
 }
 
-// ─── Wrapper to open the AI Coach sheet (reuses internal _CoachSheet) ─────────
-// Since _CoachSheet is private in ai_coach_overlay.dart, we use AiCoachFab's
-// showModalBottomSheet approach by importing the overlay and calling it directly.
-// This widget is a lightweight passthrough.
 class _CoachSheetWrapper extends StatelessWidget {
   final CoachContext coachContext;
   const _CoachSheetWrapper({required this.coachContext});
 
   @override
   Widget build(BuildContext context) {
-    // Delegate rendering to AiCoachFab's sheet via a hidden fab tap simulation.
-    // Since _CoachSheet is private, we expose it by creating an AiCoachFab
-    // and triggering it programmatically — or better: move _CoachSheet to
-    // public. For now, use the public AiCoachFab widget in a hidden overlay.
     return AiCoachFab(context: coachContext);
   }
 }
 
-// ─── One-line greeting bar ─────────────────────────────────────────────────────
+// ─── Greeting bar — shows "Welcome back, [name] 👋" ──────────────────────────
 class _GreetingBar extends StatelessWidget {
-  const _GreetingBar();
-
-  String _greeting() {
-    final h = DateTime.now().hour;
-    if (h < 12) return 'Good Morning';
-    if (h < 17) return 'Good Afternoon';
-    return 'Good Evening';
-  }
+  final String userName;
+  const _GreetingBar({required this.userName});
 
   @override
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Text(
-          '${_greeting()} Thabo 👋',
-          style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w800,
-              color: AppColors.textDark),
+        Expanded(
+          child: RichText(
+            text: TextSpan(
+              style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.textDark),
+              children: [
+                const TextSpan(text: 'Welcome back, '),
+                TextSpan(
+                  text: userName,
+                  style: const TextStyle(color: AppColors.primary),
+                ),
+                const TextSpan(text: ' 👋'),
+              ],
+            ),
+          ),
         ),
-        const Spacer(),
+        const SizedBox(width: 8),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
           decoration: BoxDecoration(
@@ -690,7 +707,6 @@ class _GreetingBar extends StatelessWidget {
   }
 }
 
-// ─── Floating icon button ─────────────────────────────────────────────────────
 class _FloatingIcon extends StatelessWidget {
   final IconData icon;
   final String label;
@@ -748,7 +764,6 @@ class _FloatingIcon extends StatelessWidget {
   }
 }
 
-// ─── Customise Actions sheet ───────────────────────────────────────────────────
 class _CustomiseActionsSheet extends StatefulWidget {
   final List<String> pinnedIds;
   final void Function(List<String>) onSave;
@@ -900,7 +915,6 @@ class _CustomiseActionsSheetState extends State<_CustomiseActionsSheet> {
   }
 }
 
-// ─── Quick Action tile ─────────────────────────────────────────────────────────
 class _QuickAction extends StatelessWidget {
   final IconData icon;
   final String label;
@@ -946,7 +960,6 @@ class _QuickAction extends StatelessWidget {
   }
 }
 
-// ─── Wallet/stats row item ─────────────────────────────────────────────────────
 class _WalletStat extends StatelessWidget {
   final String label;
   final String value;

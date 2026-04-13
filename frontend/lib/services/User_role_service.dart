@@ -1,4 +1,4 @@
-// frontend/lib/services/user_role_service.dart
+// lib/services/user_role_service.dart
 class UserRoleService {
   static final UserRoleService _instance = UserRoleService._internal();
   factory UserRoleService() => _instance;
@@ -8,6 +8,7 @@ class UserRoleService {
   String _institutionId = '';
   String _institutionName = '';
   String _userType = 'student'; // student, institution, buyer
+  String _userName = '';        // stores full name from registration
 
   String get role => _role;
   set role(String value) => _role = value;
@@ -21,6 +22,9 @@ class UserRoleService {
   String get userType => _userType;
   set userType(String value) => _userType = value;
 
+  String get userName => _userName;
+  set userName(String value) => _userName = value;
+
   bool get isInstitution => _userType == 'institution';
   bool get isStudent => _userType == 'student';
   bool get isBuyer => _userType == 'buyer';
@@ -30,5 +34,6 @@ class UserRoleService {
     _institutionId = '';
     _institutionName = '';
     _userType = 'student';
+    _userName = '';
   }
 }

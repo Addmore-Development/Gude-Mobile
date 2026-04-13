@@ -487,17 +487,12 @@ class _StabilityPageState extends State<StabilityPage>
                           ]),
                     ),
                     const SizedBox(width: 16),
-                    GestureDetector(
-                      onTap: () =>
-                          setState(() => _scoreExpanded = !_scoreExpanded),
-                      child: AnimatedBuilder(
-                        animation: _scoreAnim,
-                        builder: (_, __) => _ScoreRing(
-                          value: _scoreValue.value,
-                          color: _scoreColor,
-                          score: (_scoreValue.value * 100).round(),
-                          expanded: _scoreExpanded,
-                        ),
+                    AnimatedBuilder(
+                      animation: _scoreAnim,
+                      builder: (_, __) => _ScoreRing(
+                        value: _scoreValue.value,
+                        color: _scoreColor,
+                        score: (_scoreValue.value * 100).round(),
                       ),
                     ),
                   ]),
@@ -1120,13 +1115,11 @@ class _ScoreRing extends StatelessWidget {
   final double value;
   final Color color;
   final int score;
-  final bool expanded;
 
   const _ScoreRing({
     required this.value,
     required this.color,
     required this.score,
-    required this.expanded,
   });
 
   @override
@@ -1176,13 +1169,6 @@ class _ScoreRing extends StatelessWidget {
                   color: color.withOpacity(0.7),
                   height: 1.2,
                 ),
-              ),
-              Icon(
-                expanded
-                    ? Icons.keyboard_arrow_up_rounded
-                    : Icons.keyboard_arrow_down_rounded,
-                size: 12,
-                color: color.withOpacity(0.7),
               ),
             ],
           ),

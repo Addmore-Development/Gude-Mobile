@@ -1,6 +1,6 @@
 // lib/shared/widgets/buyer_nav_shell.dart
 // Buyer-specific bottom navigation shell — distinct from student BottomNavShell
-// Navy color scheme, no wallet/stability/community tabs
+// Navy color scheme, no wallet/stability/chats tabs
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 

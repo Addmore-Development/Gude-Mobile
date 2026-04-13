@@ -201,6 +201,23 @@ class _Cart {
       });
 }
 
+// ── Wishlist singleton ────────────────────────────────────────
+class _Wishlist {
+  static final _Wishlist _i = _Wishlist._();
+  factory _Wishlist() => _i;
+  _Wishlist._();
+  final Set<String> _ids = {};
+  bool has(String id) => _ids.contains(id);
+  void toggle(String id) {
+    if (_ids.contains(id)) {
+      _ids.remove(id);
+    } else {
+      _ids.add(id);
+    }
+  }
+  List<String> get ids => _ids.toList();
+}
+
 // ════════════════════════════════════════════════════════════════
 //  Marketplace Landing
 // ════════════════════════════════════════════════════════════════
@@ -497,6 +514,7 @@ class _MarketplacePageState extends State<MarketplacePage> {
     final priceCtrl = TextEditingController();
     final descCtrl = TextEditingController();
     String type = 'Product';
+    String? _pickedImageName; // simulates picked file name
 
     showModalBottomSheet(
       context: context,
@@ -511,7 +529,8 @@ class _MarketplacePageState extends State<MarketplacePage> {
               left: 20,
               right: 20,
               top: 20),
-          child: Column(mainAxisSize: MainAxisSize.min, children: [
+          child: SingleChildScrollView(
+            child: Column(mainAxisSize: MainAxisSize.min, children: [
             Container(
               width: 36,
               height: 4,
@@ -537,6 +556,74 @@ class _MarketplacePageState extends State<MarketplacePage> {
                   onTap: () => setS(() => type = 'Service')),
             ]),
             const SizedBox(height: 14),
+
+            // ── Image upload picker ──────────────────────────
+            GestureDetector(
+              onTap: () {
+                // Simulate image pick (real app uses image_picker package)
+                setS(() => _pickedImageName = 'photo_${DateTime.now().millisecondsSinceEpoch}.jpg');
+              },
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                width: double.infinity,
+                height: 110,
+                decoration: BoxDecoration(
+                  color: _pickedImageName != null
+                      ? _C.primary.withOpacity(0.07)
+                      : const Color(0xFFF8F8F8),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: _pickedImageName != null ? _C.primary : _C.border,
+                    width: _pickedImageName != null ? 1.5 : 1.0,
+                    style: BorderStyle.solid,
+                  ),
+                ),
+                child: _pickedImageName != null
+                    ? Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.check_circle_rounded,
+                              color: _C.primary, size: 32),
+                          const SizedBox(height: 6),
+                          Text(
+                            _pickedImageName!,
+                            style: const TextStyle(
+                                fontSize: 11,
+                                color: _C.primary,
+                                fontWeight: FontWeight.w600),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 2),
+                          GestureDetector(
+                            onTap: () => setS(() => _pickedImageName = null),
+                            child: const Text('Remove',
+                                style: TextStyle(
+                                    fontSize: 11,
+                                    color: _C.grey,
+                                    decoration: TextDecoration.underline)),
+                          ),
+                        ],
+                      )
+                    : Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: const [
+                          Icon(Icons.add_photo_alternate_outlined,
+                              color: _C.grey, size: 32),
+                          SizedBox(height: 6),
+                          Text('Tap to upload product image',
+                              style: TextStyle(
+                                  fontSize: 12,
+                                  color: _C.grey,
+                                  fontWeight: FontWeight.w500)),
+                          SizedBox(height: 2),
+                          Text('JPG, PNG up to 5MB',
+                              style: TextStyle(fontSize: 10, color: Color(0xFFBBBBBB))),
+                        ],
+                      ),
+              ),
+            ),
+            const SizedBox(height: 12),
 
             _Field(
                 ctrl: nameCtrl,
@@ -571,6 +658,7 @@ class _MarketplacePageState extends State<MarketplacePage> {
             ),
             const SizedBox(height: 24),
           ]),
+          ),
         ),
       ),
     );
@@ -652,16 +740,49 @@ class _Field extends StatelessWidget {
 // ════════════════════════════════════════════════════════════════
 //  Item Card  — add-to-cart button pinned to the far right
 // ════════════════════════════════════════════════════════════════
-class _ItemCard extends StatelessWidget {
+class _ItemCard extends StatefulWidget {
   final MarketItem item;
   final VoidCallback onTap, onAddToCart;
   const _ItemCard(
       {required this.item, required this.onTap, required this.onAddToCart});
 
   @override
+  State<_ItemCard> createState() => _ItemCardState();
+}
+
+class _ItemCardState extends State<_ItemCard> {
+  final _wishlist = _Wishlist();
+
+  void _toggleWishlist(BuildContext context) {
+    setState(() => _wishlist.toggle(widget.item.id));
+    final isNowWishlisted = _wishlist.has(widget.item.id);
+    ScaffoldMessenger.of(context).clearSnackBars();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(children: [
+          Icon(
+            isNowWishlisted ? Icons.favorite_rounded : Icons.favorite_border,
+            color: Colors.white,
+            size: 16,
+          ),
+          const SizedBox(width: 8),
+          Text(isNowWishlisted
+              ? '${widget.item.name} added to Wishlist'
+              : '${widget.item.name} removed from Wishlist'),
+        ]),
+        backgroundColor: isNowWishlisted ? _C.primary : _C.grey,
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 2),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      ),
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final isWishlisted = _wishlist.has(widget.item.id);
     return GestureDetector(
-      onTap: onTap,
+      onTap: widget.onTap,
       child: Container(
         decoration: BoxDecoration(
           color: Colors.white,
@@ -679,10 +800,11 @@ class _ItemCard extends StatelessWidget {
                 borderRadius: BorderRadius.vertical(top: Radius.circular(14)),
               ),
               child: Center(
-                child: Text(item.emoji, style: const TextStyle(fontSize: 50)),
+                child: Text(widget.item.emoji,
+                    style: const TextStyle(fontSize: 50)),
               ),
             ),
-            if (item.isSale)
+            if (widget.item.isSale)
               Positioned(
                 top: 8,
                 left: 8,
@@ -699,7 +821,7 @@ class _ItemCard extends StatelessWidget {
                           fontWeight: FontWeight.w800)),
                 ),
               ),
-            if (item.isNew)
+            if (widget.item.isNew)
               Positioned(
                 top: 8,
                 left: 8,
@@ -715,7 +837,7 @@ class _ItemCard extends StatelessWidget {
                           fontWeight: FontWeight.w800)),
                 ),
               ),
-            if (item.isService)
+            if (widget.item.isService)
               Positioned(
                 top: 8,
                 left: 8,
@@ -732,17 +854,42 @@ class _ItemCard extends StatelessWidget {
                           fontWeight: FontWeight.w800)),
                 ),
               ),
+            // ── Heart / wishlist button ───────────────────
             Positioned(
               top: 8,
               right: 8,
               child: GestureDetector(
-                onTap: () {},
-                child: Container(
+                onTap: () => _toggleWishlist(context),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
                   padding: const EdgeInsets.all(5),
-                  decoration: const BoxDecoration(
-                      color: Colors.white, shape: BoxShape.circle),
-                  child: const Icon(Icons.favorite_border,
-                      size: 14, color: _C.primary),
+                  decoration: BoxDecoration(
+                    color: isWishlisted
+                        ? _C.primary.withOpacity(0.12)
+                        : Colors.white,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.08),
+                        blurRadius: 4,
+                      )
+                    ],
+                  ),
+                  child: AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 200),
+                    transitionBuilder: (child, anim) => ScaleTransition(
+                      scale: anim,
+                      child: child,
+                    ),
+                    child: Icon(
+                      isWishlisted
+                          ? Icons.favorite_rounded
+                          : Icons.favorite_border,
+                      key: ValueKey(isWishlisted),
+                      size: 14,
+                      color: _C.primary,
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -752,7 +899,7 @@ class _ItemCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(item.name,
+                Text(widget.item.name,
                     style: const TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w700,
@@ -761,17 +908,17 @@ class _ItemCard extends StatelessWidget {
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis),
                 const SizedBox(height: 2),
-                Text(item.brand,
+                Text(widget.item.brand,
                     style: const TextStyle(fontSize: 10, color: _C.grey)),
                 const SizedBox(height: 6),
                 Row(children: [
-                  Text('R${item.price.toStringAsFixed(0)}',
+                  Text('R${widget.item.price.toStringAsFixed(0)}',
                       style: const TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w800,
                           color: _C.primary)),
                   const SizedBox(width: 4),
-                  Text('R${item.originalPrice.toStringAsFixed(0)}',
+                  Text('R${widget.item.originalPrice.toStringAsFixed(0)}',
                       style: const TextStyle(
                           fontSize: 10,
                           color: Color(0xFFAAAAAA),
@@ -782,13 +929,13 @@ class _ItemCard extends StatelessWidget {
                   const Icon(Icons.star_rounded,
                       size: 12, color: Color(0xFFF59E0B)),
                   const SizedBox(width: 2),
-                  Text(item.rating.toString(),
+                  Text(widget.item.rating.toString(),
                       style: const TextStyle(
                           fontSize: 10, fontWeight: FontWeight.w600)),
                   const Spacer(),
                   // ── Add to cart — far right ──────────────
                   GestureDetector(
-                    onTap: onAddToCart,
+                    onTap: widget.onAddToCart,
                     child: Container(
                       padding: const EdgeInsets.all(7),
                       decoration: BoxDecoration(
@@ -822,10 +969,10 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
   int _qty = 1;
   int _selectedColor = 0;
   final _cart = _Cart();
+  final _wishlist = _Wishlist();
   bool _showAnalytics = false;
 
   MarketItem get item => widget.item;
-
   @override
   Widget build(BuildContext context) {
     final discount =
@@ -1103,6 +1250,52 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
               color: Colors.white,
               border: Border(top: BorderSide(color: _C.border))),
           child: Row(children: [
+            // ── Wishlist heart button ─────────────────────
+            GestureDetector(
+              onTap: () {
+                setState(() => _wishlist.toggle(item.id));
+                final saved = _wishlist.has(item.id);
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                  content: Text(saved
+                      ? '${item.name} saved to Wishlist'
+                      : '${item.name} removed from Wishlist'),
+                  backgroundColor: saved ? _C.primary : _C.grey,
+                  behavior: SnackBarBehavior.floating,
+                  duration: const Duration(seconds: 2),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10)),
+                ));
+              },
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                margin: const EdgeInsets.only(right: 10),
+                padding: const EdgeInsets.all(11),
+                decoration: BoxDecoration(
+                  color: _wishlist.has(item.id)
+                      ? _C.primary.withOpacity(0.10)
+                      : const Color(0xFFF5F5F5),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: _wishlist.has(item.id)
+                        ? _C.primary.withOpacity(0.4)
+                        : _C.border,
+                  ),
+                ),
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 200),
+                  transitionBuilder: (child, anim) =>
+                      ScaleTransition(scale: anim, child: child),
+                  child: Icon(
+                    _wishlist.has(item.id)
+                        ? Icons.favorite_rounded
+                        : Icons.favorite_border_rounded,
+                    key: ValueKey(_wishlist.has(item.id)),
+                    color: _C.primary,
+                    size: 20,
+                  ),
+                ),
+              ),
+            ),
             Container(
               decoration: BoxDecoration(
                   border: Border.all(color: _C.border),
@@ -1736,11 +1929,158 @@ class _CartPageState extends State<CartPage>
                     ]),
                   ),
                 ]),
-          const Center(
-              child: Text('Wishlist coming soon',
-                  style: TextStyle(color: _C.grey))),
+          // ── Wishlist tab ──────────────────────────────────────
+          _WishlistTab(allItems: widget.allItems),
         ],
       ),
+    );
+  }
+}
+
+// ════════════════════════════════════════════════════════════════
+//  Wishlist Tab — shows all heart-saved items
+// ════════════════════════════════════════════════════════════════
+class _WishlistTab extends StatefulWidget {
+  final List<MarketItem> allItems;
+  const _WishlistTab({required this.allItems});
+
+  @override
+  State<_WishlistTab> createState() => _WishlistTabState();
+}
+
+class _WishlistTabState extends State<_WishlistTab> {
+  final _wishlist = _Wishlist();
+  final _cart = _Cart();
+
+  List<MarketItem> get _wishlisted => widget.allItems
+      .where((item) => _wishlist.has(item.id))
+      .toList();
+
+  @override
+  Widget build(BuildContext context) {
+    final items = _wishlisted;
+
+    if (items.isEmpty) {
+      return const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.favorite_border_rounded, size: 52, color: _C.grey),
+            SizedBox(height: 14),
+            Text('No saved items yet',
+                style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: _C.grey)),
+            SizedBox(height: 6),
+            Text('Tap the ♡ on any product to save it here',
+                style: TextStyle(fontSize: 12, color: Color(0xFFBBBBBB))),
+          ],
+        ),
+      );
+    }
+
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: items.length,
+      itemBuilder: (_, i) {
+        final item = items[i];
+        return Container(
+          margin: const EdgeInsets.only(bottom: 12),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(14),
+            boxShadow: [
+              BoxShadow(
+                  color: Colors.black.withOpacity(0.05), blurRadius: 6)
+            ],
+          ),
+          child: Row(children: [
+            // Thumbnail
+            Container(
+              width: 82,
+              height: 82,
+              decoration: const BoxDecoration(
+                color: Color(0xFFF5F5F5),
+                borderRadius:
+                    BorderRadius.horizontal(left: Radius.circular(14)),
+              ),
+              child: Center(
+                child:
+                    Text(item.emoji, style: const TextStyle(fontSize: 36)),
+              ),
+            ),
+            // Details
+            Expanded(
+              child: Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(item.name,
+                        style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: _C.dark),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis),
+                    const SizedBox(height: 2),
+                    Text(item.brand,
+                        style: const TextStyle(
+                            fontSize: 10, color: _C.grey)),
+                    const SizedBox(height: 6),
+                    Row(children: [
+                      Text('R${item.price.toStringAsFixed(0)}',
+                          style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w800,
+                              color: _C.primary)),
+                      const Spacer(),
+                      // Move to cart button
+                      GestureDetector(
+                        onTap: () {
+                          _cart.add(item.id);
+                          setState(() => _wishlist.toggle(item.id));
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('${item.name} moved to cart'),
+                              backgroundColor: _C.green,
+                              behavior: SnackBarBehavior.floating,
+                              duration: const Duration(seconds: 2),
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10)),
+                            ),
+                          );
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: _C.primary,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Text('Add to Cart',
+                              style: TextStyle(
+                                  fontSize: 10,
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w700)),
+                        ),
+                      ),
+                    ]),
+                  ],
+                ),
+              ),
+            ),
+            // Remove from wishlist
+            IconButton(
+              icon: const Icon(Icons.favorite_rounded,
+                  color: _C.primary, size: 20),
+              onPressed: () => setState(() => _wishlist.toggle(item.id)),
+            ),
+          ]),
+        );
+      },
     );
   }
 }
@@ -1867,10 +2207,10 @@ class _CheckoutPageState extends State<CheckoutPage> {
             children: [
               for (int i = 0; i < 3; i++) ...[
                 _StepChip(
-                    label: ['Shipping', 'Payment', 'Review'][i],
+                    label: ['Payment', 'Shipping', 'Review'][i],
                     icon: [
-                      Icons.local_shipping_outlined,
                       Icons.payment_outlined,
+                      Icons.local_shipping_outlined,
                       Icons.rate_review_outlined
                     ][i],
                     isActive: i == _step,
@@ -1888,9 +2228,9 @@ class _CheckoutPageState extends State<CheckoutPage> {
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(16),
             child: _step == 0
-                ? _shippingForm()
+                ? _paymentForm()
                 : _step == 1
-                    ? _paymentForm()
+                    ? _shippingForm()
                     : _reviewStep(),
           ),
         ),

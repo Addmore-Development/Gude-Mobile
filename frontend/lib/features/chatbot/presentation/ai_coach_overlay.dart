@@ -415,7 +415,7 @@ class _CoachHeader extends StatelessWidget {
         Expanded(
             child:
                 Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          const Text('Coach Gude',
+          const Text('AI Buddy',
               style: TextStyle(
                   fontSize: 16, fontWeight: FontWeight.w800, color: _dark)),
           Row(children: [
@@ -709,7 +709,7 @@ class _InputBar extends StatelessWidget {
               minLines: 1,
               style: const TextStyle(fontSize: 14, color: _dark),
               decoration: const InputDecoration(
-                hintText: 'Ask Coach Gude anything...',
+                hintText: 'Ask AI Buddy anything...',
                 hintStyle: TextStyle(fontSize: 13.5, color: Color(0xFFAAAAAA)),
                 border: InputBorder.none,
                 contentPadding:

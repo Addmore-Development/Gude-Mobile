@@ -999,7 +999,8 @@ class CheckoutPaymentPage extends StatefulWidget {
 
 class _CheckoutPaymentPageState extends State<CheckoutPaymentPage> {
   final _cart = CartState();
-  int _step = 0; // 0=Shipping 1=Payment 2=Review
+  int _step = 0; // 0=Payment 1=Address 2=Review
+  String? _selectedPaymentMethod;
 
   @override
   Widget build(BuildContext context) {
@@ -1026,7 +1027,7 @@ class _CheckoutPaymentPageState extends State<CheckoutPaymentPage> {
               children: [
                 for (int i = 0; i < 3; i++) ...[
                   _StepChip(
-                    label: ['Shipping', 'Payment', 'Review'][i],
+                    label: ['Payment', 'Address', 'Review'][i],
                     isActive: i == _step,
                     isDone: i < _step,
                   ),
@@ -1040,9 +1041,12 @@ class _CheckoutPaymentPageState extends State<CheckoutPaymentPage> {
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(16),
               child: _step == 0
-                  ? _ShippingForm()
+                  ? _PaymentForm(
+                      selectedMethod: _selectedPaymentMethod,
+                      onSelect: (m) => setState(() => _selectedPaymentMethod = m),
+                    )
                   : _step == 1
-                      ? _PaymentForm()
+                      ? _ShippingForm()
                       : _ReviewStep(cart: _cart),
             ),
           ),
@@ -1070,23 +1074,27 @@ class _CheckoutPaymentPageState extends State<CheckoutPaymentPage> {
                   flex: 2,
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
+                      backgroundColor: (_step == 0 && _selectedPaymentMethod == null)
+                          ? const Color(0xFFCCCCCC)
+                          : AppColors.primary,
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
-                    onPressed: () {
-                      if (_step < 2) {
-                        setState(() => _step++);
-                      } else {
-                        // Place order
-                        CartState().items.clear();
-                        Navigator.pushAndRemoveUntil(
-                          context,
-                          MaterialPageRoute(builder: (_) => const OrderSuccessPage()),
-                          (route) => false,
-                        );
-                      }
-                    },
+                    onPressed: (_step == 0 && _selectedPaymentMethod == null)
+                        ? null
+                        : () {
+                            if (_step < 2) {
+                              setState(() => _step++);
+                            } else {
+                              // Place order
+                              CartState().items.clear();
+                              Navigator.pushAndRemoveUntil(
+                                context,
+                                MaterialPageRoute(builder: (_) => const OrderSuccessPage()),
+                                (route) => false,
+                              );
+                            }
+                          },
                     child: Text(
                       _step == 2 ? 'Place Order' : 'Continue',
                       style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
@@ -1178,44 +1186,56 @@ class _ShippingForm extends StatelessWidget {
 }
 
 class _PaymentForm extends StatelessWidget {
+  final String? selectedMethod;
+  final ValueChanged<String> onSelect;
+  const _PaymentForm({required this.selectedMethod, required this.onSelect});
+
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text('Payment Method', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Color(0xFF1A1A1A))),
+        const SizedBox(height: 4),
+        const Text('Please select a payment method to continue', style: TextStyle(fontSize: 12, color: Color(0xFF888888))),
         const SizedBox(height: 12),
         for (final method in ['Gude Wallet', 'Credit/Debit Card', 'EFT / Instant Pay'])
-          Container(
-            margin: const EdgeInsets.only(bottom: 10),
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: method == 'Gude Wallet' ? AppColors.primary : const Color(0xFFEEEEEE)),
-            ),
-            child: Row(
-              children: [
-                Icon(
-                  method == 'Gude Wallet' ? Icons.account_balance_wallet_outlined
-                      : method.contains('Card') ? Icons.credit_card_outlined
-                      : Icons.swap_horiz_rounded,
-                  color: method == 'Gude Wallet' ? AppColors.primary : const Color(0xFF888888),
-                  size: 20,
+          GestureDetector(
+            onTap: () => onSelect(method),
+            child: Container(
+              margin: const EdgeInsets.only(bottom: 10),
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: selectedMethod == method ? AppColors.primary : const Color(0xFFEEEEEE),
+                  width: selectedMethod == method ? 2 : 1,
                 ),
-                const SizedBox(width: 12),
-                Text(method, style: TextStyle(
-                  fontWeight: FontWeight.w600, fontSize: 14,
-                  color: method == 'Gude Wallet' ? AppColors.primary : const Color(0xFF1A1A1A),
-                )),
-                const Spacer(),
-                if (method == 'Gude Wallet')
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(color: AppColors.primary.withOpacity(0.1), borderRadius: BorderRadius.circular(6)),
-                    child: const Text('Selected', style: TextStyle(color: AppColors.primary, fontSize: 11, fontWeight: FontWeight.w600)),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    method == 'Gude Wallet' ? Icons.account_balance_wallet_outlined
+                        : method.contains('Card') ? Icons.credit_card_outlined
+                        : Icons.swap_horiz_rounded,
+                    color: selectedMethod == method ? AppColors.primary : const Color(0xFF888888),
+                    size: 20,
                   ),
-              ],
+                  const SizedBox(width: 12),
+                  Text(method, style: TextStyle(
+                    fontWeight: FontWeight.w600, fontSize: 14,
+                    color: selectedMethod == method ? AppColors.primary : const Color(0xFF1A1A1A),
+                  )),
+                  const Spacer(),
+                  if (selectedMethod == method)
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(color: AppColors.primary.withOpacity(0.1), borderRadius: BorderRadius.circular(6)),
+                      child: const Text('Selected', style: TextStyle(color: AppColors.primary, fontSize: 11, fontWeight: FontWeight.w600)),
+                    ),
+                ],
+              ),
             ),
           ),
       ],
@@ -1312,7 +1332,7 @@ class OrderSuccessPage extends StatelessWidget {
                 children: [
                   for (int i = 0; i < 3; i++) ...[
                     _StepChip(
-                      label: ['Shipping', 'Payment', 'Review'][i],
+                      label: ['Payment', 'Address', 'Review'][i],
                       isActive: false,
                       isDone: true,
                     ),
@@ -1439,7 +1459,7 @@ class _StepChip extends StatelessWidget {
             child: isDone
                 ? const Icon(Icons.check, size: 14, color: Colors.white)
                 : Icon(
-                    label == 'Shipping' ? Icons.local_shipping_outlined
+                    label == 'Address' ? Icons.location_on_outlined
                         : label == 'Payment' ? Icons.payment_outlined
                         : Icons.rate_review_outlined,
                     size: 14,

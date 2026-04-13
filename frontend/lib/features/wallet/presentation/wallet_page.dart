@@ -169,6 +169,7 @@ class WalletPage extends StatefulWidget {
 class _WalletPageState extends State<WalletPage>
     with SingleTickerProviderStateMixin {
   int _pocketIndex = 0;
+  int _pocketDir = 1; // 1 = forward, -1 = backward
   bool _balVisible = true;
   bool _showAllTx = false;
 
@@ -197,6 +198,7 @@ class _WalletPageState extends State<WalletPage>
     HapticFeedback.lightImpact();
     _arrowCtrl.forward().then((_) => _arrowCtrl.reverse());
     setState(() {
+      _pocketDir = 1;
       _pocketIndex = (_pocketIndex + 1) % _pockets.length;
       _showAllTx = false;
     });
@@ -264,16 +266,28 @@ class _WalletPageState extends State<WalletPage>
 
           SliverToBoxAdapter(
             child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 320),
-              switchInCurve: Curves.easeOut,
-              switchOutCurve: Curves.easeIn,
-              transitionBuilder: (child, anim) => SlideTransition(
-                position: Tween<Offset>(
-                  begin: const Offset(0.12, 0),
+              duration: const Duration(milliseconds: 420),
+              switchInCurve: Curves.easeOutCubic,
+              switchOutCurve: Curves.easeInCubic,
+              transitionBuilder: (child, anim) {
+                final isIncoming = child.key == ValueKey(_pocketIndex);
+                final slideIn = Tween<Offset>(
+                  begin: Offset(_pocketDir * (isIncoming ? 1.0 : -1.0), 0),
                   end: Offset.zero,
-                ).animate(CurvedAnimation(parent: anim, curve: Curves.easeOut)),
-                child: FadeTransition(opacity: anim, child: child),
-              ),
+                ).animate(CurvedAnimation(parent: anim, curve: Curves.easeOutCubic));
+                return SlideTransition(
+                  position: slideIn,
+                  child: FadeTransition(
+                    opacity: Tween<double>(begin: 0.0, end: 1.0).animate(
+                      CurvedAnimation(
+                        parent: anim,
+                        curve: const Interval(0.0, 0.6, curve: Curves.easeOut),
+                      ),
+                    ),
+                    child: child,
+                  ),
+                );
+              },
               child: _PocketContent(
                 key: ValueKey(_pocketIndex),
                 pocket: p,
@@ -348,73 +362,72 @@ class _PocketContent extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // ── Card + arrow button row ───────────────────────
+        // ── Card with arrow button overlaid on the right edge ─────────────
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
+          child: Stack(
             children: [
-              // Card expands to fill available width
-              Expanded(
-                child: _PocketCard(
-                  pocket: pocket,
-                  balVisible: balVisible,
-                  onToggle: onToggleBal,
-                  income: income,
-                  spent: spent,
-                ),
+              // Card fills full width
+              _PocketCard(
+                pocket: pocket,
+                balVisible: balVisible,
+                onToggle: onToggleBal,
+                income: income,
+                spent: spent,
               ),
-              const SizedBox(width: 10),
-              // ── Manual "next pocket" arrow ────────────
-              Column(
-                children: [
-                  ScaleTransition(
-                    scale: arrowScale,
-                    child: GestureDetector(
-                      onTap: onNext,
-                      child: Container(
-                        width: 42,
-                        height: 42,
-                        decoration: BoxDecoration(
-                          color: pocket.cardColor.withOpacity(0.12),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: pocket.cardColor.withOpacity(0.35),
-                            width: 1.5,
+              // Arrow button overlaid on the right-centre of the card
+              Positioned(
+                right: 12,
+                top: 0,
+                bottom: 0,
+                child: Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      ScaleTransition(
+                        scale: arrowScale,
+                        child: GestureDetector(
+                          onTap: onNext,
+                          child: Container(
+                            width: 36,
+                            height: 36,
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.18),
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
+                                color: Colors.white.withOpacity(0.35),
+                                width: 1.5,
+                              ),
+                            ),
+                            child: const Icon(
+                              Icons.chevron_right_rounded,
+                              color: Colors.white,
+                              size: 22,
+                            ),
                           ),
                         ),
-                        child: Icon(
-                          Icons.chevron_right_rounded,
-                          color: pocket.cardColor == const Color(0xFF1A1A1A)
-                              ? _C.dark
-                              : pocket.cardColor,
-                          size: 26,
-                        ),
                       ),
-                    ),
+                      const SizedBox(height: 6),
+                      // Dot indicators
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: List.generate(
+                            totalPockets,
+                            (i) => Container(
+                                  width: i == pocketIndex ? 12 : 5,
+                                  height: 5,
+                                  margin: const EdgeInsets.symmetric(horizontal: 1.5),
+                                  decoration: BoxDecoration(
+                                    color: i == pocketIndex
+                                        ? Colors.white
+                                        : Colors.white.withOpacity(0.35),
+                                    borderRadius: BorderRadius.circular(3),
+                                  ),
+                                )),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 6),
-                  // Dot indicators
-                  Row(
-                    children: List.generate(
-                        totalPockets,
-                        (i) => Container(
-                              width: i == pocketIndex ? 12 : 5,
-                              height: 5,
-                              margin:
-                                  const EdgeInsets.symmetric(horizontal: 1.5),
-                              decoration: BoxDecoration(
-                                color: i == pocketIndex
-                                    ? (pocket.cardColor ==
-                                            const Color(0xFF1A1A1A)
-                                        ? _C.dark
-                                        : pocket.cardColor)
-                                    : _C.border,
-                                borderRadius: BorderRadius.circular(3),
-                              ),
-                            )),
-                  ),
-                ],
+                ),
               ),
             ],
           ),

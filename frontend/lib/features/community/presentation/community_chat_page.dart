@@ -106,13 +106,13 @@ class _PrivateMessage {
 }
 
 // ─── Community Chat Page ───────────────────────────────────────────────
-class CommunityChatPage extends StatefulWidget {
-  const CommunityChatPage({super.key});
+class ChatsChatPage extends StatefulWidget {
+  const ChatsChatPage({super.key});
   @override
-  State<CommunityChatPage> createState() => _CommunityChatPageState();
+  State<ChatsChatPage> createState() => _ChatsChatPageState();
 }
 
-class _CommunityChatPageState extends State<CommunityChatPage>
+class _ChatsChatPageState extends State<ChatsChatPage>
     with SingleTickerProviderStateMixin {
   late TabController _tabCtrl;
   final List<_GroupMessage> _messages = _buildMessages();
@@ -126,7 +126,8 @@ class _CommunityChatPageState extends State<CommunityChatPage>
   @override
   void initState() {
     super.initState();
-    _tabCtrl = TabController(length: 2, vsync: this);
+    _tabCtrl = TabController(length: 2, vsync: this, initialIndex: 0);
+    _seedPrivateChats();
     WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
   }
 
@@ -136,6 +137,24 @@ class _CommunityChatPageState extends State<CommunityChatPage>
     _msgCtrl.dispose();
     _scrollCtrl.dispose();
     super.dispose();
+  }
+
+  void _seedPrivateChats() {
+    final now = DateTime.now();
+    _privateChats['p1'] = [
+      _PrivateMessage('p1', 'Hey! Still available for that design project?', now.subtract(const Duration(hours: 2))),
+      _PrivateMessage('me', 'Yes still available! What do you need?', now.subtract(const Duration(hours: 1, minutes: 50))),
+      _PrivateMessage('p1', 'A logo for my tutoring brand. Budget R200', now.subtract(const Duration(hours: 1, minutes: 40))),
+    ];
+    _privateChats['p3'] = [
+      _PrivateMessage('p3', 'Still interested in the graphic design gig?', now.subtract(const Duration(hours: 3))),
+      _PrivateMessage('me', 'Yes! Send me the brief when ready', now.subtract(const Duration(hours: 2, minutes: 55))),
+    ];
+    _privateChats['p5'] = [
+      _PrivateMessage('p5', 'Are you joining the CS201 study group Thursday?', now.subtract(const Duration(minutes: 45))),
+      _PrivateMessage('me', 'Definitely! See you at 5pm', now.subtract(const Duration(minutes: 30))),
+      _PrivateMessage('p5', "Perfect, I'll bring notes from last week", now.subtract(const Duration(minutes: 15))),
+    ];
   }
 
   void _scrollToBottom() {
@@ -315,7 +334,7 @@ class _CommunityChatPageState extends State<CommunityChatPage>
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Community',
+            const Text('Chats',
                 style: TextStyle(
                     color: _C.dark, fontWeight: FontWeight.w800, fontSize: 18)),
             Text(
@@ -374,7 +393,6 @@ class _CommunityChatPageState extends State<CommunityChatPage>
           indicatorColor: _C.primary,
           labelStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
           tabs: [
-            const Tab(text: 'Group Chat'),
             Tab(
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -392,13 +410,22 @@ class _CommunityChatPageState extends State<CommunityChatPage>
                 ],
               ),
             ),
+            const Tab(text: 'Group Chat'),
           ],
         ),
       ),
       body: TabBarView(
         controller: _tabCtrl,
         children: [
-          // ── Group Chat tab ────────────────────────────────────────
+          // ── Private Chats tab (index 0 — left) ─────────────────────
+          _PrivateInbox(
+            participants: visibleParticipants,
+            privateChats: _privateChats,
+            onOpen: (p) => _openPrivateChat(p.id, p.name, p.avatarLetter),
+            onDelete: (id) => setState(() => _privateChats.remove(id)),
+          ),
+
+          // ── Group Chat tab (index 1 — right) ─────────────────────────
           Column(
             children: [
               // Info banner
@@ -456,13 +483,6 @@ class _CommunityChatPageState extends State<CommunityChatPage>
             ],
           ),
 
-          // ── Private Chats tab ─────────────────────────────────────
-          _PrivateInbox(
-            participants: visibleParticipants,
-            privateChats: _privateChats,
-            onOpen: (p) => _openPrivateChat(p.id, p.name, p.avatarLetter),
-            onDelete: (id) => setState(() => _privateChats.remove(id)),
-          ),
         ],
       ),
     );
