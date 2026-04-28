@@ -1,7 +1,6 @@
 // lib/features/wallet/presentation/wallet_page.dart
-// Wallet landing page — main card at top with a "›" arrow button beside it
-// that manually steps through each pocket card (no auto-play slideshow).
-// Pressing the arrow changes the card AND the info beneath it in sync.
+// Wallet landing page — main card with "<" and ">" arrows to step through pockets.
+// No auto‑play slideshow. Pressing an arrow changes the card AND the info beneath.
 import 'package:flutter/material.dart';
 import 'package:gude_app/features/chatbot/presentation/ai_coach_overlay.dart';
 import 'package:gude_app/features/chatbot/services/ai_coach_service.dart';
@@ -33,8 +32,8 @@ class _Pocket {
     required this.balance,
     required this.cardColor,
     required this.cardColorEnd,
-    this.income = 0,
-    this.spent = 0,
+    required this.income,
+    required this.spent,
     this.isMain = false,
     this.transactions = const [],
   });
@@ -79,6 +78,8 @@ final _pockets = [
     cardNumber: '2015 1320 8870 2351',
     expiry: '09/30',
     balance: 190,
+    income: 170,   // 100 + 70
+    spent: 20,     // -20
     cardColor: const Color(0xFF1A1A1A),
     cardColorEnd: const Color(0xFF3A3A3A),
     transactions: const [
@@ -95,6 +96,8 @@ final _pockets = [
     cardNumber: '1202 1320 8870 2351',
     expiry: '09/30',
     balance: 100,
+    income: 100,   // top up
+    spent: 77,     // 32+45
     cardColor: const Color(0xFF1A3A8F),
     cardColorEnd: const Color(0xFF3B5BD5),
     transactions: const [
@@ -110,6 +113,8 @@ final _pockets = [
     cardNumber: '0057 0120 8870 0234',
     expiry: '09/30',
     balance: 120,
+    income: 150,   // top up
+    spent: 150,    // 89+61
     cardColor: const Color(0xFF065F46),
     cardColorEnd: const Color(0xFF059669),
     transactions: const [
@@ -126,6 +131,8 @@ final _pockets = [
     cardNumber: '0587 1320 8870 5723',
     expiry: '09/30',
     balance: 200,
+    income: 250,   // 200 top up + 50 refund
+    spent: 200,    // rent
     cardColor: const Color(0xFF5B21B6),
     cardColorEnd: const Color(0xFF7C3AED),
     transactions: const [
@@ -193,7 +200,6 @@ class _WalletPageState extends State<WalletPage>
     super.dispose();
   }
 
-  // Advance to next pocket — this is the ONLY navigation trigger
   void _nextPocket() {
     HapticFeedback.lightImpact();
     _arrowCtrl.forward().then((_) => _arrowCtrl.reverse());
@@ -204,9 +210,19 @@ class _WalletPageState extends State<WalletPage>
     });
   }
 
+  void _previousPocket() {
+    HapticFeedback.lightImpact();
+    _arrowCtrl.forward().then((_) => _arrowCtrl.reverse());
+    setState(() {
+      _pocketDir = -1;
+      _pocketIndex = (_pocketIndex - 1 + _pockets.length) % _pockets.length;
+      _showAllTx = false;
+    });
+  }
+
   _Pocket get _pocket => _pockets[_pocketIndex];
 
-  // ── Financial health helpers ──────────────────────────────
+  // ── Financial health helpers (only used for main wallet) ──
   static const _budget = 3000.0;
   static const _spent = 1830.0;
   static const _income = 4200.0;
@@ -230,7 +246,6 @@ class _WalletPageState extends State<WalletPage>
   @override
   Widget build(BuildContext context) {
     final p = _pocket;
-    // Build coach context from wallet data
     const coachCtx = CoachContext(
       walletBalance: 610,
       monthlyBudget: _budget,
@@ -248,7 +263,6 @@ class _WalletPageState extends State<WalletPage>
       floatingActionButton: AiCoachFab(context: coachCtx),
       body: CustomScrollView(
         slivers: [
-          // ── App bar ──────────────────────────────────────
           SliverAppBar(
             pinned: true,
             backgroundColor: Colors.white,
@@ -263,7 +277,6 @@ class _WalletPageState extends State<WalletPage>
               ),
             ],
           ),
-
           SliverToBoxAdapter(
             child: AnimatedSwitcher(
               duration: const Duration(milliseconds: 420),
@@ -298,14 +311,14 @@ class _WalletPageState extends State<WalletPage>
                 totalPockets: _pockets.length,
                 onToggleBal: () => setState(() => _balVisible = !_balVisible),
                 onNext: _nextPocket,
+                onPrevious: _previousPocket,
                 onToggleAllTx: () => setState(() => _showAllTx = !_showAllTx),
-                income: _income,
-                spent: _spent,
-                budget: _budget,
                 score: _score,
                 hColor: _hColor,
                 hLabel: _hLabel,
                 hEmoji: _hEmoji,
+                budget: _budget,
+                spent: _spent,
                 cats: _cats,
                 onNavigate: (route) => context.push(route),
               ),
@@ -325,8 +338,8 @@ class _PocketContent extends StatelessWidget {
   final bool balVisible, showAllTx;
   final Animation<double> arrowScale;
   final int pocketIndex, totalPockets;
-  final VoidCallback onToggleBal, onNext, onToggleAllTx;
-  final double income, spent, budget, score;
+  final VoidCallback onToggleBal, onNext, onPrevious, onToggleAllTx;
+  final double score, budget, spent;
   final Color hColor;
   final String hLabel, hEmoji;
   final List<_Cat> cats;
@@ -342,14 +355,14 @@ class _PocketContent extends StatelessWidget {
     required this.totalPockets,
     required this.onToggleBal,
     required this.onNext,
+    required this.onPrevious,
     required this.onToggleAllTx,
-    required this.income,
-    required this.spent,
-    required this.budget,
     required this.score,
     required this.hColor,
     required this.hLabel,
     required this.hEmoji,
+    required this.budget,
+    required this.spent,
     required this.cats,
     required this.onNavigate,
   });
@@ -362,77 +375,105 @@ class _PocketContent extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // ── Card with arrow button overlaid on the right edge ─────────────
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-          child: Stack(
+        // ── Card with both arrow buttons on the right side ─────────────
+Padding(
+  padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+  child: Stack(
+    children: [
+      _PocketCard(
+        pocket: pocket,
+        balVisible: balVisible,
+        onToggle: onToggleBal,
+      ),
+      // Both arrows (left & right) on the right edge, dot indicators below
+      Positioned(
+        right: 12,
+        top: 0,
+        bottom: 0,
+        child: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              // Card fills full width
-              _PocketCard(
-                pocket: pocket,
-                balVisible: balVisible,
-                onToggle: onToggleBal,
-                income: income,
-                spent: spent,
-              ),
-              // Arrow button overlaid on the right-centre of the card
-              Positioned(
-                right: 12,
-                top: 0,
-                bottom: 0,
-                child: Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      ScaleTransition(
-                        scale: arrowScale,
-                        child: GestureDetector(
-                          onTap: onNext,
-                          child: Container(
-                            width: 36,
-                            height: 36,
-                            decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.18),
-                              borderRadius: BorderRadius.circular(10),
-                              border: Border.all(
-                                color: Colors.white.withOpacity(0.35),
-                                width: 1.5,
-                              ),
-                            ),
-                            child: const Icon(
-                              Icons.chevron_right_rounded,
-                              color: Colors.white,
-                              size: 22,
-                            ),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Left arrow (back)
+                  ScaleTransition(
+                    scale: arrowScale,
+                    child: GestureDetector(
+                      onTap: onPrevious,
+                      child: Container(
+                        width: 36,
+                        height: 36,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.18),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: Colors.white.withOpacity(0.35),
+                            width: 1.5,
                           ),
                         ),
+                        child: const Icon(
+                          Icons.chevron_left_rounded,
+                          color: Colors.white,
+                          size: 22,
+                        ),
                       ),
-                      const SizedBox(height: 6),
-                      // Dot indicators
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: List.generate(
-                            totalPockets,
-                            (i) => Container(
-                                  width: i == pocketIndex ? 12 : 5,
-                                  height: 5,
-                                  margin: const EdgeInsets.symmetric(horizontal: 1.5),
-                                  decoration: BoxDecoration(
-                                    color: i == pocketIndex
-                                        ? Colors.white
-                                        : Colors.white.withOpacity(0.35),
-                                    borderRadius: BorderRadius.circular(3),
-                                  ),
-                                )),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  // Right arrow (forward)
+                  ScaleTransition(
+                    scale: arrowScale,
+                    child: GestureDetector(
+                      onTap: onNext,
+                      child: Container(
+                        width: 36,
+                        height: 36,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.18),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: Colors.white.withOpacity(0.35),
+                            width: 1.5,
+                          ),
+                        ),
+                        child: const Icon(
+                          Icons.chevron_right_rounded,
+                          color: Colors.white,
+                          size: 22,
+                        ),
                       ),
-                    ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              // Dot indicators
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: List.generate(
+                  totalPockets,
+                  (i) => Container(
+                    width: i == pocketIndex ? 12 : 5,
+                    height: 5,
+                    margin: const EdgeInsets.symmetric(horizontal: 1.5),
+                    decoration: BoxDecoration(
+                      color: i == pocketIndex
+                          ? Colors.white
+                          : Colors.white.withOpacity(0.35),
+                      borderRadius: BorderRadius.circular(3),
+                    ),
                   ),
                 ),
               ),
             ],
           ),
         ),
-
+      ),
+    ],
+  ),
+),
         // ── Pocket name label ─────────────────────────────
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
@@ -545,15 +586,8 @@ class _PocketContent extends StatelessWidget {
           ),
         ),
 
-        // ── Financial health (main card only) ─────────────
+        // ── Spending by Category (only for main wallet) ─────────
         if (pocket.isMain) ...[
-          _HealthCard(
-              score: score,
-              hColor: hColor,
-              hLabel: hLabel,
-              hEmoji: hEmoji,
-              budget: budget,
-              spent: spent),
           const Padding(
             padding: EdgeInsets.fromLTRB(16, 18, 16, 8),
             child: Text('Spending by Category',
@@ -627,26 +661,35 @@ class _PocketContent extends StatelessWidget {
                   itemBuilder: (_, i) => _TxTile(tx: txList[i]),
                 ),
         ),
+
+        // ── Financial Health (only for main wallet) – last section ──
+        if (pocket.isMain) ...[
+          _HealthCard(
+              score: score,
+              hColor: hColor,
+              hLabel: hLabel,
+              hEmoji: hEmoji,
+              budget: budget,
+              spent: spent),
+          const SizedBox(height: 16),
+        ],
       ],
     );
   }
 }
 
 // ════════════════════════════════════════════════════════════════
-//  Pocket Card
+//  Pocket Card – shows income/spent for EVERY pocket (balance removed)
 // ════════════════════════════════════════════════════════════════
 class _PocketCard extends StatelessWidget {
   final _Pocket pocket;
   final bool balVisible;
   final VoidCallback onToggle;
-  final double income, spent;
 
   const _PocketCard({
     required this.pocket,
     required this.balVisible,
     required this.onToggle,
-    required this.income,
-    required this.spent,
   });
 
   @override
@@ -760,38 +803,27 @@ class _PocketCard extends StatelessWidget {
                         fontWeight: FontWeight.w500,
                         letterSpacing: 1.8)),
                 const SizedBox(height: 6),
+                // Income & Spent now shown for EVERY pocket (balance removed)
                 Row(children: [
                   Text(pocket.expiry,
                       style:
                           const TextStyle(color: Colors.white60, fontSize: 11)),
                   const Spacer(),
-                  if (pocket.isMain) ...[
-                    _CardStat(
-                        label: 'Income',
-                        value: balVisible
-                            ? '+R${income.toStringAsFixed(0)}'
-                            : '••••',
-                        icon: Icons.arrow_downward_rounded,
-                        color: Colors.greenAccent),
-                    const SizedBox(width: 10),
-                    _CardStat(
-                        label: 'Spent',
-                        value: balVisible
-                            ? '-R${spent.toStringAsFixed(0)}'
-                            : '••••',
-                        icon: Icons.arrow_upward_rounded,
-                        color: Colors.orangeAccent),
-                    const SizedBox(width: 10),
-                  ],
-                  Text(
-                    balVisible
-                        ? 'R${pocket.balance.toStringAsFixed(2)}'
-                        : 'R•••••',
-                    style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700),
-                  ),
+                  _CardStat(
+                      label: 'Income',
+                      value: balVisible
+                          ? '+R${pocket.income.toStringAsFixed(0)}'
+                          : '••••',
+                      icon: Icons.arrow_downward_rounded,
+                      color: Colors.greenAccent),
+                  const SizedBox(width: 10),
+                  _CardStat(
+                      label: 'Spent',
+                      value: balVisible
+                          ? '-R${pocket.spent.toStringAsFixed(0)}'
+                          : '••••',
+                      icon: Icons.arrow_upward_rounded,
+                      color: Colors.orangeAccent),
                 ]),
               ],
             ),
