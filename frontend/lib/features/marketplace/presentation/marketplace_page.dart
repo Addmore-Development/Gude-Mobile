@@ -350,7 +350,7 @@ class _MarketplacePageState extends State<MarketplacePage> {
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
                   child: GestureDetector(
-                    onTap: () => _showAddListingSheet(context),
+                    onTap: () => context.push('/marketplace/create'),
                     child: Container(
                       padding: const EdgeInsets.symmetric(
                           horizontal: 16, vertical: 12),
