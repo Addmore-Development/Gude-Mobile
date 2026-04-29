@@ -1,6 +1,6 @@
 // lib/features/wallet/presentation/wallet_page.dart
-// Wallet landing page — main card with "<" and ">" arrows to step through pockets.
-// No auto‑play slideshow. Pressing an arrow changes the card AND the info beneath.
+// Wallet landing page — swipeable card carousel with an "Add card" button.
+// Swipe left/right to change pocket. All sections (spending, transactions, health) appear for every pocket.
 import 'package:flutter/material.dart';
 import 'package:gude_app/features/chatbot/presentation/ai_coach_overlay.dart';
 import 'package:gude_app/features/chatbot/services/ai_coach_service.dart';
@@ -78,8 +78,8 @@ final _pockets = [
     cardNumber: '2015 1320 8870 2351',
     expiry: '09/30',
     balance: 190,
-    income: 170,   // 100 + 70
-    spent: 20,     // -20
+    income: 170,
+    spent: 20,
     cardColor: const Color(0xFF1A1A1A),
     cardColorEnd: const Color(0xFF3A3A3A),
     transactions: const [
@@ -96,8 +96,8 @@ final _pockets = [
     cardNumber: '1202 1320 8870 2351',
     expiry: '09/30',
     balance: 100,
-    income: 100,   // top up
-    spent: 77,     // 32+45
+    income: 100,
+    spent: 77,
     cardColor: const Color(0xFF1A3A8F),
     cardColorEnd: const Color(0xFF3B5BD5),
     transactions: const [
@@ -113,8 +113,8 @@ final _pockets = [
     cardNumber: '0057 0120 8870 0234',
     expiry: '09/30',
     balance: 120,
-    income: 150,   // top up
-    spent: 150,    // 89+61
+    income: 150,
+    spent: 150,
     cardColor: const Color(0xFF065F46),
     cardColorEnd: const Color(0xFF059669),
     transactions: const [
@@ -131,8 +131,8 @@ final _pockets = [
     cardNumber: '0587 1320 8870 5723',
     expiry: '09/30',
     balance: 200,
-    income: 250,   // 200 top up + 50 refund
-    spent: 200,    // rent
+    income: 250,
+    spent: 200,
     cardColor: const Color(0xFF5B21B6),
     cardColorEnd: const Color(0xFF7C3AED),
     transactions: const [
@@ -173,56 +173,40 @@ class WalletPage extends StatefulWidget {
   State<WalletPage> createState() => _WalletPageState();
 }
 
-class _WalletPageState extends State<WalletPage>
-    with SingleTickerProviderStateMixin {
+class _WalletPageState extends State<WalletPage> {
+  late PageController _pageController;
   int _pocketIndex = 0;
-  int _pocketDir = 1; // 1 = forward, -1 = backward
   bool _balVisible = true;
   bool _showAllTx = false;
-
-  late AnimationController _arrowCtrl;
-  late Animation<double> _arrowScale;
 
   @override
   void initState() {
     super.initState();
-    _arrowCtrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 180),
+    _pageController = PageController(
+      initialPage: _pocketIndex,
+      viewportFraction: 0.85, // makes adjacent cards visible
     );
-    _arrowScale = Tween<double>(begin: 1.0, end: 0.82)
-        .animate(CurvedAnimation(parent: _arrowCtrl, curve: Curves.easeInOut));
   }
 
   @override
   void dispose() {
-    _arrowCtrl.dispose();
+    _pageController.dispose();
     super.dispose();
   }
 
-  void _nextPocket() {
-    HapticFeedback.lightImpact();
-    _arrowCtrl.forward().then((_) => _arrowCtrl.reverse());
-    setState(() {
-      _pocketDir = 1;
-      _pocketIndex = (_pocketIndex + 1) % _pockets.length;
-      _showAllTx = false;
-    });
-  }
-
-  void _previousPocket() {
-    HapticFeedback.lightImpact();
-    _arrowCtrl.forward().then((_) => _arrowCtrl.reverse());
-    setState(() {
-      _pocketDir = -1;
-      _pocketIndex = (_pocketIndex - 1 + _pockets.length) % _pockets.length;
-      _showAllTx = false;
-    });
+  void _onPageChanged(int index) {
+    if (index != _pocketIndex) {
+      HapticFeedback.lightImpact();
+      setState(() {
+        _pocketIndex = index;
+        _showAllTx = false;
+      });
+    }
   }
 
   _Pocket get _pocket => _pockets[_pocketIndex];
 
-  // ── Financial health helpers (only used for main wallet) ──
+  // ── Financial health helpers (same for all pockets) ──
   static const _budget = 3000.0;
   static const _spent = 1830.0;
   static const _income = 4200.0;
@@ -245,7 +229,6 @@ class _WalletPageState extends State<WalletPage>
 
   @override
   Widget build(BuildContext context) {
-    final p = _pocket;
     const coachCtx = CoachContext(
       walletBalance: 610,
       monthlyBudget: _budget,
@@ -278,50 +261,23 @@ class _WalletPageState extends State<WalletPage>
             ],
           ),
           SliverToBoxAdapter(
-            child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 420),
-              switchInCurve: Curves.easeOutCubic,
-              switchOutCurve: Curves.easeInCubic,
-              transitionBuilder: (child, anim) {
-                final isIncoming = child.key == ValueKey(_pocketIndex);
-                final slideIn = Tween<Offset>(
-                  begin: Offset(_pocketDir * (isIncoming ? 1.0 : -1.0), 0),
-                  end: Offset.zero,
-                ).animate(CurvedAnimation(parent: anim, curve: Curves.easeOutCubic));
-                return SlideTransition(
-                  position: slideIn,
-                  child: FadeTransition(
-                    opacity: Tween<double>(begin: 0.0, end: 1.0).animate(
-                      CurvedAnimation(
-                        parent: anim,
-                        curve: const Interval(0.0, 0.6, curve: Curves.easeOut),
-                      ),
-                    ),
-                    child: child,
-                  ),
-                );
-              },
-              child: _PocketContent(
-                key: ValueKey(_pocketIndex),
-                pocket: p,
-                balVisible: _balVisible,
-                showAllTx: _showAllTx,
-                arrowScale: _arrowScale,
-                pocketIndex: _pocketIndex,
-                totalPockets: _pockets.length,
-                onToggleBal: () => setState(() => _balVisible = !_balVisible),
-                onNext: _nextPocket,
-                onPrevious: _previousPocket,
-                onToggleAllTx: () => setState(() => _showAllTx = !_showAllTx),
-                score: _score,
-                hColor: _hColor,
-                hLabel: _hLabel,
-                hEmoji: _hEmoji,
-                budget: _budget,
-                spent: _spent,
-                cats: _cats,
-                onNavigate: (route) => context.push(route),
-              ),
+            child: _PocketContent(
+              pockets: _pockets,
+              currentIndex: _pocketIndex,
+              pageController: _pageController,
+              onPageChanged: _onPageChanged,
+              balVisible: _balVisible,
+              showAllTx: _showAllTx,
+              onToggleBal: () => setState(() => _balVisible = !_balVisible),
+              onToggleAllTx: () => setState(() => _showAllTx = !_showAllTx),
+              score: _score,
+              hColor: _hColor,
+              hLabel: _hLabel,
+              hEmoji: _hEmoji,
+              budget: _budget,
+              spent: _spent,
+              cats: _cats,
+              onNavigate: (route) => context.push(route),
             ),
           ),
         ],
@@ -334,11 +290,12 @@ class _WalletPageState extends State<WalletPage>
 //  _PocketContent — all scrollable content for the active pocket
 // ════════════════════════════════════════════════════════════════
 class _PocketContent extends StatelessWidget {
-  final _Pocket pocket;
+  final List<_Pocket> pockets;
+  final int currentIndex;
+  final PageController pageController;
+  final void Function(int) onPageChanged;
   final bool balVisible, showAllTx;
-  final Animation<double> arrowScale;
-  final int pocketIndex, totalPockets;
-  final VoidCallback onToggleBal, onNext, onPrevious, onToggleAllTx;
+  final VoidCallback onToggleBal, onToggleAllTx;
   final double score, budget, spent;
   final Color hColor;
   final String hLabel, hEmoji;
@@ -347,15 +304,13 @@ class _PocketContent extends StatelessWidget {
 
   const _PocketContent({
     super.key,
-    required this.pocket,
+    required this.pockets,
+    required this.currentIndex,
+    required this.pageController,
+    required this.onPageChanged,
     required this.balVisible,
     required this.showAllTx,
-    required this.arrowScale,
-    required this.pocketIndex,
-    required this.totalPockets,
     required this.onToggleBal,
-    required this.onNext,
-    required this.onPrevious,
     required this.onToggleAllTx,
     required this.score,
     required this.hColor,
@@ -369,109 +324,83 @@ class _PocketContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final pocket = pockets[currentIndex];
     final txList =
         showAllTx ? pocket.transactions : pocket.transactions.take(3).toList();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // ── Card with both arrow buttons on the right side ─────────────
+       // ── Card carousel with fixed "Add card" button on the left ─────────
 Padding(
   padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-  child: Stack(
-    children: [
-      _PocketCard(
-        pocket: pocket,
-        balVisible: balVisible,
-        onToggle: onToggleBal,
-      ),
-      // Both arrows (left & right) on the right edge, dot indicators below
-      Positioned(
-        right: 12,
-        top: 0,
-        bottom: 0,
-        child: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Left arrow (back)
-                  ScaleTransition(
-                    scale: arrowScale,
-                    child: GestureDetector(
-                      onTap: onPrevious,
-                      child: Container(
-                        width: 36,
-                        height: 36,
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.18),
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(
-                            color: Colors.white.withOpacity(0.35),
-                            width: 1.5,
-                          ),
-                        ),
-                        child: const Icon(
-                          Icons.chevron_left_rounded,
-                          color: Colors.white,
-                          size: 22,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  // Right arrow (forward)
-                  ScaleTransition(
-                    scale: arrowScale,
-                    child: GestureDetector(
-                      onTap: onNext,
-                      child: Container(
-                        width: 36,
-                        height: 36,
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.18),
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(
-                            color: Colors.white.withOpacity(0.35),
-                            width: 1.5,
-                          ),
-                        ),
-                        child: const Icon(
-                          Icons.chevron_right_rounded,
-                          color: Colors.white,
-                          size: 22,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
+  child: SizedBox(
+    height: 185, // fixed height matching the card
+    child: Stack(
+      children: [
+        // PageView for swipeable cards
+        PageView.builder(
+          controller: pageController,
+          onPageChanged: onPageChanged,
+          itemCount: pockets.length,
+          itemBuilder: (context, index) {
+            final p = pockets[index];
+            return Padding(
+              padding: const EdgeInsets.only(right: 8.0),
+              child: _PocketCard(
+                pocket: p,
+                balVisible: balVisible,
+                onToggle: onToggleBal,
               ),
-              const SizedBox(height: 8),
-              // Dot indicators
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: List.generate(
-                  totalPockets,
-                  (i) => Container(
-                    width: i == pocketIndex ? 12 : 5,
-                    height: 5,
-                    margin: const EdgeInsets.symmetric(horizontal: 1.5),
-                    decoration: BoxDecoration(
-                      color: i == pocketIndex
-                          ? Colors.white
-                          : Colors.white.withOpacity(0.35),
-                      borderRadius: BorderRadius.circular(3),
+            );
+          },
+        ),
+        // Fixed "Add card" button on the left
+        Positioned(
+          left: -20,
+          top: 0,
+          bottom: 0,
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: GestureDetector(
+              onTap: () {
+                HapticFeedback.lightImpact();
+                // TODO: Navigate to add card screen
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.1),
+                      blurRadius: 8,
+                      offset: const Offset(2, 2),
                     ),
-                  ),
+                  ],
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.add_card_rounded, color: _C.primary, size: 10),
+                    const SizedBox(height: 4),
+                    const Text(
+                      'Add card',
+                      style: TextStyle(
+                        fontSize: 7,
+                        fontWeight: FontWeight.w600,
+                        color: _C.dark,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ],
+            ),
           ),
         ),
-      ),
-    ],
+      ],
+    ),
   ),
 ),
         // ── Pocket name label ─────────────────────────────
@@ -488,7 +417,7 @@ Padding(
                       color: _C.dark)),
               const Spacer(),
               Text(
-                '${pocketIndex + 1} / $totalPockets',
+                '${currentIndex + 1} / ${pockets.length}',
                 style: const TextStyle(fontSize: 11, color: _C.grey),
               ),
             ],
@@ -586,27 +515,25 @@ Padding(
           ),
         ),
 
-        // ── Spending by Category (only for main wallet) ─────────
-        if (pocket.isMain) ...[
-          const Padding(
-            padding: EdgeInsets.fromLTRB(16, 18, 16, 8),
-            child: Text('Spending by Category',
-                style: TextStyle(
-                    fontSize: 16, fontWeight: FontWeight.w700, color: _C.dark)),
+        // ── Spending by Category (appears for ALL pockets) ─────────
+        const Padding(
+          padding: EdgeInsets.fromLTRB(16, 18, 16, 8),
+          child: Text('Spending by Category',
+              style: TextStyle(
+                  fontSize: 16, fontWeight: FontWeight.w700, color: _C.dark)),
+        ),
+        Container(
+          margin: const EdgeInsets.symmetric(horizontal: 16),
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8)
+            ],
           ),
-          Container(
-            margin: const EdgeInsets.symmetric(horizontal: 16),
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8)
-              ],
-            ),
-            child: Column(children: cats.map((c) => _CatBar(cat: c)).toList()),
-          ),
-        ],
+          child: Column(children: cats.map((c) => _CatBar(cat: c)).toList()),
+        ),
 
         // ── Transactions ──────────────────────────────────
         Padding(
@@ -662,17 +589,15 @@ Padding(
                 ),
         ),
 
-        // ── Financial Health (only for main wallet) – last section ──
-        if (pocket.isMain) ...[
-          _HealthCard(
-              score: score,
-              hColor: hColor,
-              hLabel: hLabel,
-              hEmoji: hEmoji,
-              budget: budget,
-              spent: spent),
-          const SizedBox(height: 16),
-        ],
+        // ── Financial Health (appears for ALL pockets) – last section ──
+        _HealthCard(
+            score: score,
+            hColor: hColor,
+            hLabel: hLabel,
+            hEmoji: hEmoji,
+            budget: budget,
+            spent: spent),
+        const SizedBox(height: 16),
       ],
     );
   }
@@ -803,7 +728,6 @@ class _PocketCard extends StatelessWidget {
                         fontWeight: FontWeight.w500,
                         letterSpacing: 1.8)),
                 const SizedBox(height: 6),
-                // Income & Spent now shown for EVERY pocket (balance removed)
                 Row(children: [
                   Text(pocket.expiry,
                       style:
