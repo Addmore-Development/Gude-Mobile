@@ -54,6 +54,16 @@ import 'package:gude_app/features/messaging/presentation/messaging_inbox_page.da
 import 'package:gude_app/features/community/presentation/community_chat_page.dart';
 import 'package:gude_app/features/community/presentation/notice_board_page.dart';
 
+// ── NEW: Coach, Rewards, Challenges, Notifications ──────────────────────────
+import 'package:gude_app/features/coach/presentation/coach_onboarding_page.dart';
+import 'package:gude_app/features/coach/presentation/coach_chat_page.dart';
+import 'package:gude_app/features/rewards/presentation/rewards_page.dart';
+import 'package:gude_app/features/challenges/presentation/challenges_page.dart';
+import 'package:gude_app/features/notifications/presentation/notifications_page.dart' hide NotificationsPage; // keep marketplace one under /notifications
+// We alias the new one:
+import 'package:gude_app/features/notifications/presentation/notifications_page.dart'
+    as nudge_notif;
+
 // ── Buyer Features ─────────────────────────────────────────────────
 import 'package:gude_app/features/buyer/presentation/buyer_messages_page.dart'
     hide BuyerNavShell;
@@ -91,6 +101,32 @@ class AppRouter {
           path: '/buyer-onboarding/welcome',
           builder: (c, s) => const BuyerOnboardingWelcomePage()),
 
+        // ── NEW: Coach onboarding flow ───────────────────────────────────
+      GoRoute(
+          path: '/coach/onboarding',
+          builder: (c, s) => const CoachOnboardingPage()),
+ 
+      // ── NEW: Coach chat ──────────────────────────────────────────────
+      GoRoute(
+          path: '/coach/chat',
+          builder: (c, s) => const CoachChatPage()),
+ 
+      // ── NEW: Rewards (Gude Vitality) ─────────────────────────────────
+      GoRoute(
+          path: '/rewards',
+          builder: (c, s) => const RewardsPage()),
+ 
+      // ── NEW: Challenges ──────────────────────────────────────────────
+      GoRoute(
+          path: '/challenges',
+          builder: (c, s) => const ChallengesPage()),
+ 
+      // ── NEW: Nudge Notifications (AI nudges) ─────────────────────────
+      GoRoute(
+          path: '/nudges',
+          builder: (c, s) => const nudge_notif.NotificationsPage()),
+
+      
       // ── Marketplace sub-screens (outside shells) ───────────────────
       GoRoute(
           path: '/marketplace/create',
