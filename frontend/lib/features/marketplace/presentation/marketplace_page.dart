@@ -1,9 +1,4 @@
 // lib/features/marketplace/presentation/marketplace_page.dart
-// — Add to cart button: far right of every product card
-// — Students can add a service or product listing
-// — Seller analytics: views, demographics, purchases, location
-// — Hire a service → opens private message thread
-// — Checkout: payment methods each expand to collect details
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -215,6 +210,7 @@ class _Wishlist {
       _ids.add(id);
     }
   }
+
   List<String> get ids => _ids.toList();
 }
 
@@ -230,13 +226,35 @@ class MarketplacePage extends StatefulWidget {
 class _MarketplacePageState extends State<MarketplacePage> {
   final _cart = _Cart();
   String _filter = 'All';
+  String _searchQuery = '';
+  final _searchCtrl = TextEditingController();
   final _filters = ['All', 'Electronics', 'Service', 'Stationery', 'Furniture'];
 
-  List<MarketItem> get _visible => _filter == 'All'
-      ? _items
-      : _items.where((i) => i.category == _filter).toList();
+  // ── Filtered + searched list ──────────────────────────────
+  List<MarketItem> get _visible {
+    var list = _filter == 'All'
+        ? _items
+        : _items.where((i) => i.category == _filter).toList();
+    if (_searchQuery.isNotEmpty) {
+      final q = _searchQuery.toLowerCase();
+      list = list
+          .where((i) =>
+              i.name.toLowerCase().contains(q) ||
+              i.description.toLowerCase().contains(q) ||
+              i.brand.toLowerCase().contains(q) ||
+              i.seller.toLowerCase().contains(q))
+          .toList();
+    }
+    return list;
+  }
 
   void _refresh() => setState(() {});
+
+  @override
+  void dispose() {
+    _searchCtrl.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -253,7 +271,6 @@ class _MarketplacePageState extends State<MarketplacePage> {
                 style: TextStyle(
                     color: _C.dark, fontWeight: FontWeight.w800, fontSize: 20)),
             actions: [
-              // Cart badge
               Stack(
                 children: [
                   IconButton(
@@ -346,47 +363,109 @@ class _MarketplacePageState extends State<MarketplacePage> {
                   ]),
                 ),
 
-                // ── Add listing button for students ─────────
+                // ── SPLIT listing buttons ───────────────────
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-                  child: GestureDetector(
-                    onTap: () => context.push('/marketplace/create'),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 12),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                            color: _C.primary.withOpacity(0.4), width: 1.5),
-                      ),
-                      child: const Row(children: [
-                        Icon(Icons.add_circle_rounded,
-                            color: _C.primary, size: 20),
-                        SizedBox(width: 10),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text('Sell a product or service',
-                                  style: TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w700,
-                                      color: _C.dark)),
-                              Text('Advertise to students & buyers',
-                                  style:
-                                      TextStyle(fontSize: 11, color: _C.grey)),
-                            ],
+                  child: Row(
+                    children: [
+                      // List a Product
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () => _showListingSheet(context, 'Product'),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 13),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                  color: _C.primary.withOpacity(0.4),
+                                  width: 1.5),
+                            ),
+                            child: Row(children: [
+                              Container(
+                                padding: const EdgeInsets.all(6),
+                                decoration: BoxDecoration(
+                                  color: _C.primary.withOpacity(0.08),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: const Icon(Icons.inventory_2_outlined,
+                                    color: _C.primary, size: 16),
+                              ),
+                              const SizedBox(width: 8),
+                              const Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text('List a Product',
+                                        style: TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w700,
+                                            color: _C.dark)),
+                                    Text('Physical items',
+                                        style: TextStyle(
+                                            fontSize: 10, color: _C.grey)),
+                                  ],
+                                ),
+                              ),
+                            ]),
                           ),
                         ),
-                        Icon(Icons.chevron_right_rounded,
-                            color: _C.grey, size: 20),
-                      ]),
-                    ),
+                      ),
+                      const SizedBox(width: 10),
+                      // List a Service
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () => _showListingSheet(context, 'Service'),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 13),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                  color:
+                                      const Color(0xFF3B82F6).withOpacity(0.4),
+                                  width: 1.5),
+                            ),
+                            child: Row(children: [
+                              Container(
+                                padding: const EdgeInsets.all(6),
+                                decoration: BoxDecoration(
+                                  color:
+                                      const Color(0xFF3B82F6).withOpacity(0.08),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: const Icon(
+                                    Icons.design_services_outlined,
+                                    color: Color(0xFF3B82F6),
+                                    size: 16),
+                              ),
+                              const SizedBox(width: 8),
+                              const Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text('List a Service',
+                                        style: TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w700,
+                                            color: _C.dark)),
+                                    Text('Skills & gigs',
+                                        style: TextStyle(
+                                            fontSize: 10, color: _C.grey)),
+                                  ],
+                                ),
+                              ),
+                            ]),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
 
-                // ── Search ──────────────────────────────────
+                // ── Search (functional) ─────────────────────
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
                   child: Container(
@@ -399,17 +478,29 @@ class _MarketplacePageState extends State<MarketplacePage> {
                             blurRadius: 6)
                       ],
                     ),
-                    child: const TextField(
+                    child: TextField(
+                      controller: _searchCtrl,
+                      onChanged: (v) => setState(() => _searchQuery = v),
                       decoration: InputDecoration(
                         hintText: 'Search products & services',
-                        hintStyle:
-                            TextStyle(color: Color(0xFFAAAAAA), fontSize: 13),
-                        prefixIcon: Icon(Icons.search,
+                        hintStyle: const TextStyle(
+                            color: Color(0xFFAAAAAA), fontSize: 13),
+                        prefixIcon: const Icon(Icons.search,
                             color: Color(0xFFAAAAAA), size: 18),
-                        suffixIcon: Icon(Icons.tune_rounded,
-                            color: Color(0xFFAAAAAA), size: 18),
+                        suffixIcon: _searchQuery.isNotEmpty
+                            ? IconButton(
+                                icon: const Icon(Icons.close,
+                                    color: Color(0xFFAAAAAA), size: 18),
+                                onPressed: () {
+                                  _searchCtrl.clear();
+                                  setState(() => _searchQuery = '');
+                                },
+                              )
+                            : const Icon(Icons.tune_rounded,
+                                color: Color(0xFFAAAAAA), size: 18),
                         border: InputBorder.none,
-                        contentPadding: EdgeInsets.symmetric(vertical: 14),
+                        contentPadding:
+                            const EdgeInsets.symmetric(vertical: 14),
                       ),
                     ),
                   ),
@@ -453,68 +544,100 @@ class _MarketplacePageState extends State<MarketplacePage> {
                 const SizedBox(height: 12),
 
                 // ── Header ──────────────────────────────────
-                const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 16),
-                  child: Text('Recommended',
-                      style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w700,
-                          color: _C.dark)),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        _searchQuery.isNotEmpty
+                            ? '${_visible.length} result${_visible.length == 1 ? '' : 's'} for "$_searchQuery"'
+                            : 'Recommended',
+                        style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700,
+                            color: _C.dark),
+                      ),
+                    ],
+                  ),
                 ),
                 const SizedBox(height: 10),
+
+                // ── Empty search state ───────────────────────
+                if (_visible.isEmpty)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 40),
+                    child: Center(
+                      child: Column(children: [
+                        const Text('🔍', style: TextStyle(fontSize: 40)),
+                        const SizedBox(height: 12),
+                        Text('No results for "$_searchQuery"',
+                            style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: _C.dark)),
+                        const SizedBox(height: 4),
+                        const Text('Try a different search term',
+                            style: TextStyle(fontSize: 12, color: _C.grey)),
+                      ]),
+                    ),
+                  ),
               ],
             ),
           ),
 
           // ── Product grid ─────────────────────────────────
-          SliverPadding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 20),
-            sliver: SliverGrid(
-              delegate: SliverChildBuilderDelegate(
-                (_, i) {
-                  final item = _visible[i];
-                  return _ItemCard(
-                    item: item,
-                    onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (_) => ProductDetailPage(item: item)),
-                    ).then((_) => _refresh()),
-                    onAddToCart: () {
-                      _cart.add(item.id);
-                      _refresh();
-                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                        content: Text('${item.name} added to cart'),
-                        duration: const Duration(seconds: 1),
-                        backgroundColor: _C.primary,
-                        behavior: SnackBarBehavior.floating,
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10)),
-                      ));
-                    },
-                  );
-                },
-                childCount: _visible.length,
-              ),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                mainAxisSpacing: 12,
-                crossAxisSpacing: 12,
-                childAspectRatio: 0.70,
+          if (_visible.isNotEmpty)
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 20),
+              sliver: SliverGrid(
+                delegate: SliverChildBuilderDelegate(
+                  (_, i) {
+                    final item = _visible[i];
+                    return _ItemCard(
+                      item: item,
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (_) => ProductDetailPage(item: item)),
+                      ).then((_) => _refresh()),
+                      onAddToCart: () {
+                        _cart.add(item.id);
+                        _refresh();
+                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                          content: Text('${item.name} added to cart'),
+                          duration: const Duration(seconds: 1),
+                          backgroundColor: _C.primary,
+                          behavior: SnackBarBehavior.floating,
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10)),
+                        ));
+                      },
+                    );
+                  },
+                  childCount: _visible.length,
+                ),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  mainAxisSpacing: 12,
+                  crossAxisSpacing: 12,
+                  childAspectRatio: 0.70,
+                ),
               ),
             ),
-          ),
         ],
       ),
     );
   }
 
-  void _showAddListingSheet(BuildContext context) {
+  // ── Listing bottom sheet — pre-selects Product or Service ──
+  void _showListingSheet(BuildContext context, String initialType) {
     final nameCtrl = TextEditingController();
     final priceCtrl = TextEditingController();
     final descCtrl = TextEditingController();
-    String type = 'Product';
-    String? _pickedImageName; // simulates picked file name
+    String type = initialType;
+    String? pickedImageName;
 
     showModalBottomSheet(
       context: context,
@@ -531,133 +654,189 @@ class _MarketplacePageState extends State<MarketplacePage> {
               top: 20),
           child: SingleChildScrollView(
             child: Column(mainAxisSize: MainAxisSize.min, children: [
-            Container(
-              width: 36,
-              height: 4,
-              decoration: BoxDecoration(
-                  color: _C.border, borderRadius: BorderRadius.circular(2)),
-            ),
-            const SizedBox(height: 16),
-            const Text('Create a Listing',
-                style: TextStyle(
-                    fontSize: 18, fontWeight: FontWeight.w800, color: _C.dark)),
-            const SizedBox(height: 16),
-
-            // Type toggle
-            Row(children: [
-              _TypeBtn(
-                  label: 'Product',
-                  selected: type == 'Product',
-                  onTap: () => setS(() => type = 'Product')),
-              const SizedBox(width: 10),
-              _TypeBtn(
-                  label: 'Service',
-                  selected: type == 'Service',
-                  onTap: () => setS(() => type = 'Service')),
-            ]),
-            const SizedBox(height: 14),
-
-            // ── Image upload picker ──────────────────────────
-            GestureDetector(
-              onTap: () {
-                // Simulate image pick (real app uses image_picker package)
-                setS(() => _pickedImageName = 'photo_${DateTime.now().millisecondsSinceEpoch}.jpg');
-              },
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                width: double.infinity,
-                height: 110,
+              Container(
+                width: 36,
+                height: 4,
                 decoration: BoxDecoration(
-                  color: _pickedImageName != null
-                      ? _C.primary.withOpacity(0.07)
-                      : const Color(0xFFF8F8F8),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: _pickedImageName != null ? _C.primary : _C.border,
-                    width: _pickedImageName != null ? 1.5 : 1.0,
-                    style: BorderStyle.solid,
+                    color: _C.border, borderRadius: BorderRadius.circular(2)),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                type == 'Product' ? 'List a Product' : 'List a Service',
+                style: const TextStyle(
+                    fontSize: 18, fontWeight: FontWeight.w800, color: _C.dark),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                type == 'Product'
+                    ? 'Sell a physical item to students & buyers'
+                    : 'Offer your skills or gig to the community',
+                style: const TextStyle(fontSize: 12, color: _C.grey),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 16),
+
+              // Type toggle
+              Row(children: [
+                _TypeBtn(
+                    label: 'Product',
+                    selected: type == 'Product',
+                    onTap: () => setS(() => type = 'Product')),
+                const SizedBox(width: 10),
+                _TypeBtn(
+                    label: 'Service',
+                    selected: type == 'Service',
+                    onTap: () => setS(() => type = 'Service')),
+              ]),
+              const SizedBox(height: 14),
+
+              // Image upload (products only)
+              if (type == 'Product') ...[
+                GestureDetector(
+                  onTap: () {
+                    setS(() => pickedImageName =
+                        'photo_${DateTime.now().millisecondsSinceEpoch}.jpg');
+                  },
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    width: double.infinity,
+                    height: 110,
+                    decoration: BoxDecoration(
+                      color: pickedImageName != null
+                          ? _C.primary.withOpacity(0.07)
+                          : const Color(0xFFF8F8F8),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: pickedImageName != null ? _C.primary : _C.border,
+                        width: pickedImageName != null ? 1.5 : 1.0,
+                      ),
+                    ),
+                    child: pickedImageName != null
+                        ? Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(Icons.check_circle_rounded,
+                                  color: _C.primary, size: 32),
+                              const SizedBox(height: 6),
+                              Text(
+                                pickedImageName!,
+                                style: const TextStyle(
+                                    fontSize: 11,
+                                    color: _C.primary,
+                                    fontWeight: FontWeight.w600),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 2),
+                              GestureDetector(
+                                onTap: () => setS(() => pickedImageName = null),
+                                child: const Text('Remove',
+                                    style: TextStyle(
+                                        fontSize: 11,
+                                        color: _C.grey,
+                                        decoration: TextDecoration.underline)),
+                              ),
+                            ],
+                          )
+                        : const Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.add_photo_alternate_outlined,
+                                  color: _C.grey, size: 32),
+                              SizedBox(height: 6),
+                              Text('Tap to upload product image',
+                                  style: TextStyle(
+                                      fontSize: 12,
+                                      color: _C.grey,
+                                      fontWeight: FontWeight.w500)),
+                              SizedBox(height: 2),
+                              Text('JPG, PNG up to 5MB',
+                                  style: TextStyle(
+                                      fontSize: 10, color: Color(0xFFBBBBBB))),
+                            ],
+                          ),
                   ),
                 ),
-                child: _pickedImageName != null
-                    ? Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(Icons.check_circle_rounded,
-                              color: _C.primary, size: 32),
-                          const SizedBox(height: 6),
-                          Text(
-                            _pickedImageName!,
-                            style: const TextStyle(
-                                fontSize: 11,
-                                color: _C.primary,
-                                fontWeight: FontWeight.w600),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          const SizedBox(height: 2),
-                          GestureDetector(
-                            onTap: () => setS(() => _pickedImageName = null),
-                            child: const Text('Remove',
-                                style: TextStyle(
-                                    fontSize: 11,
-                                    color: _C.grey,
-                                    decoration: TextDecoration.underline)),
-                          ),
-                        ],
-                      )
-                    : Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: const [
-                          Icon(Icons.add_photo_alternate_outlined,
-                              color: _C.grey, size: 32),
-                          SizedBox(height: 6),
-                          Text('Tap to upload product image',
-                              style: TextStyle(
-                                  fontSize: 12,
-                                  color: _C.grey,
-                                  fontWeight: FontWeight.w500)),
-                          SizedBox(height: 2),
-                          Text('JPG, PNG up to 5MB',
-                              style: TextStyle(fontSize: 10, color: Color(0xFFBBBBBB))),
-                        ],
+                const SizedBox(height: 12),
+              ],
+
+              // Service icon picker (services only)
+              if (type == 'Service') ...[
+                Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF0F5FF),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                        color: const Color(0xFF3B82F6).withOpacity(0.3)),
+                  ),
+                  child: const Row(children: [
+                    Icon(Icons.info_outline_rounded,
+                        color: Color(0xFF3B82F6), size: 16),
+                    SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Services are delivered remotely or in person. Set your rate per hour or per session.',
+                        style: TextStyle(
+                            fontSize: 11,
+                            color: Color(0xFF1A3A8F),
+                            height: 1.4),
                       ),
-              ),
-            ),
-            const SizedBox(height: 12),
+                    ),
+                  ]),
+                ),
+                const SizedBox(height: 12),
+              ],
 
-            _Field(
-                ctrl: nameCtrl,
-                hint: type == 'Product' ? 'Product name' : 'Service title'),
-            const SizedBox(height: 10),
-            _Field(ctrl: priceCtrl, hint: 'Price (R)', isNum: true),
-            const SizedBox(height: 10),
-            _Field(ctrl: descCtrl, hint: 'Description', maxLines: 3),
-            const SizedBox(height: 16),
+              _Field(
+                  ctrl: nameCtrl,
+                  hint: type == 'Product'
+                      ? 'Product name'
+                      : 'Service title (e.g. Maths Tutoring)'),
+              const SizedBox(height: 10),
+              _Field(
+                  ctrl: priceCtrl,
+                  hint: type == 'Product'
+                      ? 'Price (R)'
+                      : 'Rate (R) per hour or session',
+                  isNum: true),
+              const SizedBox(height: 10),
+              _Field(
+                  ctrl: descCtrl,
+                  hint: type == 'Product'
+                      ? 'Describe your product'
+                      : 'Describe your service & what is included',
+                  maxLines: 3),
+              const SizedBox(height: 16),
 
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: _C.primary,
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12)),
-                minimumSize: const Size(double.infinity, 50),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor:
+                      type == 'Product' ? _C.primary : const Color(0xFF3B82F6),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
+                  minimumSize: const Size(double.infinity, 50),
+                  elevation: 0,
+                ),
+                onPressed: () {
+                  Navigator.pop(ctx);
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                    content: Text(
+                        '${type == 'Product' ? 'Product' : 'Service'} submitted for review — you\'ll be notified once live.'),
+                    backgroundColor: _C.green,
+                    behavior: SnackBarBehavior.floating,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10)),
+                  ));
+                },
+                child: Text(type == 'Product' ? 'Post Product' : 'Post Service',
+                    style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700)),
               ),
-              onPressed: () {
-                Navigator.pop(ctx);
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                  content: Text(
-                      'Listing submitted for review — you\'ll be notified once live.'),
-                  backgroundColor: _C.green,
-                  behavior: SnackBarBehavior.floating,
-                ));
-              },
-              child: const Text('Post Listing',
-                  style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 15,
-                      fontWeight: FontWeight.w700)),
-            ),
-            const SizedBox(height: 24),
-          ]),
+              const SizedBox(height: 24),
+            ]),
           ),
         ),
       ),
@@ -665,7 +844,7 @@ class _MarketplacePageState extends State<MarketplacePage> {
   }
 }
 
-// ── Type button (product / service toggle) ────────────────────
+// ── Type button ───────────────────────────────────────────────
 class _TypeBtn extends StatelessWidget {
   final String label;
   final bool selected;
@@ -738,7 +917,7 @@ class _Field extends StatelessWidget {
 }
 
 // ════════════════════════════════════════════════════════════════
-//  Item Card  — add-to-cart button pinned to the far right
+//  Item Card
 // ════════════════════════════════════════════════════════════════
 class _ItemCard extends StatefulWidget {
   final MarketItem item;
@@ -854,7 +1033,6 @@ class _ItemCardState extends State<_ItemCard> {
                           fontWeight: FontWeight.w800)),
                 ),
               ),
-            // ── Heart / wishlist button ───────────────────
             Positioned(
               top: 8,
               right: 8,
@@ -877,10 +1055,8 @@ class _ItemCardState extends State<_ItemCard> {
                   ),
                   child: AnimatedSwitcher(
                     duration: const Duration(milliseconds: 200),
-                    transitionBuilder: (child, anim) => ScaleTransition(
-                      scale: anim,
-                      child: child,
-                    ),
+                    transitionBuilder: (child, anim) =>
+                        ScaleTransition(scale: anim, child: child),
                     child: Icon(
                       isWishlisted
                           ? Icons.favorite_rounded
@@ -933,7 +1109,6 @@ class _ItemCardState extends State<_ItemCard> {
                       style: const TextStyle(
                           fontSize: 10, fontWeight: FontWeight.w600)),
                   const Spacer(),
-                  // ── Add to cart — far right ──────────────
                   GestureDetector(
                     onTap: widget.onAddToCart,
                     child: Container(
@@ -973,6 +1148,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
   bool _showAnalytics = false;
 
   MarketItem get item => widget.item;
+
   @override
   Widget build(BuildContext context) {
     final discount =
@@ -1037,7 +1213,6 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Hero
                 Container(
                   height: 240,
                   color: const Color(0xFFF5F5F5),
@@ -1064,7 +1239,6 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                       ),
                   ]),
                 ),
-
                 Padding(
                   padding: const EdgeInsets.all(16),
                   child: Column(
@@ -1105,14 +1279,10 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                                 const TextStyle(fontSize: 12, color: _C.grey)),
                       ]),
                       const SizedBox(height: 14),
-
-                      // ── Owner analytics panel ──────────────
                       if (isOwner && _showAnalytics) ...[
                         _AnalyticsPanel(item: item),
                         const SizedBox(height: 14),
                       ],
-
-                      // Colors
                       if (item.colors.isNotEmpty) ...[
                         const Text('Color',
                             style: TextStyle(
@@ -1146,8 +1316,6 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                         ),
                         const SizedBox(height: 14),
                       ],
-
-                      // Description
                       const Text('Description',
                           style: TextStyle(
                               fontSize: 13,
@@ -1160,8 +1328,6 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                               color: Color(0xFF555555),
                               height: 1.5)),
                       const SizedBox(height: 14),
-
-                      // Seller
                       const Text('Seller',
                           style: TextStyle(
                               fontSize: 13,
@@ -1242,15 +1408,12 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
             ),
           ),
         ),
-
-        // ── Bottom bar ────────────────────────────────────
         Container(
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
           decoration: const BoxDecoration(
               color: Colors.white,
               border: Border(top: BorderSide(color: _C.border))),
           child: Row(children: [
-            // ── Wishlist heart button ─────────────────────
             GestureDetector(
               onTap: () {
                 setState(() => _wishlist.toggle(item.id));
@@ -1366,14 +1529,14 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
         builder: (_) => _DirectChatPage(
           sellerName: item.seller,
           sellerAvatar: item.sellerAvatar,
-          context: item.name,
+          itemContext: item.name,
         ),
       ),
     );
   }
 }
 
-// ── Analytics panel (seller view) ────────────────────────────
+// ── Analytics panel ───────────────────────────────────────────
 class _AnalyticsPanel extends StatelessWidget {
   final MarketItem item;
   const _AnalyticsPanel({required this.item});
@@ -1514,11 +1677,11 @@ class _AStatBox extends StatelessWidget {
 //  Direct Chat Page
 // ════════════════════════════════════════════════════════════════
 class _DirectChatPage extends StatefulWidget {
-  final String sellerName, sellerAvatar, context;
+  final String sellerName, sellerAvatar, itemContext;
   const _DirectChatPage({
     required this.sellerName,
     required this.sellerAvatar,
-    required this.context,
+    required this.itemContext,
   });
   @override
   State<_DirectChatPage> createState() => _DirectChatPageState();
@@ -1631,7 +1794,7 @@ class _DirectChatPageState extends State<_DirectChatPage> {
           child: Row(children: [
             const Icon(Icons.info_outline_rounded, color: _C.primary, size: 14),
             const SizedBox(width: 6),
-            Text('Re: ${widget.context}',
+            Text('Re: ${widget.itemContext}',
                 style: const TextStyle(
                     color: _C.primary,
                     fontSize: 12,
@@ -1929,7 +2092,6 @@ class _CartPageState extends State<CartPage>
                     ]),
                   ),
                 ]),
-          // ── Wishlist tab ──────────────────────────────────────
           _WishlistTab(allItems: widget.allItems),
         ],
       ),
@@ -1938,7 +2100,7 @@ class _CartPageState extends State<CartPage>
 }
 
 // ════════════════════════════════════════════════════════════════
-//  Wishlist Tab — shows all heart-saved items
+//  Wishlist Tab
 // ════════════════════════════════════════════════════════════════
 class _WishlistTab extends StatefulWidget {
   final List<MarketItem> allItems;
@@ -1952,14 +2114,12 @@ class _WishlistTabState extends State<_WishlistTab> {
   final _wishlist = _Wishlist();
   final _cart = _Cart();
 
-  List<MarketItem> get _wishlisted => widget.allItems
-      .where((item) => _wishlist.has(item.id))
-      .toList();
+  List<MarketItem> get _wishlisted =>
+      widget.allItems.where((item) => _wishlist.has(item.id)).toList();
 
   @override
   Widget build(BuildContext context) {
     final items = _wishlisted;
-
     if (items.isEmpty) {
       return const Center(
         child: Column(
@@ -1969,9 +2129,7 @@ class _WishlistTabState extends State<_WishlistTab> {
             SizedBox(height: 14),
             Text('No saved items yet',
                 style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: _C.grey)),
+                    fontSize: 15, fontWeight: FontWeight.w600, color: _C.grey)),
             SizedBox(height: 6),
             Text('Tap the ♡ on any product to save it here',
                 style: TextStyle(fontSize: 12, color: Color(0xFFBBBBBB))),
@@ -1979,7 +2137,6 @@ class _WishlistTabState extends State<_WishlistTab> {
         ),
       );
     }
-
     return ListView.builder(
       padding: const EdgeInsets.all(16),
       itemCount: items.length,
@@ -1991,12 +2148,10 @@ class _WishlistTabState extends State<_WishlistTab> {
             color: Colors.white,
             borderRadius: BorderRadius.circular(14),
             boxShadow: [
-              BoxShadow(
-                  color: Colors.black.withOpacity(0.05), blurRadius: 6)
+              BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 6)
             ],
           ),
           child: Row(children: [
-            // Thumbnail
             Container(
               width: 82,
               height: 82,
@@ -2006,11 +2161,9 @@ class _WishlistTabState extends State<_WishlistTab> {
                     BorderRadius.horizontal(left: Radius.circular(14)),
               ),
               child: Center(
-                child:
-                    Text(item.emoji, style: const TextStyle(fontSize: 36)),
+                child: Text(item.emoji, style: const TextStyle(fontSize: 36)),
               ),
             ),
-            // Details
             Expanded(
               child: Padding(
                 padding:
@@ -2027,8 +2180,7 @@ class _WishlistTabState extends State<_WishlistTab> {
                         overflow: TextOverflow.ellipsis),
                     const SizedBox(height: 2),
                     Text(item.brand,
-                        style: const TextStyle(
-                            fontSize: 10, color: _C.grey)),
+                        style: const TextStyle(fontSize: 10, color: _C.grey)),
                     const SizedBox(height: 6),
                     Row(children: [
                       Text('R${item.price.toStringAsFixed(0)}',
@@ -2037,7 +2189,6 @@ class _WishlistTabState extends State<_WishlistTab> {
                               fontWeight: FontWeight.w800,
                               color: _C.primary)),
                       const Spacer(),
-                      // Move to cart button
                       GestureDetector(
                         onTap: () {
                           _cart.add(item.id);
@@ -2072,7 +2223,6 @@ class _WishlistTabState extends State<_WishlistTab> {
                 ),
               ),
             ),
-            // Remove from wishlist
             IconButton(
               icon: const Icon(Icons.favorite_rounded,
                   color: _C.primary, size: 20),

@@ -2,54 +2,57 @@
 // Financial Coach onboarding flow — 6 steps matching PDF wireframes.
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:gude_app/services/user_role_service.dart';
+import 'package:gude_app/services/wallet_service.dart';
 
 // ── Colours (matching app palette) ──────────────────────────
 class _C {
-  static const primary   = Color(0xFFE30613);
-  static const dark      = Color(0xFF1A1A1A);
-  static const grey      = Color(0xFF888888);
+  static const primary = Color(0xFFE30613);
+  static const dark = Color(0xFF1A1A1A);
+  static const grey = Color(0xFF888888);
   static const lightGrey = Color(0xFFF5F5F5);
-  static const border    = Color(0xFFEEEEEE);
-  static const green     = Color(0xFF10B981);
+  static const border = Color(0xFFEEEEEE);
+  static const green = Color(0xFF10B981);
 }
 
 // ── Data models ───────────────────────────────────────────────
 enum _FundingType { nsfas, bursary, hustle, familySupport }
-enum _LivingType  { res, home, renting }
+
+enum _LivingType { res, home, renting }
 
 extension _FundingExt on _FundingType {
   String get label => const {
-    _FundingType.nsfas:         'NSFAS',
-    _FundingType.bursary:       'Bursary',
-    _FundingType.hustle:        'Hustle / Side Income',
-    _FundingType.familySupport: 'Family Support',
-  }[this]!;
+        _FundingType.nsfas: 'NSFAS',
+        _FundingType.bursary: 'Bursary',
+        _FundingType.hustle: 'Hustle / Side Income',
+        _FundingType.familySupport: 'Family Support',
+      }[this]!;
   String get emoji => const {
-    _FundingType.nsfas:         '🏛️',
-    _FundingType.bursary:       '🎓',
-    _FundingType.hustle:        '💼',
-    _FundingType.familySupport: '👨‍👩‍👧',
-  }[this]!;
+        _FundingType.nsfas: '🏛️',
+        _FundingType.bursary: '🎓',
+        _FundingType.hustle: '💼',
+        _FundingType.familySupport: '👨‍👩‍👧',
+      }[this]!;
 }
 
 extension _LivingExt on _LivingType {
   String get label => const {
-    _LivingType.res:     'Residence / Digs',
-    _LivingType.home:    'Living at Home',
-    _LivingType.renting: 'Renting',
-  }[this]!;
+        _LivingType.res: 'Residence / Digs',
+        _LivingType.home: 'Living at Home',
+        _LivingType.renting: 'Renting',
+      }[this]!;
   String get emoji => const {
-    _LivingType.res:     '🏠',
-    _LivingType.home:    '🏡',
-    _LivingType.renting: '🔑',
-  }[this]!;
+        _LivingType.res: '🏠',
+        _LivingType.home: '🏡',
+        _LivingType.renting: '🔑',
+      }[this]!;
 }
 
 const _painPoints = [
-  ('Food',      '🍔', Color(0xFFE30613)),
+  ('Food', '🍔', Color(0xFFE30613)),
   ('Transport', '🚌', Color(0xFF3B82F6)),
-  ('Data',      '📶', Color(0xFF8B5CF6)),
-  ('Debt',      '💳', Color(0xFFF59E0B)),
+  ('Data', '📶', Color(0xFF8B5CF6)),
+  ('Debt', '💳', Color(0xFFF59E0B)),
 ];
 
 // ════════════════════════════════════════════════════════════════
@@ -64,7 +67,7 @@ class OnboardingPage extends StatefulWidget {
 class _OnboardingPageState extends State<OnboardingPage>
     with SingleTickerProviderStateMixin {
   final _pageCtrl = PageController();
-  int _step = 0;                     // 0-5
+  int _step = 0; // 0-5
 
   // Collected answers
   _FundingType? _funding;
@@ -73,9 +76,10 @@ class _OnboardingPageState extends State<OnboardingPage>
   final Set<String> _painSelected = {};
 
   late AnimationController _animCtrl;
-  late Animation<double>   _fadeAnim;
+  late Animation<double> _fadeAnim;
 
-  static const _totalSteps = 6; // 0=welcome,1=funding,2=income,3=living,4=pain,5=summary
+  static const _totalSteps =
+      6; // 0=welcome,1=funding,2=income,3=living,4=pain,5=summary
 
   @override
   void initState() {
@@ -84,6 +88,8 @@ class _OnboardingPageState extends State<OnboardingPage>
         vsync: this, duration: const Duration(milliseconds: 350));
     _fadeAnim = CurvedAnimation(parent: _animCtrl, curve: Curves.easeOut);
     _animCtrl.forward();
+
+    _incomeCtrl.addListener(() => setState(() {}));
   }
 
   @override
@@ -99,23 +105,38 @@ class _OnboardingPageState extends State<OnboardingPage>
       _animCtrl.reset();
       _animCtrl.forward();
       _pageCtrl.nextPage(
-          duration: const Duration(milliseconds: 350),
-          curve: Curves.easeInOut);
+          duration: const Duration(milliseconds: 350), curve: Curves.easeInOut);
       setState(() => _step++);
     } else {
-      context.go('/login');
+      // Save onboarding answers so the AI coach can use them
+      final userService = UserRoleService();
+      userService.fundingType = _funding?.label ?? '';
+      userService.monthlyIncome = double.tryParse(_incomeCtrl.text.trim()) ?? 0;
+      userService.livingType = _living?.label ?? '';
+      userService.painPoints = _painSelected.toList();
+      WalletService().initFromOnboarding();
+
+      context.go('/home'); // ← was '/login'
     }
   }
 
   bool get _canProceed {
     switch (_step) {
-      case 0: return true;
-      case 1: return _funding != null;
-      case 2: return _incomeCtrl.text.trim().isNotEmpty;
-      case 3: return _living != null;
-      case 4: return _painSelected.isNotEmpty;
-      case 5: return true;
-      default: return true;
+      case 0:
+        return true;
+      case 1:
+        return _funding != null;
+      case 2:
+        final amount = double.tryParse(_incomeCtrl.text.trim()) ?? 0;
+        return amount >= 1000;
+      case 3:
+        return _living != null;
+      case 4:
+        return _painSelected.isNotEmpty;
+      case 5:
+        return true;
+      default:
+        return true;
     }
   }
 
@@ -144,7 +165,8 @@ class _OnboardingPageState extends State<OnboardingPage>
                             setState(() => _step--);
                           },
                           child: Container(
-                            width: 36, height: 36,
+                            width: 36,
+                            height: 36,
                             decoration: BoxDecoration(
                               color: _C.lightGrey,
                               borderRadius: BorderRadius.circular(10),
@@ -158,18 +180,13 @@ class _OnboardingPageState extends State<OnboardingPage>
                       Text(
                         'Step ${_step + 1} of $_totalSteps',
                         style: const TextStyle(
-                            fontSize: 12, color: _C.grey,
+                            fontSize: 12,
+                            color: _C.grey,
                             fontWeight: FontWeight.w500),
                       ),
                       TextButton(
                         onPressed: () => context.go('/home'),
-                        style: TextButton.styleFrom(
-                          foregroundColor: _C.grey,
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 6),
-                        ),
-                        child: const Text('Skip',
-                            style: TextStyle(fontSize: 13)),
+                        child: const Text('Skip'),
                       ),
                     ],
                   ),
@@ -275,7 +292,8 @@ class _WelcomeStep extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            width: 72, height: 72,
+            width: 72,
+            height: 72,
             decoration: BoxDecoration(
               color: _C.primary.withOpacity(0.1),
               borderRadius: BorderRadius.circular(20),
@@ -319,16 +337,14 @@ class _WelcomeStep extends StatelessWidget {
                     borderRadius: BorderRadius.circular(14)),
               ),
               child: const Text('Start',
-                  style: TextStyle(
-                      fontSize: 16, fontWeight: FontWeight.w700)),
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
             ),
           ),
           const SizedBox(height: 12),
           Center(
             child: Text(
               'Takes less than 2 minutes',
-              style: TextStyle(
-                  fontSize: 12, color: _C.grey.withOpacity(0.7)),
+              style: TextStyle(fontSize: 12, color: _C.grey.withOpacity(0.7)),
             ),
           ),
         ],
@@ -355,8 +371,11 @@ class _FundingStep extends StatelessWidget {
           const Text(
             'How do you get money?',
             style: TextStyle(
-              fontSize: 26, fontWeight: FontWeight.w900, color: _C.dark,
-              letterSpacing: -0.5, height: 1.2,
+              fontSize: 26,
+              fontWeight: FontWeight.w900,
+              color: _C.dark,
+              letterSpacing: -0.5,
+              height: 1.2,
             ),
           ),
           const SizedBox(height: 8),
@@ -393,13 +412,15 @@ class _IncomeStep extends StatelessWidget {
           const Text(
             'How much do you\nreceive monthly?',
             style: TextStyle(
-              fontSize: 26, fontWeight: FontWeight.w900, color: _C.dark,
-              letterSpacing: -0.5, height: 1.2,
+              fontSize: 26,
+              fontWeight: FontWeight.w900,
+              color: _C.dark,
+              letterSpacing: -0.5,
+              height: 1.2,
             ),
           ),
           const SizedBox(height: 8),
-          const Text(
-              'This helps your coach set realistic budgets for you.',
+          const Text('This helps your coach set realistic budgets for you.',
               style: TextStyle(fontSize: 14, color: _C.grey)),
           const SizedBox(height: 36),
           Container(
@@ -410,18 +431,15 @@ class _IncomeStep extends StatelessWidget {
             ),
             child: TextField(
               controller: controller,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              keyboardType:
+                  const TextInputType.numberWithOptions(decimal: true),
               style: const TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w800,
-                  color: _C.dark),
+                  fontSize: 22, fontWeight: FontWeight.w800, color: _C.dark),
               decoration: const InputDecoration(
                 border: InputBorder.none,
                 prefixText: 'R  ',
                 prefixStyle: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w800,
-                    color: _C.grey),
+                    fontSize: 22, fontWeight: FontWeight.w800, color: _C.grey),
                 hintText: '0.00',
                 hintStyle: TextStyle(color: Color(0xFFCCCCCC), fontSize: 22),
                 contentPadding:
@@ -448,6 +466,12 @@ class _IncomeStep extends StatelessWidget {
               ),
             ]),
           ),
+          const SizedBox(height: 8),
+          const Text(
+            'Minimum R1,000 to continue',
+            style: TextStyle(fontSize: 11, color: _C.grey),
+            textAlign: TextAlign.center,
+          ),
         ],
       ),
     );
@@ -472,8 +496,11 @@ class _LivingStep extends StatelessWidget {
           const Text(
             'Where are you\nliving?',
             style: TextStyle(
-              fontSize: 26, fontWeight: FontWeight.w900, color: _C.dark,
-              letterSpacing: -0.5, height: 1.2,
+              fontSize: 26,
+              fontWeight: FontWeight.w900,
+              color: _C.dark,
+              letterSpacing: -0.5,
+              height: 1.2,
             ),
           ),
           const SizedBox(height: 8),
@@ -511,8 +538,11 @@ class _PainStep extends StatelessWidget {
           const Text(
             'What stresses\nyou most?',
             style: TextStyle(
-              fontSize: 26, fontWeight: FontWeight.w900, color: _C.dark,
-              letterSpacing: -0.5, height: 1.2,
+              fontSize: 26,
+              fontWeight: FontWeight.w900,
+              color: _C.dark,
+              letterSpacing: -0.5,
+              height: 1.2,
             ),
           ),
           const SizedBox(height: 8),
@@ -527,8 +557,8 @@ class _PainStep extends StatelessWidget {
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
                 margin: const EdgeInsets.only(bottom: 12),
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 16, vertical: 14),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                 decoration: BoxDecoration(
                   color: sel ? color.withOpacity(0.08) : Colors.white,
                   borderRadius: BorderRadius.circular(14),
@@ -555,7 +585,8 @@ class _PainStep extends StatelessWidget {
                   ),
                   AnimatedContainer(
                     duration: const Duration(milliseconds: 200),
-                    width: 22, height: 22,
+                    width: 22,
+                    height: 22,
                     decoration: BoxDecoration(
                       color: sel ? color : Colors.transparent,
                       borderRadius: BorderRadius.circular(6),
@@ -563,8 +594,7 @@ class _PainStep extends StatelessWidget {
                           color: sel ? color : _C.border, width: 1.5),
                     ),
                     child: sel
-                        ? const Icon(Icons.check,
-                            size: 14, color: Colors.white)
+                        ? const Icon(Icons.check, size: 14, color: Colors.white)
                         : null,
                   ),
                 ]),
@@ -595,8 +625,10 @@ class _SummaryStep extends StatelessWidget {
 
   String get _savingsTip {
     final amt = double.tryParse(income) ?? 0;
-    if (amt > 5000) return 'Save at least R${(amt * 0.15).toStringAsFixed(0)} monthly.';
-    if (amt > 2000) return 'Aim to save R${(amt * 0.1).toStringAsFixed(0)} monthly.';
+    if (amt > 5000)
+      return 'Save at least R${(amt * 0.15).toStringAsFixed(0)} monthly.';
+    if (amt > 2000)
+      return 'Aim to save R${(amt * 0.1).toStringAsFixed(0)} monthly.';
     return 'Even saving R50/week adds up fast.';
   }
 
@@ -608,19 +640,22 @@ class _SummaryStep extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            width: 60, height: 60,
+            width: 60,
+            height: 60,
             decoration: BoxDecoration(
               color: _C.green.withOpacity(0.12),
               borderRadius: BorderRadius.circular(16),
             ),
-            child: const Center(
-                child: Text('🎯', style: TextStyle(fontSize: 30))),
+            child:
+                const Center(child: Text('🎯', style: TextStyle(fontSize: 30))),
           ),
           const SizedBox(height: 20),
           const Text(
             "Here's your plan 🎉",
             style: TextStyle(
-              fontSize: 26, fontWeight: FontWeight.w900, color: _C.dark,
+              fontSize: 26,
+              fontWeight: FontWeight.w900,
+              color: _C.dark,
               letterSpacing: -0.5,
             ),
           ),
@@ -723,7 +758,8 @@ class _SummaryRow extends StatelessWidget {
       ),
       child: Row(children: [
         Container(
-          width: 36, height: 36,
+          width: 36,
+          height: 36,
           decoration: BoxDecoration(
               color: color.withOpacity(0.1),
               borderRadius: BorderRadius.circular(10)),
@@ -731,13 +767,10 @@ class _SummaryRow extends StatelessWidget {
         ),
         const SizedBox(width: 12),
         Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(label,
-              style: const TextStyle(fontSize: 11, color: _C.grey)),
+          Text(label, style: const TextStyle(fontSize: 11, color: _C.grey)),
           Text(value,
               style: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                  color: _C.dark)),
+                  fontSize: 13, fontWeight: FontWeight.w700, color: _C.dark)),
         ]),
       ]),
     );
@@ -768,8 +801,7 @@ class _OptionTile extends StatelessWidget {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         margin: const EdgeInsets.only(bottom: 12),
-        padding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         decoration: BoxDecoration(
           color: selected ? color.withOpacity(0.07) : Colors.white,
           borderRadius: BorderRadius.circular(14),
@@ -796,7 +828,8 @@ class _OptionTile extends StatelessWidget {
           ),
           if (selected)
             Container(
-              width: 22, height: 22,
+              width: 22,
+              height: 22,
               decoration: BoxDecoration(
                   color: color, borderRadius: BorderRadius.circular(6)),
               child: const Icon(Icons.check, size: 14, color: Colors.white),

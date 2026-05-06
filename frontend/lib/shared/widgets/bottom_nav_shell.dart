@@ -1,6 +1,7 @@
 // lib/shared/widgets/bottom_nav_shell.dart
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'walkthrough_overlay.dart';
 
 class BottomNavShell extends StatelessWidget {
   final Widget child;
@@ -13,7 +14,7 @@ class BottomNavShell extends StatelessWidget {
     _Tab('/wallet', Icons.account_balance_wallet_outlined,
         Icons.account_balance_wallet_rounded, 'Wallet'),
     _Tab('/stability', Icons.favorite_outline, Icons.favorite_rounded,
-        'Stability'),
+        'Support Hub'),
   ];
 
   int _activeIndex(BuildContext context) {
@@ -26,7 +27,7 @@ class BottomNavShell extends StatelessWidget {
   Widget build(BuildContext context) {
     final active = _activeIndex(context);
     return Scaffold(
-      body: child,
+      body: WalkthroughOverlay(child: child),
       bottomNavigationBar: SafeArea(
         child: Container(
           height: 62,

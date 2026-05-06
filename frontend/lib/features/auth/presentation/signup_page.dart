@@ -73,7 +73,7 @@ class _SignupPageState extends State<SignupPage> {
 
     final userService = UserRoleService();
     userService.userType = _userType;
-    userService.userName = _name.text.trim(); // save name for home page greeting
+    userService.userName = _name.text.trim();
 
     if (_userType == 'institution') {
       userService.institutionName = _institutionName.text.trim();
@@ -81,10 +81,10 @@ class _SignupPageState extends State<SignupPage> {
       context.go('/institution/marketplace');
     } else if (_userType == 'buyer') {
       userService.role = 'buyer';
-      context.go('/buyer/marketplace');
+      context.go('/onboarding');
     } else {
       userService.role = 'student';
-      context.go('/home');
+      context.go('/onboarding');
     }
   }
 

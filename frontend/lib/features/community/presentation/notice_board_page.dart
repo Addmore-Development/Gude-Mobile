@@ -12,6 +12,7 @@ class _C {
   static const green = Color(0xFF10B981);
   static const orange = Color(0xFFF59E0B);
   static const blue = Color(0xFF3B82F6);
+  static const purple = Color(0xFF8B5CF6);
 }
 
 class Notice {
@@ -55,6 +56,8 @@ class _NoticeBoardPageState extends State<NoticeBoardPage>
   final List<Notice> _notices = [];
   final List<Notice> _announcements = [];
   final List<Notice> _events = [];
+  final List<Notice> _internships = [];
+  final List<Notice> _partTimeJobs = [];
 
   String _selectedTag = 'All';
   final List<String> _tags = [
@@ -63,13 +66,14 @@ class _NoticeBoardPageState extends State<NoticeBoardPage>
     'Events',
     'Social',
     'Lost & Found',
-    'Jobs'
+    'Internships',
+    'Part Time Jobs',
   ];
 
   @override
   void initState() {
     super.initState();
-    _tabCtrl = TabController(length: 3, vsync: this);
+    _tabCtrl = TabController(length: 5, vsync: this);
     _loadMockData();
   }
 
@@ -140,20 +144,61 @@ class _NoticeBoardPageState extends State<NoticeBoardPage>
       ),
       Notice(
         id: 'n6',
-        title: 'Part-time Job: Research Assistant',
+        title: 'Software Engineering Internship – FinTech Co.',
         content:
-            'Psychology department seeking research assistants. Must have good data entry skills. Email prof@university.ac.za',
-        author: 'Prof. Smith',
-        authorAvatar: 'PS',
+            'FinTech Co. is looking for Software Engineering interns for Summer 2025. Must be 3rd or 4th year. Apply at careers@fintechco.co.za',
+        author: 'Careers Office',
+        authorAvatar: 'CO',
+        timestamp: now.subtract(const Duration(days: 1)),
+        tags: ['Internships'],
+        likes: 143,
+        comments: 41,
+        isPinned: true,
+      ),
+      Notice(
+        id: 'n7',
+        title: 'Data Analytics Internship – TechCorp SA',
+        content:
+            'TechCorp SA offers a 6-month paid data analytics internship. Open to Statistics and Computer Science students. Stipend: R8 000/month.',
+        author: 'Prof. Dlamini',
+        authorAvatar: 'PD',
+        timestamp: now.subtract(const Duration(days: 3)),
+        tags: ['Internships'],
+        likes: 98,
+        comments: 27,
+      ),
+      Notice(
+        id: 'n8',
+        title: 'Part-time Tutor Needed – Grade 11 Maths',
+        content:
+            'Family in Sandton looking for a reliable university student to tutor Grade 11 Maths twice a week. R200/hour. WhatsApp 071 555 0123.',
+        author: 'Zanele B.',
+        authorAvatar: 'ZB',
+        timestamp: now.subtract(const Duration(hours: 8)),
+        tags: ['Part Time Jobs'],
+        likes: 62,
+        comments: 18,
+      ),
+      Notice(
+        id: 'n9',
+        title: 'Part-time Barista – Coffee on Campus',
+        content:
+            'Coffee on Campus is hiring a part-time barista for weekends. Flexible hours, student-friendly schedule. Drop your CV at the kiosk.',
+        author: 'Coffee on Campus',
+        authorAvatar: 'CC',
         timestamp: now.subtract(const Duration(days: 2, hours: 5)),
-        tags: ['Jobs', 'Academic'],
-        likes: 67,
-        comments: 19,
+        tags: ['Part Time Jobs'],
+        likes: 55,
+        comments: 14,
       ),
     ]);
 
     _announcements.addAll(_notices.where((n) => n.isAnnouncement).toList());
     _events.addAll(_notices.where((n) => n.tags.contains('Events')).toList());
+    _internships
+        .addAll(_notices.where((n) => n.tags.contains('Internships')).toList());
+    _partTimeJobs.addAll(
+        _notices.where((n) => n.tags.contains('Part Time Jobs')).toList());
   }
 
   List<Notice> get _filteredNotices {
@@ -171,17 +216,25 @@ class _NoticeBoardPageState extends State<NoticeBoardPage>
       ),
       builder: (_) => _CreateNoticeSheet(onPost: (title, content, tags) {
         setState(() {
-          _notices.insert(
-              0,
-              Notice(
-                id: DateTime.now().millisecondsSinceEpoch.toString(),
-                title: title,
-                content: content,
-                author: 'You',
-                authorAvatar: 'Y',
-                timestamp: DateTime.now(),
-                tags: tags,
-              ));
+          final newNotice = Notice(
+            id: DateTime.now().millisecondsSinceEpoch.toString(),
+            title: title,
+            content: content,
+            author: 'You',
+            authorAvatar: 'Y',
+            timestamp: DateTime.now(),
+            tags: tags,
+          );
+          _notices.insert(0, newNotice);
+          if (newNotice.tags.contains('Events')) {
+            _events.insert(0, newNotice);
+          }
+          if (newNotice.tags.contains('Internships')) {
+            _internships.insert(0, newNotice);
+          }
+          if (newNotice.tags.contains('Part Time Jobs')) {
+            _partTimeJobs.insert(0, newNotice);
+          }
         });
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
@@ -222,46 +275,19 @@ class _NoticeBoardPageState extends State<NoticeBoardPage>
           labelColor: _C.primary,
           unselectedLabelColor: _C.grey,
           indicatorColor: _C.primary,
+          isScrollable: true,
+          tabAlignment: TabAlignment.start,
           tabs: const [
             Tab(text: 'All Posts'),
             Tab(text: 'Announcements'),
             Tab(text: 'Events'),
+            Tab(text: 'Internships'),
+            Tab(text: 'Part Time Jobs'),
           ],
         ),
       ),
       body: Column(
         children: [
-          // Tag filter
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: _tags
-                    .map((tag) => Padding(
-                          padding: const EdgeInsets.only(right: 8),
-                          child: FilterChip(
-                            label: Text(tag),
-                            selected: _selectedTag == tag,
-                            onSelected: (selected) {
-                              setState(() {
-                                _selectedTag = selected ? tag : 'All';
-                              });
-                            },
-                            selectedColor: _C.primary.withOpacity(0.1),
-                            checkmarkColor: _C.primary,
-                            labelStyle: TextStyle(
-                              color: _selectedTag == tag ? _C.primary : _C.grey,
-                              fontWeight: _selectedTag == tag
-                                  ? FontWeight.w600
-                                  : FontWeight.normal,
-                            ),
-                          ),
-                        ))
-                    .toList(),
-              ),
-            ),
-          ),
           Expanded(
             child: TabBarView(
               controller: _tabCtrl,
@@ -269,6 +295,8 @@ class _NoticeBoardPageState extends State<NoticeBoardPage>
                 _NoticeList(notices: _filteredNotices),
                 _NoticeList(notices: _announcements),
                 _NoticeList(notices: _events),
+                _NoticeList(notices: _internships),
+                _NoticeList(notices: _partTimeJobs),
               ],
             ),
           ),
@@ -325,6 +353,21 @@ class _NoticeCard extends StatelessWidget {
     return '${diff.inDays}d ago';
   }
 
+  Color get _avatarBg {
+    if (notice.isAnnouncement) return _C.primary.withOpacity(0.1);
+    if (notice.tags.contains('Internships')) return _C.purple.withOpacity(0.1);
+    if (notice.tags.contains('Part Time Jobs'))
+      return _C.green.withOpacity(0.1);
+    return _C.blue.withOpacity(0.1);
+  }
+
+  Color get _avatarFg {
+    if (notice.isAnnouncement) return _C.primary;
+    if (notice.tags.contains('Internships')) return _C.purple;
+    if (notice.tags.contains('Part Time Jobs')) return _C.green;
+    return _C.blue;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -350,15 +393,13 @@ class _NoticeCard extends StatelessWidget {
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  color: notice.isAnnouncement
-                      ? _C.primary.withOpacity(0.1)
-                      : _C.blue.withOpacity(0.1),
+                  color: _avatarBg,
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Center(
                   child: Text(notice.authorAvatar,
                       style: TextStyle(
-                        color: notice.isAnnouncement ? _C.primary : _C.blue,
+                        color: _avatarFg,
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
                       )),
@@ -504,7 +545,8 @@ class _CreateNoticeSheetState extends State<_CreateNoticeSheet> {
     'Events',
     'Social',
     'Lost & Found',
-    'Jobs'
+    'Internships',
+    'Part Time Jobs',
   ];
 
   @override

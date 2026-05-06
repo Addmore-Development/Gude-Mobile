@@ -1,22 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
+import 'package:gude_app/services/wallet_service.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // CASH WITHDRAW SCREEN
 // Step 0 → Enter details (amount, pin, store)
 // Step 1 → Success (green check, barcode, download voucher)
-//
-// Matches Figma exactly:
-//  - Blue info banner
-//  - From Account card (bank icon, Current balance, R100.00 ZAR right-aligned)
-//  - Amount field + hint
-//  - Pin field + hint
-//  - "Please choose a retail Partners" label
-//  - "Choose a Store" expandable row → logo grid (Boxer, Checkers, PnP, Shoprite)
-//  - Red "Get Guidecode" button pinned to bottom
-//  - Success: green check, amount, "Withdrawal Successfully", barcode, code,
-//    security note, red left-bar, Download Voucher, support note, Go back
 // ─────────────────────────────────────────────────────────────────────────────
 
 class WithdrawScreen extends StatefulWidget {
@@ -33,9 +23,10 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
   final _pinCtrl = TextEditingController();
   bool _pinObscure = true;
   bool _storeExpanded = false;
-  String? _selectedStore; // null = none chosen
+  String? _selectedStore;
 
-  final double _balance = 100.00;
+  /// The pocket passed via GoRouter extra — resolved in initState.
+  Pocket? _sourcePocket;
 
   static const _stores = [
     _StoreData('Boxer', Color(0xFFD22027)),
@@ -44,6 +35,23 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
     _StoreData('Shoprite', Color(0xFFD22027)),
   ];
 
+  // ── Lifecycle ──────────────────────────────────────────────────────────────
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final extra = GoRouterState.of(context).extra;
+      if (extra is Map && extra['pocket'] is Pocket) {
+        setState(() => _sourcePocket = extra['pocket'] as Pocket);
+      }
+      // Fall back to the main account if nothing was passed
+      _sourcePocket ??= WalletService().pockets.isNotEmpty
+          ? WalletService().pockets.first
+          : null;
+    });
+  }
+
   @override
   void dispose() {
     _amountCtrl.dispose();
@@ -51,22 +59,63 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
     super.dispose();
   }
 
-  // ── Validation & submit ──────────────────────────────────────────────────
+  // ── Live balance — always reads from the service ───────────────────────────
+
+  double get _balance {
+    if (_sourcePocket == null) return 0.0;
+    final live = WalletService()
+        .pockets
+        .where((p) => p.id == _sourcePocket!.id)
+        .toList();
+    return live.isNotEmpty ? live.first.balance : _sourcePocket!.balance;
+  }
+
+  // ── Validation & submit ────────────────────────────────────────────────────
 
   void _submit() {
     final raw = _amountCtrl.text.trim().replaceAll(',', '.');
-    if (raw.isEmpty) { _err('Please enter an amount'); return; }
+    if (raw.isEmpty) {
+      _err('Please enter an amount');
+      return;
+    }
     final amount = double.tryParse(raw);
-    if (amount == null) { _err('Invalid amount'); return; }
-    if (amount < 20)    { _err('Minimum withdrawal is R20.00'); return; }
-    if (amount > 4500)  { _err('Maximum withdrawal is R4500.00'); return; }
-    if (amount > _balance) { _err('Insufficient balance'); return; }
+    if (amount == null) {
+      _err('Invalid amount');
+      return;
+    }
+    if (amount < 20) {
+      _err('Minimum withdrawal is R20.00');
+      return;
+    }
+    if (amount > 4500) {
+      _err('Maximum withdrawal is R4500.00');
+      return;
+    }
+    if (amount > _balance) {
+      _err('Insufficient balance');
+      return;
+    }
 
     final pin = _pinCtrl.text.trim();
     if (pin.length != 4 || !RegExp(r'^\d{4}$').hasMatch(pin)) {
-      _err('PIN must be exactly 4 digits'); return;
+      _err('PIN must be exactly 4 digits');
+      return;
     }
-    if (_selectedStore == null) { _err('Please choose a retail partner'); return; }
+    if (_selectedStore == null) {
+      _err('Please choose a retail partner');
+      return;
+    }
+
+    // Debit the pocket so the wallet reflects the withdrawal
+    if (_sourcePocket != null) {
+      final label = 'Cash Withdrawal – $_selectedStore';
+      final success =
+          WalletService().debitPocket(_sourcePocket!.id, amount, label);
+      if (!success) {
+        _err('Insufficient balance');
+        return;
+      }
+    }
 
     setState(() => _step = 1);
   }
@@ -81,7 +130,7 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
     ));
   }
 
-  // ── Guidecode generator ──────────────────────────────────────────────────
+  // ── Guidecode generator ────────────────────────────────────────────────────
 
   String _guidecode() {
     final n = DateTime.now().millisecondsSinceEpoch;
@@ -90,7 +139,7 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
         '${(n % 100).toString().padLeft(2, '0')}';
   }
 
-  // ── Build ────────────────────────────────────────────────────────────────
+  // ── Build ──────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
@@ -106,8 +155,8 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
         elevation: 0,
         centerTitle: true,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back,
-              size: 18, color: Color(0xFF232323)),
+          icon:
+              const Icon(Icons.arrow_back, size: 18, color: Color(0xFF232323)),
           onPressed: () =>
               _step == 0 ? context.go('/wallet') : setState(() => _step = 0),
         ),
@@ -137,14 +186,13 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
             child: LinearProgressIndicator(
               value: null,
               backgroundColor: Color(0xFFFF3B3C),
-              valueColor:
-                  AlwaysStoppedAnimation<Color>(Color(0xFFFF3B3C)),
+              valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFFF3B3C)),
             ),
           ),
         ),
       );
 
-  // ── FORM VIEW ────────────────────────────────────────────────────────────
+  // ── FORM VIEW ──────────────────────────────────────────────────────────────
 
   Widget _formView() {
     return Column(
@@ -157,15 +205,15 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
               children: [
                 // ── Blue info banner ──
                 Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 12, vertical: 10),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                   decoration: BoxDecoration(
                     color: const Color(0xFFE8F4FD),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: Row(
+                  child: const Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    children: const [
+                    children: [
                       Icon(Icons.info_outline_rounded,
                           color: Color(0xFF1E90FF), size: 16),
                       SizedBox(width: 8),
@@ -191,37 +239,61 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
                 const _FieldLabel('From Account'),
                 const SizedBox(height: 8),
                 Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 14, vertical: 13),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(10),
-                    border:
-                        Border.all(color: const Color(0xFFE0E0E0)),
+                    border: Border.all(
+                      color: _sourcePocket != null
+                          ? _sourcePocket!.color.withOpacity(0.4)
+                          : const Color(0xFFE0E0E0),
+                    ),
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.account_balance_outlined,
-                          size: 20, color: Color(0xFF999999)),
+                      // Show pocket emoji if available, otherwise bank icon
+                      _sourcePocket != null
+                          ? Text(_sourcePocket!.emoji,
+                              style: const TextStyle(fontSize: 18))
+                          : const Icon(Icons.account_balance_outlined,
+                              size: 20, color: Color(0xFF999999)),
                       const SizedBox(width: 10),
-                      const Expanded(
-                        child: Text(
-                          'Current balance',
-                          style: TextStyle(
-                            fontFamily: 'Poppins',
-                            fontSize: 13,
-                            fontWeight: FontWeight.w400,
-                            color: Color(0xFF999999),
-                          ),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              _sourcePocket?.name ?? 'Current balance',
+                              style: TextStyle(
+                                fontFamily: 'Poppins',
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: _sourcePocket != null
+                                    ? const Color(0xFF232323)
+                                    : const Color(0xFF999999),
+                              ),
+                            ),
+                            if (_sourcePocket != null)
+                              const Text(
+                                'Available balance',
+                                style: TextStyle(
+                                  fontFamily: 'Poppins',
+                                  fontSize: 10,
+                                  color: Color(0xFF999999),
+                                ),
+                              ),
+                          ],
                         ),
                       ),
                       Text(
                         'R${_balance.toStringAsFixed(2)} ZAR',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontFamily: 'Poppins',
                           fontSize: 13,
                           fontWeight: FontWeight.w700,
-                          color: Color(0xFF232323),
+                          color:
+                              _sourcePocket?.color ?? const Color(0xFF232323),
                         ),
                       ),
                     ],
@@ -236,11 +308,10 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
                 _StyledField(
                   controller: _amountCtrl,
                   hint: 'R 0.00',
-                  keyboardType: const TextInputType.numberWithOptions(
-                      decimal: true),
+                  keyboardType:
+                      const TextInputType.numberWithOptions(decimal: true),
                   inputFormatters: [
-                    FilteringTextInputFormatter.allow(
-                        RegExp(r'[\d.,]')),
+                    FilteringTextInputFormatter.allow(RegExp(r'[\d.,]')),
                   ],
                 ),
                 const SizedBox(height: 6),
@@ -270,8 +341,7 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
                       color: const Color(0xFFBBBBBB),
                       size: 18,
                     ),
-                    onPressed: () =>
-                        setState(() => _pinObscure = !_pinObscure),
+                    onPressed: () => setState(() => _pinObscure = !_pinObscure),
                   ),
                 ),
                 const SizedBox(height: 6),
@@ -286,16 +356,14 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
 
                 // ── Store selector row ──
                 GestureDetector(
-                  onTap: () =>
-                      setState(() => _storeExpanded = !_storeExpanded),
+                  onTap: () => setState(() => _storeExpanded = !_storeExpanded),
                   child: Container(
                     padding: const EdgeInsets.symmetric(
                         horizontal: 14, vertical: 14),
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(10),
-                      border: Border.all(
-                          color: const Color(0xFFE0E0E0)),
+                      border: Border.all(color: const Color(0xFFE0E0E0)),
                     ),
                     child: Row(
                       children: [
@@ -380,13 +448,12 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
     );
   }
 
-  // ── SUCCESS VIEW ─────────────────────────────────────────────────────────
+  // ── SUCCESS VIEW ───────────────────────────────────────────────────────────
 
   Widget _successView() {
     final code = _guidecode();
-    final rawAmt =
-        _amountCtrl.text.trim().replaceAll(',', '.');
-    final amount = double.tryParse(rawAmt) ?? 100.0;
+    final rawAmt = _amountCtrl.text.trim().replaceAll(',', '.');
+    final amount = double.tryParse(rawAmt) ?? 0.0;
 
     return Column(
       children: [
@@ -436,32 +503,39 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
                   ),
                 ),
 
+                if (_sourcePocket != null) ...[
+                  const SizedBox(height: 6),
+                  Text(
+                    'Deducted from ${_sourcePocket!.emoji} ${_sourcePocket!.name}',
+                    style: TextStyle(
+                      fontFamily: 'Poppins',
+                      fontSize: 12,
+                      color: _sourcePocket!.color,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+
                 const SizedBox(height: 28),
 
                 // ── Barcode ──
                 Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 16, vertical: 18),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                        color: const Color(0xFFEEEEEE)),
+                    border: Border.all(color: const Color(0xFFEEEEEE)),
                   ),
                   child: Column(
                     children: [
-                      // Barcode drawn with CustomPaint
                       SizedBox(
                         height: 70,
                         width: double.infinity,
-                        child: CustomPaint(
-                            painter: _BarcodePainter()),
+                        child: CustomPaint(painter: _BarcodePainter()),
                       ),
-
                       const SizedBox(height: 10),
-
-                      // Guidecode text
                       Text(
                         code,
                         style: const TextStyle(
@@ -499,12 +573,10 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(10),
-                    border: Border.all(
-                        color: const Color(0xFFEEEEEE)),
+                    border: Border.all(color: const Color(0xFFEEEEEE)),
                   ),
                   child: Row(
                     children: [
-                      // Red left bar
                       Container(
                         width: 5,
                         height: 52,
@@ -551,7 +623,7 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
           ),
         ),
 
-        // ── Go back to wallet — pinned to bottom ──
+        // ── Go back to wallet ──
         Container(
           color: Colors.white,
           padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
@@ -671,8 +743,7 @@ class _StyledField extends StatelessWidget {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(
-              color: Color(0xFFFF3B3C), width: 1.5),
+          borderSide: const BorderSide(color: Color(0xFFFF3B3C), width: 1.5),
         ),
       ),
     );
@@ -712,9 +783,7 @@ class _StoreLogo extends StatelessWidget {
           color: Colors.white,
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
-            color: selected
-                ? const Color(0xFFFF3B3C)
-                : const Color(0xFFE0E0E0),
+            color: selected ? const Color(0xFFFF3B3C) : const Color(0xFFE0E0E0),
             width: selected ? 2 : 1,
           ),
           boxShadow: [
@@ -725,9 +794,7 @@ class _StoreLogo extends StatelessWidget {
             ),
           ],
         ),
-        child: Center(
-          child: _StoreLogoContent(store: store),
-        ),
+        child: Center(child: _StoreLogoContent(store: store)),
       ),
     );
   }
@@ -739,8 +806,6 @@ class _StoreLogoContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Draw store brand name in brand color as styled text
-    // (In production, replace with actual SVG/PNG assets)
     switch (store.name) {
       case 'Boxer':
         return _BoxerLogo();
@@ -763,8 +828,6 @@ class _StoreLogoContent extends StatelessWidget {
     }
   }
 }
-
-// ── Store logo widgets (styled text representations) ─────────────────────────
 
 class _BoxerLogo extends StatelessWidget {
   @override
@@ -792,20 +855,15 @@ class _BoxerLogo extends StatelessWidget {
 class _CheckersLogo extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: const [
-        Text(
-          'Checkers',
-          style: TextStyle(
-            fontFamily: 'Georgia',
-            fontSize: 11,
-            fontWeight: FontWeight.w700,
-            color: Color(0xFF007A3D),
-            fontStyle: FontStyle.italic,
-          ),
-        ),
-      ],
+    return const Text(
+      'Checkers',
+      style: TextStyle(
+        fontFamily: 'Georgia',
+        fontSize: 11,
+        fontWeight: FontWeight.w700,
+        color: Color(0xFF007A3D),
+        fontStyle: FontStyle.italic,
+      ),
     );
   }
 }
@@ -823,26 +881,20 @@ class _PnPLogo extends StatelessWidget {
             color: const Color(0xFF0072CE),
             borderRadius: BorderRadius.circular(4),
           ),
-          child: const Text(
-            'P',
-            style: TextStyle(
-              fontFamily: 'Poppins',
-              fontSize: 14,
-              fontWeight: FontWeight.w900,
-              color: Colors.white,
-            ),
-          ),
+          child: const Text('P',
+              style: TextStyle(
+                  fontFamily: 'Poppins',
+                  fontSize: 14,
+                  fontWeight: FontWeight.w900,
+                  color: Colors.white)),
         ),
         const SizedBox(width: 2),
-        const Text(
-          'n',
-          style: TextStyle(
-            fontFamily: 'Poppins',
-            fontSize: 11,
-            fontWeight: FontWeight.w600,
-            color: Color(0xFF232323),
-          ),
-        ),
+        const Text('n',
+            style: TextStyle(
+                fontFamily: 'Poppins',
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF232323))),
         const SizedBox(width: 2),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 3),
@@ -850,15 +902,12 @@ class _PnPLogo extends StatelessWidget {
             color: const Color(0xFFD22027),
             borderRadius: BorderRadius.circular(4),
           ),
-          child: const Text(
-            'P',
-            style: TextStyle(
-              fontFamily: 'Poppins',
-              fontSize: 14,
-              fontWeight: FontWeight.w900,
-              color: Colors.white,
-            ),
-          ),
+          child: const Text('P',
+              style: TextStyle(
+                  fontFamily: 'Poppins',
+                  fontSize: 14,
+                  fontWeight: FontWeight.w900,
+                  color: Colors.white)),
         ),
       ],
     );
@@ -889,7 +938,6 @@ class _ShopriteLogo extends StatelessWidget {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // BARCODE PAINTER
-// Draws a realistic-looking barcode using vertical lines of varying widths
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _BarcodePainter extends CustomPainter {
@@ -899,12 +947,87 @@ class _BarcodePainter extends CustomPainter {
       ..color = const Color(0xFF1A1A1A)
       ..strokeCap = StrokeCap.square;
 
-    // Pattern: alternating bar widths simulating a real barcode
     const pattern = [
-      2, 1, 3, 1, 1, 2, 1, 3, 2, 1, 1, 2, 3, 1, 2, 1, 1, 3, 1, 2,
-      1, 1, 2, 3, 1, 2, 1, 3, 1, 1, 2, 1, 3, 2, 1, 1, 2, 3, 1, 2,
-      1, 2, 1, 1, 3, 2, 1, 1, 2, 3, 1, 2, 1, 3, 1, 1, 2, 1, 3, 2,
-      3, 1, 1, 2, 1, 3, 1, 2, 1, 1, 3, 2, 1, 2, 3, 1, 1, 2, 3, 1,
+      2,
+      1,
+      3,
+      1,
+      1,
+      2,
+      1,
+      3,
+      2,
+      1,
+      1,
+      2,
+      3,
+      1,
+      2,
+      1,
+      1,
+      3,
+      1,
+      2,
+      1,
+      1,
+      2,
+      3,
+      1,
+      2,
+      1,
+      3,
+      1,
+      1,
+      2,
+      1,
+      3,
+      2,
+      1,
+      1,
+      2,
+      3,
+      1,
+      2,
+      1,
+      2,
+      1,
+      1,
+      3,
+      2,
+      1,
+      1,
+      2,
+      3,
+      1,
+      2,
+      1,
+      3,
+      1,
+      1,
+      2,
+      1,
+      3,
+      2,
+      3,
+      1,
+      1,
+      2,
+      1,
+      3,
+      1,
+      2,
+      1,
+      1,
+      3,
+      2,
+      1,
+      2,
+      3,
+      1,
+      1,
+      2,
+      3,
+      1,
     ];
 
     final totalUnits =
@@ -923,7 +1046,7 @@ class _BarcodePainter extends CustomPainter {
           paint,
         );
       }
-      x += w + unitW; // gap = 1 unit
+      x += w + unitW;
       isBar = !isBar;
     }
   }

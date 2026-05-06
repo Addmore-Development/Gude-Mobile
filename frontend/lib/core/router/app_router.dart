@@ -1,7 +1,8 @@
 // lib/core/router/app_router.dart
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-
+import 'package:gude_app/features/wallet/presentation/screens/transact_screen.dart';
+import 'package:gude_app/features/onboarding/feature_onboarding_page.dart';
 // Auth
 import 'package:gude_app/features/auth/presentation/splash_page.dart';
 import 'package:gude_app/features/auth/presentation/onboarding_page.dart';
@@ -10,6 +11,7 @@ import 'package:gude_app/features/auth/presentation/signup_page.dart';
 import 'package:gude_app/features/auth/presentation/forgot_password_page.dart';
 import 'package:gude_app/features/auth/presentation/skills_selection_page.dart';
 import 'package:gude_app/features/auth/presentation/student_verification_page.dart';
+import 'package:gude_app/features/messaging/presentation/unified_chat_page.dart';
 
 // Buyer onboarding — import each page from its own dedicated file.
 // Hide ALL onboarding pages from buyer_onboarding_welcome_page.dart so there
@@ -59,7 +61,8 @@ import 'package:gude_app/features/coach/presentation/coach_onboarding_page.dart'
 import 'package:gude_app/features/coach/presentation/coach_chat_page.dart';
 import 'package:gude_app/features/rewards/presentation/rewards_page.dart';
 import 'package:gude_app/features/challenges/presentation/challenges_page.dart';
-import 'package:gude_app/features/notifications/presentation/notifications_page.dart' hide NotificationsPage; // keep marketplace one under /notifications
+import 'package:gude_app/features/notifications/presentation/notifications_page.dart'
+    hide NotificationsPage; // keep marketplace one under /notifications
 // We alias the new one:
 import 'package:gude_app/features/notifications/presentation/notifications_page.dart'
     as nudge_notif;
@@ -86,6 +89,10 @@ class AppRouter {
       // ── Auth & onboarding ──────────────────────────────────────────
       GoRoute(path: '/splash', builder: (c, s) => const SplashPage()),
       GoRoute(path: '/onboarding', builder: (c, s) => const OnboardingPage()),
+      GoRoute(
+        path: '/onboarding-features',
+        builder: (_, __) => const FeatureOnboardingPage(),
+      ),
       GoRoute(path: '/login', builder: (c, s) => const LoginPage()),
       GoRoute(path: '/signup', builder: (c, s) => const SignupPage()),
       GoRoute(
@@ -101,32 +108,25 @@ class AppRouter {
           path: '/buyer-onboarding/welcome',
           builder: (c, s) => const BuyerOnboardingWelcomePage()),
 
-        // ── NEW: Coach onboarding flow ───────────────────────────────────
+      // ── NEW: Coach onboarding flow ───────────────────────────────────
       GoRoute(
           path: '/coach/onboarding',
           builder: (c, s) => const CoachOnboardingPage()),
- 
+
       // ── NEW: Coach chat ──────────────────────────────────────────────
-      GoRoute(
-          path: '/coach/chat',
-          builder: (c, s) => const CoachChatPage()),
- 
+      GoRoute(path: '/coach/chat', builder: (c, s) => const CoachChatPage()),
+
       // ── NEW: Rewards (Gude Vitality) ─────────────────────────────────
-      GoRoute(
-          path: '/rewards',
-          builder: (c, s) => const RewardsPage()),
- 
+      GoRoute(path: '/rewards', builder: (c, s) => const RewardsPage()),
+
       // ── NEW: Challenges ──────────────────────────────────────────────
-      GoRoute(
-          path: '/challenges',
-          builder: (c, s) => const ChallengesPage()),
- 
+      GoRoute(path: '/challenges', builder: (c, s) => const ChallengesPage()),
+
       // ── NEW: Nudge Notifications (AI nudges) ─────────────────────────
       GoRoute(
           path: '/nudges',
           builder: (c, s) => const nudge_notif.NotificationsPage()),
 
-      
       // ── Marketplace sub-screens (outside shells) ───────────────────
       GoRoute(
           path: '/marketplace/create',
@@ -173,12 +173,10 @@ class AppRouter {
       // ── Notice Board ───────────────────────────────────────────────
       GoRoute(
           path: '/notice-board', builder: (c, s) => const NoticeBoardPage()),
-      GoRoute(
-          path: '/noticeboard', builder: (c, s) => const NoticeBoardPage()),
+      GoRoute(path: '/noticeboard', builder: (c, s) => const NoticeBoardPage()),
 
       // ── Community Chat ─────────────────────────────────────────────
-      GoRoute(
-          path: '/community', builder: (c, s) => const ChatsChatPage()),
+      GoRoute(path: '/community', builder: (c, s) => const ChatsChatPage()),
 
       // ── Wallet sub-screens (outside shell) ─────────────────────────
       GoRoute(
@@ -198,6 +196,13 @@ class AppRouter {
             WalletPocketsPage(initialIndex: (s.extra as Map?)?['index'] ?? 0),
       ),
 
+      GoRoute(
+        path: '/wallet/transact',
+        builder: (_, __) => const TransactScreen(),
+      ),
+
+      GoRoute(path: 'transact', builder: (_, __) => const TransactScreen()),
+
       // ── Stability ─────────────────────────────────────────────────
       GoRoute(
           path: '/stability/checkin',
@@ -212,12 +217,31 @@ class AppRouter {
               path: '/marketplace', builder: (c, s) => const MarketplacePage()),
           GoRoute(path: '/wallet', builder: (c, s) => const WalletPage()),
           GoRoute(
-              path: '/messages', builder: (c, s) => const MessagingInboxPage()),
-          GoRoute(
-              path: '/chats', builder: (c, s) => const ChatsChatPage()),
+              path: '/messages', builder: (c, s) => const UnifiedChatPage()),
+          GoRoute(path: '/chats', builder: (c, s) => const ChatsChatPage()),
           GoRoute(path: '/support', builder: (c, s) => const SupportPage()),
           GoRoute(path: '/stability', builder: (c, s) => const StabilityPage()),
           GoRoute(path: '/profile', builder: (c, s) => const ProfilePage()),
+        ],
+      ),
+
+      GoRoute(
+        path: '/wallet',
+        builder: (c, s) => const WalletPage(),
+        routes: [
+          GoRoute(path: 'budget', builder: (c, s) => const BudgetPlannerPage()),
+          GoRoute(path: 'savings', builder: (c, s) => const SavingsGoalsPage()),
+          GoRoute(path: 'send', builder: (_, __) => const SendMoneyScreen()),
+          GoRoute(path: 'withdraw', builder: (_, __) => const WithdrawScreen()),
+          GoRoute(
+              path: 'received',
+              builder: (_, __) => const ReceivedMoneyScreen()),
+          GoRoute(
+            path: 'pockets',
+            builder: (_, s) => WalletPocketsPage(
+              initialIndex: (s.extra as Map?)?['index'] ?? 0,
+            ),
+          ),
         ],
       ),
 

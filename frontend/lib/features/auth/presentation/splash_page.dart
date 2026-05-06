@@ -25,7 +25,7 @@ class _SplashPageState extends State<SplashPage>
     _ctrl.forward();
 
     Future.delayed(const Duration(milliseconds: 2200), () {
-      if (mounted) context.go('/onboarding');
+      if (mounted) context.go('/onboarding-features');
     });
   }
 

@@ -1,20 +1,20 @@
 // lib/features/coach/presentation/coach_chat_page.dart
-// Coach Chat Screen — PDF section 2.5
-// Chat bubbles (AI + user) · Suggested prompts · Input bar
-// Challenges: "Survive till month-end", "NSFAS delay survival plan", "R0 to R500"
-
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'package:gude_app/services/user_role_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 // ── Colours ─────────────────────────────────────────────────
 class _C {
-  static const primary   = Color(0xFFE30613);
-  static const dark      = Color(0xFF1A1A1A);
-  static const grey      = Color(0xFF888888);
+  static const primary = Color(0xFFE30613);
+  static const dark = Color(0xFF1A1A1A);
+  static const grey = Color(0xFF888888);
   static const lightGrey = Color(0xFFF5F5F5);
-  static const border    = Color(0xFFEEEEEE);
-  static const green     = Color(0xFF10B981);
-  static const amber     = Color(0xFFF59E0B);
+  static const border = Color(0xFFEEEEEE);
+  static const green = Color(0xFF10B981);
+  static const amber = Color(0xFFF59E0B);
 }
 
 // ── Message model ────────────────────────────────────────────
@@ -25,86 +25,17 @@ class _Msg {
   const _Msg({required this.text, required this.isAi, required this.time});
 }
 
-// ── Suggested prompts (PDF 2.5) ──────────────────────────────
+// ── Suggested prompts ────────────────────────────────────────
 const _suggestions = [
-  ('Can I afford takeout?',         '🍔'),
-  ('Help me save R500',             '💰'),
-  ('Survive till month-end',        '📅'),
-  ('NSFAS delay survival plan',     '⏳'),
-  ('R0 to R500 savings challenge',  '🚀'),
-  ('How do I reduce transport cost?','🚌'),
-  ('Am I overspending?',            '📊'),
-  ('Set a new savings goal',        '🎯'),
+  ('Can I afford takeout?', '🍔'),
+  ('Help me save R500', '💰'),
+  ('Survive till month-end', '📅'),
+  ('NSFAS delay survival plan', '⏳'),
+  ('R0 to R500 savings challenge', '🚀'),
+  ('How do I reduce transport cost?', '🚌'),
+  ('Am I overspending?', '📊'),
+  ('Set a new savings goal', '🎯'),
 ];
-
-// ── AI responses (keyword-based) ─────────────────────────────
-String _aiReply(String input) {
-  final q = input.toLowerCase();
-  if (q.contains('takeout') || q.contains('afford')) {
-    return '🍔 Based on your current balance of R1,250 with 12 days left, '
-        'takeout might stretch your food budget. You\'ve already spent R650 on '
-        'food this month vs a R800 budget. I\'d recommend cooking once today '
-        'to save around R80. Want me to suggest a cheap meal plan?';
-  }
-  if (q.contains('nsfas') || q.contains('delay')) {
-    return '⏳ NSFAS Delay Survival Plan activated!\n\n'
-        '1. Cut non-essential spend immediately\n'
-        '2. Reduce food budget to R30/day (rice, eggs, bread)\n'
-        '3. Pause entertainment spend\n'
-        '4. Use campus facilities (library, gym) — they\'re already paid\n'
-        '5. Alert your res about the delay if rent is due\n\n'
-        'Your emergency fund has R500. This can last ~10 days with discipline. 💪';
-  }
-  if (q.contains('save') && q.contains('500') || q.contains('r0 to r500')) {
-    return '🚀 R0 to R500 Challenge!\n\n'
-        'Week 1: Skip 1 takeout = +R80\n'
-        'Week 2: Walk instead of Uber twice = +R90\n'
-        'Week 3: Cancel 1 subscription = +R60\n'
-        'Week 4: Sell something on Gude Marketplace = +R150+\n\n'
-        'That\'s already R380! Add R120 from your monthly surplus and you\'re done. 🎉';
-  }
-  if (q.contains('survive') || q.contains('month-end')) {
-    return '📅 Survive Till Month-End Mode!\n\n'
-        'You have R1,250 for 12 days = R104/day budget.\n\n'
-        '✅ Food: Max R40/day\n'
-        '✅ Transport: Max R30/day\n'
-        '✅ Data: You have 5 days left — ration it\n'
-        '❌ No entertainment spend this week\n\n'
-        'You CAN make it. Want daily check-ins? 💪';
-  }
-  if (q.contains('transport')) {
-    return '🚌 Your transport spend is R420 vs a R300 budget — 40% over!\n\n'
-        'Tips to cut down:\n'
-        '• Gautrain > Uber for long distances (saves ~R60/trip)\n'
-        '• Walk routes under 2km\n'
-        '• Carpool with classmates\n'
-        '• Check if your campus has a shuttle service\n\n'
-        'Saving R120 on transport can fund half your data budget.';
-  }
-  if (q.contains('overspend') || q.contains('budget')) {
-    return '📊 Budget snapshot:\n\n'
-        '🔴 Food: R650/R800 — 81% used\n'
-        '🔴 Transport: R420/R300 — OVER\n'
-        '🟡 Entertainment: R380/R150 — WAY over\n'
-        '🟢 Data: R180/R200 — on track\n'
-        '🟢 Textbooks: R150/R300 — great!\n\n'
-        'Entertainment is your biggest leak. Cut 1 streaming service and you save R99/month.';
-  }
-  if (q.contains('goal') || q.contains('saving')) {
-    return '🎯 You currently have 4 savings goals:\n\n'
-        '💻 Laptop: R3,200/R5,200 (61%)\n'
-        '🏠 Accommodation: R2,800/R4,500 (62%)\n'
-        '🍎 Food & Groceries: R650/R1,200 (54%)\n'
-        '🆘 Emergency: R500/R3,000 (17%)\n\n'
-        'I recommend boosting your Emergency Fund — it\'s only 17% funded. '
-        'Even R100/month gets you to R1,000 in 5 months.';
-  }
-  return '🤖 Great question! Based on your spending patterns, here\'s what I\'d suggest:\n\n'
-      'Your current financial health score is 62/100 — Steady. '
-      'You have R1,250 left for 12 days, which works out to about R104/day. '
-      'Focus on reducing food and entertainment costs this week.\n\n'
-      'Want me to break down a specific category?';
-}
 
 // ════════════════════════════════════════════════════════════
 //  CoachChatPage
@@ -116,19 +47,27 @@ class CoachChatPage extends StatefulWidget {
 }
 
 class _CoachChatPageState extends State<CoachChatPage> {
-  final _inputCtrl   = TextEditingController();
-  final _scrollCtrl  = ScrollController();
-  bool  _isTyping    = false;
+  final _inputCtrl = TextEditingController();
+  final _scrollCtrl = ScrollController();
+  bool _isTyping = false;
+
+  final List<Map<String, String>> _history = [];
 
   final List<_Msg> _messages = [
     _Msg(
-      text: '👋 Hey! I\'m your Gude Financial Coach.\n\n'
-          'I can help you budget smarter, save more and survive the month. '
-          'Ask me anything about your money, or pick a suggestion below!',
+      text: '👋 Hey! I\'m AI Buddy, your personal financial coach.\n\n'
+          'Ask me anything about budgeting, saving, earning, or student life in SA!',
       isAi: true,
-      time: DateTime.now().subtract(const Duration(minutes: 2)),
+      time: DateTime.now(),
     ),
   ];
+
+  // ── Lifecycle ────────────────────────────────────────────
+  @override
+  void initState() {
+    super.initState();
+    _loadHistory();
+  }
 
   @override
   void dispose() {
@@ -137,29 +76,121 @@ class _CoachChatPageState extends State<CoachChatPage> {
     super.dispose();
   }
 
-  void _send(String text) async {
-    if (text.trim().isEmpty) return;
-    _inputCtrl.clear();
-
-    setState(() {
-      _messages.add(_Msg(text: text.trim(), isAi: false, time: DateTime.now()));
-      _isTyping = true;
-    });
-
-    _scrollToBottom();
-
-    // Simulate AI "typing" delay
-    await Future.delayed(const Duration(milliseconds: 1200));
-
-    if (!mounted) return;
-    setState(() {
-      _isTyping = false;
-      _messages.add(_Msg(text: _aiReply(text), isAi: true, time: DateTime.now()));
-    });
-
-    _scrollToBottom();
+  // ── Load saved chat history ──────────────────────────────
+  Future<void> _loadHistory() async {
+    final prefs = await SharedPreferences.getInstance();
+    final saved = prefs.getString('chat_history');
+    if (saved != null) {
+      final list = jsonDecode(saved) as List;
+      setState(() {
+        _history.addAll(list.cast<Map<String, String>>());
+      });
+    }
   }
 
+  // ── Save chat history ────────────────────────────────────
+  Future<void> _saveHistory() async {
+    final prefs = await SharedPreferences.getInstance();
+    final trimmed = _history.length > 40
+        ? _history.sublist(_history.length - 40)
+        : _history;
+    await prefs.setString('chat_history', jsonEncode(trimmed));
+  }
+
+  // ── System prompt ────────────────────────────────────────
+  String _buildSystemPrompt() {
+    final svc = UserRoleService();
+    return '''
+You are AI Buddy, a warm, knowledgeable, and deeply practical financial coach built into the Gude app for South African university students. You are fluent in South African student culture, slang, and the real financial challenges students face.
+
+STUDENT PROFILE:
+- Name: ${svc.userName.isNotEmpty ? svc.userName : 'Student'}
+- Monthly income: R${svc.monthlyIncome.toStringAsFixed(0)}
+- Funding source: ${svc.fundingType.isNotEmpty ? svc.fundingType : 'Unknown'}
+- Living situation: ${svc.livingType.isNotEmpty ? svc.livingType : 'Unknown'}
+- Financial pain points: ${svc.painPoints.isNotEmpty ? svc.painPoints.join(', ') : 'General budgeting'}
+
+YOUR EXPERTISE COVERS:
+1. BUDGETING & MONEY MANAGEMENT
+   - Creating student budgets with Rand amounts
+   - 50/30/20 rule adapted for low SA student incomes
+   - Zero-based budgeting for NSFAS students
+   - Tracking daily spend on food, transport, data
+
+2. SAVING STRATEGIES
+   - Emergency funds for students (start with R200–R500)
+   - Savings challenges (52-week, R1/day, round-up saving)
+   - Best SA savings accounts: Capitec, TymeBank, FNB Easy Account
+   - Stokvel basics and group savings
+
+3. SOUTH AFRICAN FUNDING & GRANTS
+   - NSFAS: allowances, delays, appeal process, what's covered
+   - DHET bursaries and how to apply
+   - Ikusasa Student Financial Aid Programme (ISFAP)
+   - Funza Lushaka for education students
+   - Private bursaries: Anglo American, Sasol, Allan Gray Orbis
+
+4. EARNING EXTRA INCOME (SIDE HUSTLES)
+   - Tutoring fellow students (R80–R200/hr)
+   - Selling food/snacks on campus
+   - Freelancing: graphic design, writing, coding on Fiverr/Upwork
+   - Campus ambassador programmes
+   - Online surveys and micro-tasks
+   - Part-time jobs that work around lectures
+
+5. DEBT & CREDIT
+   - Understanding student debt and interest
+   - How to avoid credit card traps
+   - AfriCash, Wonga, and loan shark dangers
+   - Building a credit score from scratch
+   - NSFAS loan vs bursary components explained
+
+6. FOOD & SURVIVAL ON A BUDGET
+   - Cheapest nutritious meals under R20
+   - Grocery shopping tips: Checkers, Shoprite, PnP specials
+   - Meal prepping for the week
+   - Surviving without a kitchen (res life)
+   - Campus food banks and soup kitchens
+
+7. TRANSPORT
+   - Minibus taxi, MyCiTi, Gautrain costs compared
+   - Student discounts on Intercape/Greyhound
+   - Carpooling and lift clubs on campus
+   - Walking routes vs Uber cost analysis
+
+8. STUDENT LIFE & WELLNESS
+   - Dealing with financial stress and anxiety
+   - Avoiding peer pressure spending (parties, drinking, clothes)
+   - Mental health resources for financially stressed students
+   - Free campus resources: clinics, counselling, food parcels
+
+9. DIGITAL & DATA
+   - Cheapest data deals: Telkom, MTN, Vodacom, Cell C
+   - Campus WiFi spots and free internet access
+   - Zero-rated educational sites (NSFAS portal, etc.)
+
+10. FUTURE FINANCIAL PLANNING
+    - Opening your first bank account (best free options)
+    - Understanding tax (SARS eFiling basics for students)
+    - Starting to invest: Easy Equities, unit trusts for beginners
+    - Graduate financial planning: first salary budgeting
+
+RESPONSE RULES:
+- Always use South African Rand (R) for all amounts
+- Be conversational, warm, and encouraging — like a smart older sibling
+- Use simple language, avoid heavy financial jargon
+- Give specific, actionable advice with real Rand amounts
+- Reference real SA brands, apps, and services students know
+- Keep responses under 220 words unless the student asks for detail
+- Use bullet points or numbered steps when listing options
+- If the student seems stressed, acknowledge their feelings first
+- Never judge spending choices — guide gently instead
+- If you don't know something specific (e.g., a student's exact campus costs), make reasonable SA estimates and say so
+- End responses with an encouraging note or a follow-up question to keep them engaged
+''';
+  }
+
+  // ── Scroll helper ────────────────────────────────────────
   void _scrollToBottom() {
     Future.delayed(const Duration(milliseconds: 100), () {
       if (_scrollCtrl.hasClients) {
@@ -172,6 +203,84 @@ class _CoachChatPageState extends State<CoachChatPage> {
     });
   }
 
+  // ── Call Claude via proxy ────────────────────────────────
+  Future<String> _callClaude() async {
+    // 🔧 Change this URL depending on your platform:
+    //   Android emulator  → http://10.0.2.2:3000/chat
+    //   iOS simulator     → http://localhost:3000/chat
+    //   Physical device   → http://<YOUR_LAN_IP>:3000/chat
+    const proxyUrl =
+        'https://gude-proxy-6rpug1e3g-unathi-qamzas-projects.vercel.app/chat';
+
+    final messages = _history
+        .where((m) => m['role'] != null && m['content'] != null)
+        .toList();
+
+    try {
+      final res = await http
+          .post(
+            Uri.parse(proxyUrl),
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode({
+              'model': 'claude-haiku-4-5-20251001',
+              'max_tokens': 600,
+              'system': _buildSystemPrompt(),
+              'messages': messages,
+            }),
+          )
+          .timeout(const Duration(seconds: 30));
+
+      if (res.statusCode == 200) {
+        final data = jsonDecode(res.body);
+        // Anthropic response shape: { content: [ { type: 'text', text: '...' } ] }
+        final content = data['content'] as List?;
+        if (content != null && content.isNotEmpty) {
+          return content
+              .where((b) => b['type'] == 'text')
+              .map((b) => b['text'] as String)
+              .join('\n')
+              .trim();
+        }
+        return _fallback();
+      } else {
+        debugPrint('Proxy error ${res.statusCode}: ${res.body}');
+        return _fallback();
+      }
+    } catch (e) {
+      debugPrint('_callClaude error: $e');
+      return _fallback();
+    }
+  }
+
+  // ── Send message ─────────────────────────────────────────
+  Future<void> _send(String text) async {
+    if (text.trim().isEmpty) return;
+    _inputCtrl.clear();
+
+    setState(() {
+      _messages.add(_Msg(text: text.trim(), isAi: false, time: DateTime.now()));
+      _history.add({'role': 'user', 'content': text.trim()});
+      _isTyping = true;
+    });
+    _scrollToBottom();
+
+    final reply = await _callClaude();
+
+    if (!mounted) return;
+    setState(() {
+      _isTyping = false;
+      _messages.add(_Msg(text: reply, isAi: true, time: DateTime.now()));
+      _history.add({'role': 'assistant', 'content': reply});
+    });
+    _scrollToBottom();
+
+    await _saveHistory();
+  }
+
+  String _fallback() =>
+      "I'm having trouble connecting right now. Please check your internet connection and try again 🔄";
+
+  // ── Build ────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -185,25 +294,26 @@ class _CoachChatPageState extends State<CoachChatPage> {
         ),
         title: Row(children: [
           Container(
-            width: 36, height: 36,
+            width: 36,
+            height: 36,
             decoration: BoxDecoration(
               gradient: const LinearGradient(
                   colors: [Color(0xFF1A1A1A), Color(0xFF3A3A3A)]),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: const Center(
-                child: Text('🤖', style: TextStyle(fontSize: 18))),
+            child:
+                const Center(child: Text('🤖', style: TextStyle(fontSize: 18))),
           ),
           const SizedBox(width: 10),
           const Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Gude Coach',
+              Text('AI Buddy',
                   style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w800,
                       color: _C.dark)),
-              Text('AI Financial Coach • Always on',
+              Text('Your financial coach • Always on',
                   style: TextStyle(fontSize: 10, color: _C.grey)),
             ],
           ),
@@ -218,7 +328,8 @@ class _CoachChatPageState extends State<CoachChatPage> {
             ),
             child: Row(children: [
               Container(
-                width: 6, height: 6,
+                width: 6,
+                height: 6,
                 decoration: const BoxDecoration(
                     color: _C.green, shape: BoxShape.circle),
               ),
@@ -244,8 +355,7 @@ class _CoachChatPageState extends State<CoachChatPage> {
                 if (_isTyping && i == _messages.length) {
                   return const _TypingBubble();
                 }
-                final msg = _messages[i];
-                return _ChatBubble(msg: msg);
+                return _ChatBubble(msg: _messages[i]);
               },
             ),
           ),
@@ -264,16 +374,14 @@ class _CoachChatPageState extends State<CoachChatPage> {
                   onTap: () => _send(label),
                   child: Container(
                     margin: const EdgeInsets.only(right: 8),
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 0),
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
                     decoration: BoxDecoration(
                       color: _C.lightGrey,
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(color: _C.border),
                     ),
                     child: Row(children: [
-                      Text(emoji,
-                          style: const TextStyle(fontSize: 13)),
+                      Text(emoji, style: const TextStyle(fontSize: 13)),
                       const SizedBox(width: 5),
                       Text(label,
                           style: const TextStyle(
@@ -313,11 +421,11 @@ class _CoachChatPageState extends State<CoachChatPage> {
                     onSubmitted: _send,
                     style: const TextStyle(fontSize: 14, color: _C.dark),
                     decoration: const InputDecoration(
-                      hintText: 'Ask your coach anything...',
+                      hintText: 'Ask AI Buddy anything...',
                       hintStyle: TextStyle(color: _C.grey, fontSize: 13),
                       border: InputBorder.none,
-                      contentPadding: EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 10),
+                      contentPadding:
+                          EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                     ),
                   ),
                 ),
@@ -326,7 +434,8 @@ class _CoachChatPageState extends State<CoachChatPage> {
               GestureDetector(
                 onTap: () => _send(_inputCtrl.text),
                 child: Container(
-                  width: 44, height: 44,
+                  width: 44,
+                  height: 44,
                   decoration: BoxDecoration(
                     color: _C.dark,
                     borderRadius: BorderRadius.circular(22),
@@ -347,11 +456,11 @@ class _CoachChatPageState extends State<CoachChatPage> {
       ),
     );
   }
-}
+} // ← _CoachChatPageState closes HERE
 
-// ─────────────────────────────────────────────
-// Chat Bubble
-// ─────────────────────────────────────────────
+// ════════════════════════════════════════════════════════════
+//  Chat Bubble
+// ════════════════════════════════════════════════════════════
 class _ChatBubble extends StatelessWidget {
   final _Msg msg;
   const _ChatBubble({required this.msg});
@@ -374,7 +483,8 @@ class _ChatBubble extends StatelessWidget {
         children: [
           if (isAi) ...[
             Container(
-              width: 32, height: 32,
+              width: 32,
+              height: 32,
               margin: const EdgeInsets.only(right: 8),
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
@@ -387,13 +497,12 @@ class _ChatBubble extends StatelessWidget {
           ],
           Flexible(
             child: Column(
-              crossAxisAlignment: isAi
-                  ? CrossAxisAlignment.start
-                  : CrossAxisAlignment.end,
+              crossAxisAlignment:
+                  isAi ? CrossAxisAlignment.start : CrossAxisAlignment.end,
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 14, vertical: 12),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                   constraints: BoxConstraints(
                     maxWidth: MediaQuery.of(context).size.width * 0.72,
                   ),
@@ -430,7 +539,8 @@ class _ChatBubble extends StatelessWidget {
           ),
           if (!isAi) ...[
             Container(
-              width: 32, height: 32,
+              width: 32,
+              height: 32,
               margin: const EdgeInsets.only(left: 8),
               decoration: BoxDecoration(
                 color: _C.primary.withOpacity(0.1),
@@ -446,9 +556,9 @@ class _ChatBubble extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────
-// Typing indicator
-// ─────────────────────────────────────────────
+// ════════════════════════════════════════════════════════════
+//  Typing Bubble
+// ════════════════════════════════════════════════════════════
 class _TypingBubble extends StatefulWidget {
   const _TypingBubble();
   @override
@@ -483,15 +593,16 @@ class _TypingBubbleState extends State<_TypingBubble>
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
           Container(
-            width: 32, height: 32,
+            width: 32,
+            height: 32,
             margin: const EdgeInsets.only(right: 8),
             decoration: BoxDecoration(
               gradient: const LinearGradient(
                   colors: [Color(0xFF1A1A1A), Color(0xFF3A3A3A)]),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: const Center(
-                child: Text('🤖', style: TextStyle(fontSize: 15))),
+            child:
+                const Center(child: Text('🤖', style: TextStyle(fontSize: 15))),
           ),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -504,9 +615,7 @@ class _TypingBubbleState extends State<_TypingBubble>
                 bottomLeft: Radius.circular(4),
               ),
               boxShadow: [
-                BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 6)
+                BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 6)
               ],
             ),
             child: Row(children: [
@@ -523,6 +632,9 @@ class _TypingBubbleState extends State<_TypingBubble>
   }
 }
 
+// ════════════════════════════════════════════════════════════
+//  Dot (typing animation)
+// ════════════════════════════════════════════════════════════
 class _Dot extends StatelessWidget {
   final Animation<double> anim;
   final double delay;
@@ -533,12 +645,12 @@ class _Dot extends StatelessWidget {
     return AnimatedBuilder(
       animation: anim,
       builder: (_, __) {
-        final v = ((anim.value - delay).clamp(0.0, 1.0));
+        final v = (anim.value - delay).clamp(0.0, 1.0);
         return Container(
-          width: 7, height: 7,
+          width: 7,
+          height: 7,
           decoration: BoxDecoration(
-            color: Color.lerp(
-                const Color(0xFFCCCCCC), _C.grey, v),
+            color: Color.lerp(const Color(0xFFCCCCCC), _C.grey, v),
             shape: BoxShape.circle,
           ),
         );

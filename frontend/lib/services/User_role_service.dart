@@ -8,8 +8,16 @@ class UserRoleService {
   String _institutionId = '';
   String _institutionName = '';
   String _userType = 'student'; // student, institution, buyer
-  String _userName = '';        // stores full name from registration
+  String _userName = ''; // stores full name from registration
 
+  // Onboarding questionnaire answers
+  String _fundingType =
+      ''; // 'NSFAS', 'Bursary', 'Hustle / Side Income', 'Family Support'
+  double _monthlyIncome = 0; // e.g. 3500.0
+  String _livingType = ''; // 'Residence / Digs', 'Living at Home', 'Renting'
+  List<String> _painPoints = []; // e.g. ['Food', 'Transport']
+
+  // Existing getters/setters
   String get role => _role;
   set role(String value) => _role = value;
 
@@ -25,9 +33,27 @@ class UserRoleService {
   String get userName => _userName;
   set userName(String value) => _userName = value;
 
+  // Onboarding getters/setters
+  String get fundingType => _fundingType;
+  set fundingType(String value) => _fundingType = value;
+
+  double get monthlyIncome => _monthlyIncome;
+  set monthlyIncome(double value) => _monthlyIncome = value;
+
+  String get livingType => _livingType;
+  set livingType(String value) => _livingType = value;
+
+  List<String> get painPoints => _painPoints;
+  set painPoints(List<String> value) => _painPoints = value;
+
+  // Convenience booleans
   bool get isInstitution => _userType == 'institution';
   bool get isStudent => _userType == 'student';
   bool get isBuyer => _userType == 'buyer';
+
+  // Whether the user has completed onboarding
+  bool get hasCompletedOnboarding =>
+      _fundingType.isNotEmpty && _livingType.isNotEmpty;
 
   void clear() {
     _role = 'student';
@@ -35,5 +61,9 @@ class UserRoleService {
     _institutionName = '';
     _userType = 'student';
     _userName = '';
+    _fundingType = '';
+    _monthlyIncome = 0;
+    _livingType = '';
+    _painPoints = [];
   }
 }

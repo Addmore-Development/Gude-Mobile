@@ -3,7 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:gude_app/core/router/app_router.dart';
 import 'package:gude_app/core/theme/app_theme.dart';
 
-void main() {
+void main() async {
+  // Add async here
   WidgetsFlutterBinding.ensureInitialized();
   SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
@@ -34,7 +35,8 @@ class GudeApp extends StatelessWidget {
                 height: constraints.maxHeight,
                 decoration: BoxDecoration(
                   boxShadow: [
-                    BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 24),
+                    BoxShadow(
+                        color: Colors.black.withOpacity(0.2), blurRadius: 24),
                   ],
                 ),
                 child: ClipRect(child: child!),

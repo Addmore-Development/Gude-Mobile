@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
+import 'package:gude_app/services/wallet_service.dart';
 
 // ─────────────────────────────────────────────────────────────
 // COLORS
@@ -34,6 +35,9 @@ class _SendMoneyScreenState extends State<SendMoneyScreen> {
   Map<String, dynamic>? _selectedContact;
   bool _useManualEntry = false;
   String _sortBy = 'Recent';
+
+  /// The pocket the user is sending from — read from GoRouter extra.
+  Pocket? _sourcePocket;
 
   final _manualNameCtrl = TextEditingController();
   final _manualHandleCtrl = TextEditingController();
@@ -77,6 +81,32 @@ class _SendMoneyScreenState extends State<SendMoneyScreen> {
       'totalSent': 75.0,
     },
   ];
+
+  // ── Lifecycle ──────────────────────────────────────────────
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final extra = GoRouterState.of(context).extra;
+      if (extra is Map && extra['pocket'] is Pocket) {
+        setState(() => _sourcePocket = extra['pocket'] as Pocket);
+      }
+      // Fall back to the main account if nothing was passed
+      _sourcePocket ??= WalletService().pockets.isNotEmpty
+          ? WalletService().pockets.first
+          : null;
+    });
+  }
+
+  @override
+  void dispose() {
+    _manualNameCtrl.dispose();
+    _manualHandleCtrl.dispose();
+    _amountCtrl.dispose();
+    _noteCtrl.dispose();
+    _searchCtrl.dispose();
+    super.dispose();
+  }
 
   // ── Derived ────────────────────────────────────────────────
   List<Map<String, dynamic>> get _sortedContacts {
@@ -127,20 +157,46 @@ class _SendMoneyScreenState extends State<SendMoneyScreen> {
     return amount > 0;
   }
 
-  // ── Lifecycle ──────────────────────────────────────────────
-  @override
-  void dispose() {
-    _manualNameCtrl.dispose();
-    _manualHandleCtrl.dispose();
-    _amountCtrl.dispose();
-    _noteCtrl.dispose();
-    _searchCtrl.dispose();
-    super.dispose();
+  /// Always reads the live balance from the service so it stays
+  /// accurate after the debit without needing to rebuild the pocket ref.
+  double get _sourcePocketBalance {
+    if (_sourcePocket == null) return 0.0;
+    final live = WalletService()
+        .pockets
+        .where((p) => p.id == _sourcePocket!.id)
+        .toList();
+    return live.isNotEmpty ? live.first.balance : _sourcePocket!.balance;
   }
 
-  // ── Helpers ────────────────────────────────────────────────
-  void _send() => setState(() => _step = 3);
+  // ── Send & debit ───────────────────────────────────────────
+  void _send() {
+    final amount = double.tryParse(_amountCtrl.text) ?? 0;
+    if (amount <= 0) return;
 
+    final walletService = WalletService();
+    final pocketId = _sourcePocket?.id ?? walletService.pockets.first.id;
+
+    final note = _noteCtrl.text.trim();
+    final label = note.isNotEmpty
+        ? 'Sent to $_recipientName ($note)'
+        : 'Sent to $_recipientName';
+
+    final success = walletService.debitPocket(pocketId, amount, label);
+
+    if (!success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Insufficient balance'),
+          backgroundColor: Color(0xFFE30613),
+        ),
+      );
+      return;
+    }
+
+    setState(() => _step = 3);
+  }
+
+  // ── Dialogs / Sheets ───────────────────────────────────────
   void _showAddContactDialog() {
     final nameCtrl = TextEditingController();
     final numberCtrl = TextEditingController();
@@ -308,6 +364,44 @@ class _SendMoneyScreenState extends State<SendMoneyScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Source pocket banner
+                if (_sourcePocket != null)
+                  Container(
+                    margin: const EdgeInsets.only(bottom: 16),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 14, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: _sourcePocket!.color.withOpacity(0.07),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                          color: _sourcePocket!.color.withOpacity(0.4)),
+                    ),
+                    child: Row(children: [
+                      Text(_sourcePocket!.emoji,
+                          style: const TextStyle(fontSize: 18)),
+                      const SizedBox(width: 10),
+                      Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text('Sending from',
+                                style: TextStyle(fontSize: 10, color: _C.grey)),
+                            Text(_sourcePocket!.name,
+                                style: const TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w700,
+                                    color: _C.dark)),
+                          ]),
+                      const Spacer(),
+                      Text(
+                        'R${_sourcePocketBalance.toStringAsFixed(2)}',
+                        style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w800,
+                            color: _sourcePocket!.color),
+                      ),
+                    ]),
+                  ),
+
                 // Search bar
                 Container(
                   height: 44,
@@ -609,6 +703,44 @@ class _SendMoneyScreenState extends State<SendMoneyScreen> {
                   ]),
                 ),
 
+                const SizedBox(height: 12),
+
+                // Source pocket summary
+                if (_sourcePocket != null)
+                  Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: _sourcePocket!.color.withOpacity(0.06),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                          color: _sourcePocket!.color.withOpacity(0.3)),
+                    ),
+                    child: Row(children: [
+                      Text(_sourcePocket!.emoji,
+                          style: const TextStyle(fontSize: 18)),
+                      const SizedBox(width: 10),
+                      Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text('Sending from',
+                                style: TextStyle(fontSize: 11, color: _C.grey)),
+                            Text(_sourcePocket!.name,
+                                style: const TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w700,
+                                    color: _C.dark)),
+                          ]),
+                      const Spacer(),
+                      Text(
+                        'R${_sourcePocketBalance.toStringAsFixed(2)} available',
+                        style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: _sourcePocket!.color),
+                      ),
+                    ]),
+                  ),
+
                 const SizedBox(height: 28),
 
                 // Amount input
@@ -649,8 +781,10 @@ class _SendMoneyScreenState extends State<SendMoneyScreen> {
                         ),
                       ],
                     ),
-                    const Text('Available: R2,600.00',
-                        style: TextStyle(fontSize: 12, color: _C.grey)),
+                    Text(
+                      'Available: R${_sourcePocketBalance.toStringAsFixed(2)}',
+                      style: const TextStyle(fontSize: 12, color: _C.grey),
+                    ),
                   ]),
                 ),
 
@@ -735,6 +869,8 @@ class _SendMoneyScreenState extends State<SendMoneyScreen> {
   // ── STEP 2: Confirm ──────────────────────────────────────────
   Widget _step2() {
     final amount = double.tryParse(_amountCtrl.text) ?? 0;
+    final isOverBalance = amount > _sourcePocketBalance;
+
     return Column(
       key: const ValueKey(2),
       children: [
@@ -755,6 +891,9 @@ class _SendMoneyScreenState extends State<SendMoneyScreen> {
                           fontWeight: FontWeight.w700,
                           color: _C.dark)),
                   const SizedBox(height: 16),
+                  if (_sourcePocket != null)
+                    _summaryRow('From',
+                        '${_sourcePocket!.emoji} ${_sourcePocket!.name}'),
                   _summaryRow('To', _recipientName),
                   _summaryRow('Amount', 'R${amount.toStringAsFixed(2)}'),
                   _summaryRow('Fee', 'R0.00'),
@@ -766,6 +905,34 @@ class _SendMoneyScreenState extends State<SendMoneyScreen> {
                 ]),
               ),
               const SizedBox(height: 16),
+
+              // Insufficient balance warning
+              if (isOverBalance)
+                Container(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFEBEE),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                        color: const Color(0xFFE30613).withOpacity(0.4)),
+                  ),
+                  child: const Row(children: [
+                    Icon(Icons.error_outline_rounded,
+                        color: Color(0xFFE30613), size: 18),
+                    SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Amount exceeds available balance. Please go back and enter a lower amount.',
+                        style: TextStyle(
+                            fontSize: 12,
+                            color: Color(0xFFB71C1C),
+                            height: 1.4),
+                      ),
+                    ),
+                  ]),
+                ),
+
               Container(
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
@@ -797,15 +964,16 @@ class _SendMoneyScreenState extends State<SendMoneyScreen> {
             width: double.infinity,
             child: ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: _C.primary,
+                backgroundColor:
+                    isOverBalance ? const Color(0xFFDDDDDD) : _C.primary,
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 16),
-                elevation: 4,
+                elevation: isOverBalance ? 0 : 4,
                 shadowColor: _C.primary.withOpacity(0.4),
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14)),
               ),
-              onPressed: _send,
+              onPressed: isOverBalance ? null : _send,
               child: Text(
                 'Send R${amount.toStringAsFixed(2)}',
                 style:
@@ -847,6 +1015,17 @@ class _SendMoneyScreenState extends State<SendMoneyScreen> {
             textAlign: TextAlign.center,
             style: const TextStyle(fontSize: 14, color: _C.grey, height: 1.5),
           ),
+          if (_sourcePocket != null) ...[
+            const SizedBox(height: 6),
+            Text(
+              'Deducted from ${_sourcePocket!.emoji} ${_sourcePocket!.name}',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                  fontSize: 13,
+                  color: _sourcePocket!.color,
+                  fontWeight: FontWeight.w600),
+            ),
+          ],
           const Spacer(flex: 3),
           SizedBox(
             width: double.infinity,
@@ -999,7 +1178,6 @@ class _StepIndicator extends StatelessWidget {
 
 // ─────────────────────────────────────────────────────────────
 // RECEIVED MONEY SCREEN
-// (referenced by app_router.dart at /wallet/received)
 // ─────────────────────────────────────────────────────────────
 class ReceivedMoneyScreen extends StatelessWidget {
   const ReceivedMoneyScreen({super.key});
@@ -1034,12 +1212,14 @@ class ReceivedMoneyScreen extends StatelessWidget {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_rounded,
-              color: _C.dark, size: 18),
+              color: Color(0xFF1A1A1A), size: 18),
           onPressed: () => Navigator.of(context).maybePop(),
         ),
         title: const Text('Received Money',
             style: TextStyle(
-                color: _C.dark, fontWeight: FontWeight.w800, fontSize: 17)),
+                color: Color(0xFF1A1A1A),
+                fontWeight: FontWeight.w800,
+                fontSize: 17)),
         centerTitle: true,
       ),
       body: ListView.separated(
@@ -1070,9 +1250,10 @@ class ReceivedMoneyScreen extends StatelessWidget {
                           style: const TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
-                              color: _C.dark)),
+                              color: Color(0xFF1A1A1A))),
                       Text(r['date'] as String,
-                          style: const TextStyle(fontSize: 12, color: _C.grey)),
+                          style: const TextStyle(
+                              fontSize: 12, color: Color(0xFF888888))),
                     ]),
               ),
               Text('+R${(r['amount'] as double).toStringAsFixed(2)}',
